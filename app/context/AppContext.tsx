@@ -12,6 +12,13 @@ export interface Kolam {
     tanggalTebar: string;
     jumlahIkan: number;
     status: 'aman' | 'waspada' | 'berisiko';
+    position?: {
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+        color?: string;
+    }
 }
 
 export interface DataPakan {
@@ -237,6 +244,9 @@ interface AppContextType {
     addRiwayatPanen: (panen: Omit<RiwayatPanen, 'id'>) => void;
     deleteRiwayatPanen: (id: string) => void;
     getPanenByKolam: (kolamId: string) => RiwayatPanen[];
+    // UI State
+    isSidebarCollapsed: boolean;
+    toggleSidebar: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -263,6 +273,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [penjualan, setPenjualan] = useState<Penjualan[]>([]);
     const [jadwalPakan, setJadwalPakan] = useState<JadwalPakan[]>([]);
     const [riwayatPanen, setRiwayatPanen] = useState<RiwayatPanen[]>([]);
+    // UI State
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isLoaded, setIsLoaded] = useState(false);
 
     // Load from localStorage on mount
@@ -276,6 +288,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const savedPenjualan = localStorage.getItem('lele_penjualan');
         const savedJadwalPakan = localStorage.getItem('lele_jadwal_pakan');
         const savedRiwayatPanen = localStorage.getItem('lele_riwayat_panen');
+        const savedSidebar = localStorage.getItem('lele_sidebar_collapsed');
 
         setKolam(savedKolam ? JSON.parse(savedKolam) : initialKolam);
         setPakan(savedPakan ? JSON.parse(savedPakan) : initialPakan);
@@ -286,6 +299,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setPenjualan(savedPenjualan ? JSON.parse(savedPenjualan) : initialPenjualan);
         setJadwalPakan(savedJadwalPakan ? JSON.parse(savedJadwalPakan) : initialJadwalPakan);
         setRiwayatPanen(savedRiwayatPanen ? JSON.parse(savedRiwayatPanen) : initialRiwayatPanen);
+        if (savedSidebar) setIsSidebarCollapsed(JSON.parse(savedSidebar));
+
         setIsLoaded(true);
     }, []);
 
@@ -343,6 +358,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
             localStorage.setItem('lele_riwayat_panen', JSON.stringify(riwayatPanen));
         }
     }, [riwayatPanen, isLoaded]);
+
+    useEffect(() => {
+        if (isLoaded) {
+            localStorage.setItem('lele_sidebar_collapsed', JSON.stringify(isSidebarCollapsed));
+        }
+    }, [isSidebarCollapsed, isLoaded]);
 
     const calculateKepadatan = (k: Kolam): number => {
         const volume = k.panjang * k.lebar * k.kedalaman;
@@ -535,6 +556,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const getPanenByKolam = (kolamId: string) =>
         riwayatPanen.filter(p => p.kolamId === kolamId).sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime());
 
+    const toggleSidebar = () => setIsSidebarCollapsed(prev => !prev);
+
     if (!isLoaded) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -588,6 +611,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             addRiwayatPanen,
             deleteRiwayatPanen,
             getPanenByKolam,
+            isSidebarCollapsed,
+            toggleSidebar,
         }}>
             {children}
         </AppContext.Provider>

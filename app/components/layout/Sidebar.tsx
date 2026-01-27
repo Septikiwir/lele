@@ -18,6 +18,12 @@ const KolamIcon = () => (
   </svg>
 );
 
+const MapIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+  </svg>
+);
+
 const PakanIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
@@ -72,6 +78,18 @@ const LogoutIcon = () => (
   </svg>
 );
 
+const ChevronLeftIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+  </svg>
+);
+
+const ChevronRightIcon = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+  </svg>
+);
+
 const navigationGroups = [
   {
     title: 'Overview',
@@ -81,6 +99,7 @@ const navigationGroups = [
     title: 'Operasional',
     items: [
       { name: 'Kolam', href: '/kolam', icon: KolamIcon },
+      { name: 'Denah Tambak', href: '/denah', icon: MapIcon },
       { name: 'Pakan & FCR', href: '/pakan', icon: PakanIcon },
       { name: 'Kualitas Air', href: '/kualitas-air', icon: AirIcon },
       { name: 'Prediksi Panen', href: '/panen', icon: PanenIcon }
@@ -96,7 +115,12 @@ const navigationGroups = [
   }
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isCollapsed?: boolean;
+  toggleCollapse?: () => void;
+}
+
+export default function Sidebar({ isCollapsed = false, toggleCollapse }: SidebarProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuth();
@@ -106,7 +130,7 @@ export default function Sidebar() {
     if (user?.role === 'operator') {
       return group.title !== 'Keuangan';
     }
-    return true; // Admin and Viewer see everything in menu (Viewer read-only handled in pages)
+    return true; // Admin and Viewer see everything in menu
   });
 
   return (
@@ -130,28 +154,51 @@ export default function Sidebar() {
 
       {/* Sidebar - Fixed on desktop, Toggled on mobile */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-64 bg-[#0f172a] text-slate-300 z-40 transition-transform duration-300 ease-in-out md:translate-x-0 flex flex-col border-r border-slate-800 ${isOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+        className={`fixed left-0 top-0 h-screen bg-[#0f172a] text-slate-300 z-40 transition-all duration-300 ease-in-out flex flex-col border-r border-slate-800 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+          } ${isCollapsed ? 'md:w-20' : 'md:w-64'}`}
       >
-        {/* Logo */}
-        <div className="flex items-center gap-3 px-6 py-8 border-b border-slate-800 bg-[#0f172a] z-10 flex-shrink-0">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <span className="text-xl">🐟</span>
+        {/* Logo & Toggle */}
+        <div className={`flex items-center gap-3 px-6 py-6 border-b border-slate-800 bg-[#0f172a] z-10 flex-shrink-0 transition-all ${isCollapsed ? 'justify-center px-0' : 'justify-between'}`}>
+          <div className="flex items-center gap-3">
+            <div className={`rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 transition-all ${isCollapsed ? 'w-10 h-10' : 'w-10 h-10'}`}>
+              <span className="text-xl">🐟</span>
+            </div>
+            {!isCollapsed && (
+              <div>
+                <h1 className="text-xl font-bold text-white tracking-tight">LeleFarm</h1>
+                <p className="text-[10px] text-slate-500 font-medium tracking-wider uppercase">Management System</p>
+              </div>
+            )}
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">LeleFarm</h1>
-            <p className="text-[10px] text-slate-500 font-medium tracking-wider uppercase">Management System</p>
-          </div>
+
+          {/* Desktop Collapse Toggle */}
+          {toggleCollapse && !isCollapsed && (
+            <button onClick={toggleCollapse} className="hidden md:flex text-slate-500 hover:text-white transition-colors">
+              <ChevronLeftIcon />
+            </button>
+          )}
         </div>
 
+        {/* Toggle Button when Collapsed (Centered) */}
+        {isCollapsed && toggleCollapse && (
+          <button onClick={toggleCollapse} className="hidden md:flex justify-center py-2 text-slate-500 hover:text-white transition-colors border-b border-slate-800 bg-slate-800/20">
+            <ChevronRightIcon />
+          </button>
+        )}
+
         {/* Navigation Groups - Scrollable Area */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          <nav className="px-4 py-6 space-y-8">
+        <div className="flex-1 overflow-y-auto custom-scrollbar overflow-x-hidden">
+          <nav className={`py-6 space-y-8 ${isCollapsed ? 'px-2' : 'px-4'}`}>
             {filteredGroups.map((group) => (
               <div key={group.title}>
-                <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-3">
-                  {group.title}
-                </h3>
+                {!isCollapsed && (
+                  <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-3 whitespace-nowrap overflow-hidden">
+                    {group.title}
+                  </h3>
+                )}
+                {isCollapsed && (
+                  <div className="w-8 mx-auto border-b border-slate-800 mb-4 opacity-50"></div>
+                )}
                 <ul className="space-y-1">
                   {group.items.map((item) => {
                     const isActive = pathname === item.href ||
@@ -164,17 +211,25 @@ export default function Sidebar() {
                           href={item.href}
                           onClick={() => setIsOpen(false)}
                           className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative ${isActive
-                              ? 'text-white bg-blue-600/10'
-                              : 'text-slate-400 hover:text-white hover:bg-white/5'
-                            }`}
+                            ? 'text-white bg-blue-600/10'
+                            : 'text-slate-400 hover:text-white hover:bg-white/5'
+                            } ${isCollapsed ? 'justify-center px-0 py-3' : ''}`}
+                          title={isCollapsed ? item.name : undefined}
                         >
                           {isActive && (
-                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-500 rounded-r-full" />
+                            <div className={`absolute top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-500 rounded-r-full ${isCollapsed ? 'left-0 h-8' : 'left-0'}`} />
                           )}
                           <span className={`transition-colors ${isActive ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'}`}>
                             <Icon />
                           </span>
-                          <span>{item.name}</span>
+                          {!isCollapsed && <span>{item.name}</span>}
+
+                          {/* Hover Tooltip for Collapsed Mode */}
+                          {isCollapsed && (
+                            <div className="absolute left-full ml-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-xl border border-slate-700">
+                              {item.name}
+                            </div>
+                          )}
                         </Link>
                       </li>
                     );
@@ -188,30 +243,32 @@ export default function Sidebar() {
         {/* Bottom Section: Profile & Logout - Fixed at bottom */}
         {user ? (
           <div className="p-4 border-t border-slate-800 bg-[#0f172a] flex-shrink-0">
-            <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-slate-800/40 hover:bg-slate-800/60 transition-colors cursor-pointer group">
+            <div className={`flex items-center gap-3 px-3 py-3 rounded-xl bg-slate-800/40 hover:bg-slate-800/60 transition-colors cursor-pointer group ${isCollapsed ? 'justify-center px-0 bg-transparent hover:bg-transparent' : ''}`}>
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-sm ring-2 ring-slate-800 shadow-md">
                 {user.avatar || '👤'}
               </div>
-              <div className="flex-1 overflow-hidden">
-                <p className="text-sm font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
-                  {user.name}
-                </p>
-                <p className="text-xs text-slate-500 truncate capitalize">{user.role} • {user.plan || 'Free'}</p>
-              </div>
+              {!isCollapsed && (
+                <div className="flex-1 overflow-hidden">
+                  <p className="text-sm font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
+                    {user.name}
+                  </p>
+                  <p className="text-xs text-slate-500 truncate capitalize">{user.role} • {user.plan || 'Free'}</p>
+                </div>
+              )}
             </div>
 
             <button
               onClick={logout}
-              className="w-full mt-4 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              className={`w-full mt-4 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors ${isCollapsed ? 'mt-2 px-0' : ''}`}
             >
               <LogoutIcon />
-              <span>Keluar Aplikasi</span>
+              {!isCollapsed && <span>Keluar Aplikasi</span>}
             </button>
           </div>
         ) : (
           <div className="p-4 border-t border-slate-800 bg-[#0f172a] flex-shrink-0">
-            <Link href="/login" className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-500 transition-colors">
-              Login / Masuk
+            <Link href="/login" className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-500 transition-colors ${isCollapsed ? 'px-0' : 'w-full'}`}>
+              {isCollapsed ? <span>Login</span> : <span>Login / Masuk</span>}
             </Link>
           </div>
         )}

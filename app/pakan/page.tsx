@@ -219,8 +219,8 @@ export default function PakanPage() {
                 <button
                     onClick={() => setActiveTab('jadwal')}
                     className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 ${activeTab === 'jadwal'
-                            ? 'border-blue-600 text-blue-600'
-                            : 'border-transparent text-slate-500 hover:text-slate-700'
+                        ? 'border-blue-600 text-blue-600'
+                        : 'border-transparent text-slate-500 hover:text-slate-700'
                         }`}
                 >
                     📅 Jadwal Pakan
@@ -228,8 +228,8 @@ export default function PakanPage() {
                 <button
                     onClick={() => setActiveTab('riwayat')}
                     className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 ${activeTab === 'riwayat'
-                            ? 'border-blue-600 text-blue-600'
-                            : 'border-transparent text-slate-500 hover:text-slate-700'
+                        ? 'border-blue-600 text-blue-600'
+                        : 'border-transparent text-slate-500 hover:text-slate-700'
                         }`}
                 >
                     📝 Riwayat Pemberian
@@ -237,8 +237,8 @@ export default function PakanPage() {
                 <button
                     onClick={() => setActiveTab('stok')}
                     className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 ${activeTab === 'stok'
-                            ? 'border-blue-600 text-blue-600'
-                            : 'border-transparent text-slate-500 hover:text-slate-700'
+                        ? 'border-blue-600 text-blue-600'
+                        : 'border-transparent text-slate-500 hover:text-slate-700'
                         }`}
                 >
                     📦 Stok Pakan
@@ -255,7 +255,7 @@ export default function PakanPage() {
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {sortedJadwal.map(jadwal => {
                             const k = kolam.find(item => item.id === jadwal.kolamId);
                             return (
@@ -359,7 +359,7 @@ export default function PakanPage() {
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
                         {allJenisPakan.map(jenis => {
                             const tersedia = getStokTersediaByJenis(jenis);
                             const isLow = tersedia <= 10;

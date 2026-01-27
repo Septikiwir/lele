@@ -160,9 +160,9 @@ export default function Home() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {/* Kolam Perlu Perhatian */}
-        <div className="lg:col-span-2 card p-6">
+        <div className="lg:col-span-2 xl:col-span-3 card p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-slate-900">Kolam Perlu Perhatian</h2>
             <Link href="/kolam" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
@@ -275,7 +275,7 @@ export default function Home() {
             <p className="text-slate-500">Belum ada data stok pakan</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
             {stokPerJenis.map(s => {
               const isLow = s.tersedia <= 10;
               const isEmpty = s.tersedia <= 0;
