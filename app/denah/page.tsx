@@ -10,8 +10,26 @@ export default function DenahPage() {
     const [selectedKolamId, setSelectedKolamId] = useState<string | null>(null);
     // Dragging State
     const [draggingId, setDraggingId] = useState<string | null>(null);
-    const [dragPreview, setDragPreview] = useState<{ x: number, y: number } | null>(null);
+    const [dragOffset, setDragOffset] = useState<{ x: number, y: number } | null>(null);
+    const [dragPixelPos, setDragPixelPos] = useState<{ x: number, y: number } | null>(null);
+    const [optimisticMoves, setOptimisticMoves] = useState<Record<string, { x: number, y: number }>>({});
     const gridRef = React.useRef<HTMLDivElement>(null);
+
+    // Sync optimistic moves with real data
+    React.useEffect(() => {
+        setOptimisticMoves(prev => {
+            const next = { ...prev };
+            let changed = false;
+            kolam.forEach(k => {
+                const opt = next[k.id];
+                if (opt && k.position && k.position.x === opt.x && k.position.y === opt.y) {
+                    delete next[k.id];
+                    changed = true;
+                }
+            });
+            return changed ? next : prev;
+        });
+    }, [kolam]);
 
     // Grid Configuration
     const GRID_SIZE = 20; // 20x20 grid
@@ -23,12 +41,23 @@ export default function DenahPage() {
         const k = kolam.find(item => item.id === selectedKolamId);
         if (!k) return;
 
+        // Calculate max boundaries
+        const w = k.position?.w || 2;
+        const h = k.position?.h || 2;
+        const maxX = GRID_SIZE - w;
+        const maxY = GRID_SIZE - h;
+
+        // Clamp coordinates
+        const finalX = Math.max(0, Math.min(x, maxX));
+        const finalY = Math.max(0, Math.min(y, maxY));
+
+        setOptimisticMoves(prev => ({ ...prev, [selectedKolamId]: { x: finalX, y: finalY } }));
         updateKolam(selectedKolamId, {
             position: {
-                x,
-                y,
-                w: k.position?.w || 2,
-                h: k.position?.h || 2,
+                x: finalX,
+                y: finalY,
+                w,
+                h,
                 color: k.position?.color
             }
         });
@@ -41,81 +70,80 @@ export default function DenahPage() {
     };
 
     // Drag Logic
-    const handleMouseDown = (e: React.MouseEvent, id: string, currentX: number, currentY: number) => {
+    const handleMouseDown = (e: React.MouseEvent, id: string) => {
         if (!editMode) return;
-        e.preventDefault(); // Prevent text selection/native drag
+        e.preventDefault();
         e.stopPropagation();
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
 
         setDraggingId(id);
         setSelectedKolamId(id);
-        setDragPreview({ x: currentX, y: currentY });
+        setDragOffset({ x: offsetX, y: offsetY });
+
+        // Initial pixel pos relative to grid
+        if (gridRef.current) {
+            const gridRect = gridRef.current.getBoundingClientRect();
+            // Start from CURRENT visual position (which might be optimistic)
+            const k = kolam.find(item => item.id === id);
+            const currentPos = optimisticMoves[id] || k?.position || { x: 0, y: 0 };
+
+            setDragPixelPos({
+                x: e.clientX - gridRect.left - offsetX,
+                y: e.clientY - gridRect.top - offsetY
+            });
+        }
     };
 
     // Global Mouse Move/Up for smooth dragging
     React.useEffect(() => {
-        if (!draggingId || !editMode) return;
+        if (!draggingId || !editMode || !dragOffset) return;
 
         const handleMouseMove = (e: MouseEvent) => {
             if (!gridRef.current) return;
-            const rect = gridRef.current.getBoundingClientRect();
+            const gridRect = gridRef.current.getBoundingClientRect();
 
-            // Calculate grid position relative to container
-            const relativeX = e.clientX - rect.left;
-            const relativeY = e.clientY - rect.top;
+            // Calculate raw pixel position within grid
+            let rawX = e.clientX - gridRect.left - dragOffset.x;
+            let rawY = e.clientY - gridRect.top - dragOffset.y;
 
-            // Snap to nearest cell
-            let gridX = Math.floor(relativeX / CELL_SIZE);
-            let gridY = Math.floor(relativeY / CELL_SIZE);
+            // Optional: Clamp to grid boundaries (in pixels)
+            // But let's allow slight over-drag for smoother feel, and clamp on drop
 
-            // Immediate update (Preview) 
-            const k = kolam.find(item => item.id === draggingId);
-            if (k && k.position) {
-                // Determine max allowable X and Y based on pond size
-                const maxX = GRID_SIZE - (k.position.w || 2);
-                const maxY = GRID_SIZE - (k.position.h || 2);
-
-                console.log('Drag Boundary:', {
-                    id: k.id,
-                    currentX: gridX,
-                    maxX,
-                    w: k.position.w
-                });
-
-                // Boundaries
-                gridX = Math.max(0, Math.min(gridX, maxX));
-                gridY = Math.max(0, Math.min(gridY, maxY));
-
-                // Only update if changed to avoid unnecessary re-renders
-                if (k.position.x !== gridX || k.position.y !== gridY) {
-                    // Update PREVIEW only (smooth, local)
-                    setDragPreview({ x: gridX, y: gridY });
-                }
-            }
+            // Just update visual position instantly
+            setDragPixelPos({ x: rawX, y: rawY });
         };
 
         const handleMouseUp = () => {
-            if (draggingId && dragPreview) {
+            if (draggingId && dragPixelPos) {
                 const k = kolam.find(item => item.id === draggingId);
                 if (k && k.position) {
-                    // Determine max allowable X and Y based on pond size
+                    // Calculate snap grid position
+                    let gridX = Math.round(dragPixelPos.x / CELL_SIZE);
+                    let gridY = Math.round(dragPixelPos.y / CELL_SIZE);
+
                     const maxX = GRID_SIZE - (k.position.w || 2);
                     const maxY = GRID_SIZE - (k.position.h || 2);
 
-                    // Re-clamp for safety on drop
-                    const finalX = Math.max(0, Math.min(dragPreview.x, maxX));
-                    const finalY = Math.max(0, Math.min(dragPreview.y, maxY));
+                    // Clamp to grid
+                    gridX = Math.max(0, Math.min(gridX, maxX));
+                    gridY = Math.max(0, Math.min(gridY, maxY));
 
-                    // Commit the change
-                    if (k.position.x !== finalX || k.position.y !== finalY) {
-                        updateKolam(draggingId, {
-                            position: { ...k.position, x: finalX, y: finalY }
-                        });
-                    }
+                    // Optimistic update
+                    setOptimisticMoves(prev => ({ ...prev, [draggingId]: { x: gridX, y: gridY } }));
+
+                    // Commit change
+                    updateKolam(draggingId, {
+                        position: { ...k.position, x: gridX, y: gridY }
+                    });
                 }
             }
             // Reset
             setDraggingId(null);
-            setDragPreview(null);
+            setDragOffset(null);
+            setDragPixelPos(null);
         };
 
         window.addEventListener('mousemove', handleMouseMove);
@@ -125,7 +153,7 @@ export default function DenahPage() {
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [draggingId, editMode, dragPreview, kolam, updateKolam]);
+    }, [draggingId, editMode, dragOffset, dragPixelPos, kolam, updateKolam]);
 
     // Helper to get status color
     const getStatusColor = (status: Kolam['status']) => {
@@ -200,32 +228,36 @@ export default function DenahPage() {
                         {/* Ponds Layer */}
                         {positionedKolam.map(k => {
                             const isDragging = draggingId === k.id;
-                            // Use preview position if dragging, otherwise actual position
-                            const pos = (isDragging && dragPreview)
-                                ? { ...k.position!, x: dragPreview.x, y: dragPreview.y }
-                                : k.position!;
-
                             const isSelected = selectedKolamId === k.id;
+
+                            // Determine effective position: Dragging > Optimistic > Real
+                            const optPos = optimisticMoves[k.id];
+                            const effectiveX = isDragging && dragPixelPos ? dragPixelPos.x
+                                : (optPos ? optPos.x * CELL_SIZE : k.position!.x * CELL_SIZE);
+
+                            const effectiveY = isDragging && dragPixelPos ? dragPixelPos.y
+                                : (optPos ? optPos.y * CELL_SIZE : k.position!.y * CELL_SIZE);
 
                             return (
                                 <div
                                     key={k.id}
-                                    onMouseDown={(e) => handleMouseDown(e, k.id, pos.x, pos.y)}
+                                    onMouseDown={(e) => handleMouseDown(e, k.id)}
                                     onClick={(e) => { e.stopPropagation(); editMode && setSelectedKolamId(k.id); }}
-                                    className={`absolute transition-all ${isDragging ? 'duration-0 z-50 opacity-90 scale-105 shadow-xl ring-2 ring-blue-400' : 'duration-300 z-10'} rounded-md shadow-sm border flex flex-col items-center justify-center p-1 cursor-grab active:cursor-grabbing overflow-hidden ${pos.color || getStatusColor(k.status)
-                                        } ${isSelected && editMode && !isDragging ? 'ring-4 ring-blue-400 z-20 scale-105' : 'border-white/20'}`}
+                                    className={`absolute rounded-md shadow-sm border flex flex-col items-center justify-center p-1 cursor-grab active:cursor-grabbing overflow-hidden ${!k.position?.color ? getStatusColor(k.status) : ''
+                                        } ${isDragging ? 'z-50 opacity-90 shadow-xl ring-2 ring-blue-400 scale-105' : 'z-10'
+                                        } ${isSelected && editMode && !isDragging ? 'ring-4 ring-blue-400 z-20' : 'border-white/20'}`}
                                     style={{
-                                        left: pos.x * CELL_SIZE,
-                                        top: pos.y * CELL_SIZE,
-                                        width: pos.w * CELL_SIZE,
-                                        height: pos.h * CELL_SIZE,
-                                        // Disable pointer events on the element WHILE dragging so the grid accepts the mouse events? 
-                                        // Actually no, we attached window listener so it doesn't matter.
-                                        // But removing transition duration (duration-0) is CRITICAL for 1:1 movement.
+                                        left: effectiveX, // Use effective X
+                                        top: effectiveY,  // Use effective Y
+                                        width: (k.position?.w || 2) * CELL_SIZE,
+                                        height: (k.position?.h || 2) * CELL_SIZE,
+                                        backgroundColor: k.position?.color || undefined,
+                                        transition: isDragging ? 'none' : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)', // Smooth snap on drop
+                                        zIndex: isDragging ? 50 : (isSelected ? 20 : 10)
                                     }}
                                 >
                                     <span className="font-bold text-white text-xs text-center leading-tight drop-shadow-md select-none pointer-events-none">{k.nama}</span>
-                                    {pos.h > 1 && pos.w > 1 && (
+                                    {(k.position?.h || 2) > 1 && (k.position?.w || 2) > 1 && (
                                         <span className="text-[10px] text-white/90 select-none pointer-events-none">{k.jumlahIkan} 🐟</span>
                                     )}
                                 </div>

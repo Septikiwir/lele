@@ -1,0 +1,313 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// AUTH MODELS (NextAuth.js)
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  password      String?   // For credentials auth
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  ownedFarms    Farm[]       @relation("FarmOwner")
+  farmMembers   FarmMember[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================
+// FARM / MULTI-TENANT MODELS
+// ============================================
+
+model Farm {
+  id        String   @id @default(cuid())
+  nama      String
+  alamat    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Owner (User who created the farm)
+  ownerId String
+  owner   User   @relation("FarmOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Relations
+  members   FarmMember[]
+  kolam     Kolam[]
+  stokPakan StokPakan[]
+  pembeli   Pembeli[]
+  pengeluaran Pengeluaran[]
+}
+
+enum FarmRole {
+  OWNER
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+model FarmMember {
+  id       String   @id @default(cuid())
+  role     FarmRole @default(OPERATOR)
+  joinedAt DateTime @default(now())
+
+  userId String
+  farmId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  farm   Farm @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, farmId])
+}
+
+// ============================================
+// POND / KOLAM MODELS
+// ============================================
+
+enum KolamStatus {
+  AMAN
+  WASPADA
+  BERISIKO
+}
+
+model Kolam {
+  id           String      @id @default(cuid())
+  nama         String
+  panjang      Float       // meters
+  lebar        Float       // meters
+  kedalaman    Float       // meters
+  tanggalTebar DateTime
+  jumlahIkan   Int
+  status       KolamStatus @default(AMAN)
+
+  // Position on map (JSON for flexibility)
+  positionX Int?
+  positionY Int?
+  positionW Int?
+  positionH Int?
+  color     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Farm relation
+  farmId String
+  farm   Farm   @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  // Child relations
+  dataPakan     DataPakan[]
+  kondisiAir    KondisiAir[]
+  pengeluaran   Pengeluaran[]
+  jadwalPakan   JadwalPakan[]
+  riwayatPanen  RiwayatPanen[]
+  penjualan     Penjualan[]
+}
+
+// ============================================
+// FEEDING / PAKAN MODELS
+// ============================================
+
+model StokPakan {
+  id          String   @id @default(cuid())
+  jenisPakan  String
+  stokAwal    Float    // kg
+  hargaPerKg  Float    // rupiah
+  tanggalTambah DateTime
+  keterangan  String?
+
+  createdAt DateTime @default(now())
+
+  farmId String
+  farm   Farm   @relation(fields: [farmId], references: [id], onDelete: Cascade)
+}
+
+model DataPakan {
+  id         String   @id @default(cuid())
+  tanggal    DateTime
+  jumlahKg   Float
+  jenisPakan String
+
+  createdAt DateTime @default(now())
+
+  kolamId String
+  kolam   Kolam  @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+}
+
+model JadwalPakan {
+  id         String  @id @default(cuid())
+  waktu      String  // "HH:mm" format
+  jenisPakan String
+  jumlahKg   Float
+  keterangan String?
+  aktif      Boolean @default(true)
+
+  kolamId String
+  kolam   Kolam  @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// WATER CONDITION / KONDISI AIR
+// ============================================
+
+model KondisiAir {
+  id          String   @id @default(cuid())
+  tanggal     DateTime
+  warna       String
+  bau         String
+  ketinggian  Float    // meters
+  ph          Float?
+  suhu        Float?   // celsius
+
+  createdAt DateTime @default(now())
+
+  kolamId String
+  kolam   Kolam  @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// EXPENSES / PENGELUARAN
+// ============================================
+
+enum KategoriPengeluaran {
+  BIBIT
+  PAKAN
+  OBAT
+  LISTRIK
+  TENAGA_KERJA
+  LAINNYA
+}
+
+model Pengeluaran {
+  id         String              @id @default(cuid())
+  tanggal    DateTime
+  kategori   KategoriPengeluaran
+  keterangan String
+  jumlah     Float               // rupiah
+
+  createdAt DateTime @default(now())
+
+  kolamId String?
+  kolam   Kolam?  @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+
+  farmId String
+  farm   Farm   @relation(fields: [farmId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// BUYERS / PEMBELI
+// ============================================
+
+enum TipePembeli {
+  TENGKULAK
+  PASAR
+  RESTORAN
+  LAINNYA
+}
+
+model Pembeli {
+  id      String      @id @default(cuid())
+  nama    String
+  tipe    TipePembeli
+  kontak  String?
+  alamat  String?
+
+  createdAt DateTime @default(now())
+
+  farmId String
+  farm   Farm   @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  penjualan Penjualan[]
+}
+
+// ============================================
+// SALES / PENJUALAN
+// ============================================
+
+model Penjualan {
+  id         String   @id @default(cuid())
+  tanggal    DateTime
+  beratKg    Float
+  hargaPerKg Float
+  jumlahIkan Int?
+  keterangan String?
+
+  createdAt DateTime @default(now())
+
+  kolamId   String
+  kolam     Kolam   @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+  pembeliId String
+  pembeli   Pembeli @relation(fields: [pembeliId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// HARVEST / RIWAYAT PANEN
+// ============================================
+
+enum TipePanen {
+  PARSIAL
+  TOTAL
+}
+
+model RiwayatPanen {
+  id           String    @id @default(cuid())
+  tanggal      DateTime
+  beratTotalKg Float
+  jumlahEkor   Int
+  hargaPerKg   Float
+  tipe         TipePanen
+  catatan      String?
+
+  createdAt DateTime @default(now())
+
+  kolamId String
+  kolam   Kolam  @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+}

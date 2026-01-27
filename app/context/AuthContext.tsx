@@ -1,6 +1,7 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 export type UserRole = 'admin' | 'operator' | 'viewer';
@@ -8,6 +9,7 @@ export type UserRole = 'admin' | 'operator' | 'viewer';
 export interface User {
     id: string;
     name: string;
+    email: string;
     role: UserRole;
     avatar?: string;
     plan?: string;
@@ -16,54 +18,33 @@ export interface User {
 interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
-    login: (role: UserRole) => void;
+    isLoading: boolean;
     logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
+    const { data: session, status } = useSession();
     const router = useRouter();
+    const isLoading = status === 'loading';
 
-    useEffect(() => {
-        // Check localStorage for existing session
-        const storedUser = localStorage.getItem('lele_user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
-    }, []);
+    // Map NextAuth session to our User type
+    const user: User | null = session?.user ? {
+        id: session.user.id || '',
+        name: session.user.name || 'User',
+        email: session.user.email || '',
+        role: 'admin', // Default role - will be updated when we implement proper roles
+        plan: 'Pro Plan'
+    } : null;
 
-    const login = (role: UserRole) => {
-        let newUser: User;
-
-        switch (role) {
-            case 'admin':
-                newUser = { id: '1', name: 'Pak Bos', role: 'admin', plan: 'Pro Plan' };
-                break;
-            case 'operator':
-                newUser = { id: '2', name: 'Kang Lele', role: 'operator', plan: 'Team Plan' };
-                break;
-            case 'viewer':
-                newUser = { id: '3', name: 'Pengunjung', role: 'viewer', plan: 'Free Plan' };
-                break;
-            default:
-                newUser = { id: '3', name: 'Pengunjung', role: 'viewer', plan: 'Free Plan' };
-        }
-
-        setUser(newUser);
-        localStorage.setItem('lele_user', JSON.stringify(newUser));
-        router.push('/');
-    };
-
-    const logout = () => {
-        setUser(null);
-        localStorage.removeItem('lele_user');
+    const logout = async () => {
+        await signOut({ redirect: false });
         router.push('/login');
     };
 
     return (
-        <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout }}>
+        <AuthContext.Provider value={{ user, isAuthenticated: !!session, isLoading, logout }}>
             {children}
         </AuthContext.Provider>
     );

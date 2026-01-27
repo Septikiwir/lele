@@ -17,21 +17,21 @@ const TrashIcon = () => (
 );
 
 const kategoriOptions: { value: KategoriPengeluaran; label: string; emoji: string }[] = [
-    { value: 'bibit', label: 'Bibit / Benih', emoji: '🐟' },
-    { value: 'pakan', label: 'Pakan', emoji: '🍚' },
-    { value: 'obat', label: 'Obat & Probiotik', emoji: '💊' },
-    { value: 'listrik', label: 'Listrik', emoji: '⚡' },
-    { value: 'tenaga_kerja', label: 'Tenaga Kerja', emoji: '👷' },
-    { value: 'lainnya', label: 'Lainnya', emoji: '📦' },
+    { value: 'BIBIT', label: 'Bibit / Benih', emoji: '🐟' },
+    { value: 'PAKAN', label: 'Pakan', emoji: '🍚' },
+    { value: 'OBAT', label: 'Obat & Probiotik', emoji: '💊' },
+    { value: 'LISTRIK', label: 'Listrik', emoji: '⚡' },
+    { value: 'TENAGA_KERJA', label: 'Tenaga Kerja', emoji: '👷' },
+    { value: 'LAINNYA', label: 'Lainnya', emoji: '📦' },
 ];
 
 const kategoriColors: Record<KategoriPengeluaran, string> = {
-    bibit: 'bg-blue-100 text-blue-700',
-    pakan: 'bg-amber-100 text-amber-700',
-    obat: 'bg-purple-100 text-purple-700',
-    listrik: 'bg-yellow-100 text-yellow-700',
-    tenaga_kerja: 'bg-green-100 text-green-700',
-    lainnya: 'bg-slate-100 text-slate-700',
+    BIBIT: 'bg-blue-100 text-blue-700',
+    PAKAN: 'bg-amber-100 text-amber-700',
+    OBAT: 'bg-purple-100 text-purple-700',
+    LISTRIK: 'bg-yellow-100 text-yellow-700',
+    TENAGA_KERJA: 'bg-green-100 text-green-700',
+    LAINNYA: 'bg-slate-100 text-slate-700',
 };
 
 export default function PengeluaranPage() {
@@ -42,17 +42,21 @@ export default function PengeluaranPage() {
     const [formData, setFormData] = useState({
         kolamId: '',
         tanggal: new Date().toISOString().split('T')[0],
-        kategori: 'bibit' as KategoriPengeluaran,
+        kategori: 'BIBIT' as KategoriPengeluaran,
         keterangan: '',
         jumlah: '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.kolamId || !formData.jumlah || !formData.keterangan) return;
+        console.log('Form submitted', formData);
+        if (!formData.jumlah || !formData.keterangan) {
+            console.error('Validation failed');
+            return;
+        }
 
         addPengeluaran({
-            kolamId: formData.kolamId,
+            kolamId: formData.kolamId || null,
             tanggal: formData.tanggal,
             kategori: formData.kategori,
             keterangan: formData.keterangan,
@@ -62,7 +66,7 @@ export default function PengeluaranPage() {
         setFormData({
             kolamId: '',
             tanggal: new Date().toISOString().split('T')[0],
-            kategori: 'bibit',
+            kategori: 'BIBIT',
             keterangan: '',
             jumlah: '',
         });
@@ -75,16 +79,50 @@ export default function PengeluaranPage() {
     };
 
     // Calculate totals
-    const totalPengeluaran = pengeluaran.reduce((sum, p) => sum + p.jumlah, 0);
+    // 1. Total Manual Expenses (Farm Level + Kolam Level)
+    const totalManual = pengeluaran.reduce((sum, p) => sum + p.jumlah, 0);
+
+    // 2. Total Feed Cost (Calculated from DataPakan) - Implied in getTotalPengeluaranByKolam for each kolam
+    const totalFeedCostAllKolam = kolam.reduce((sum, k) => {
+        // getTotalPengeluaranByKategori(..., 'PAKAN') includes both manual pakan entries for that kolam AND calculated feed cost
+        // But we want just the Feed Cost part to add to 'totalManual' which already has manual parts?
+        // Wait, getTotalPengeluaranByKolam includes BOTH.
+        // So Grand Total = (Sum of getTotalPengeluaranByKolam) + (General Expenses NOT in any kolam)
+        return sum + getTotalPengeluaranByKolam(k.id);
+    }, 0);
+
+    const totalGeneralExpenses = pengeluaran
+        .filter(p => !p.kolamId)
+        .reduce((sum, p) => sum + p.jumlah, 0);
+
+    const grandTotal = totalFeedCostAllKolam + totalGeneralExpenses;
+
     const filteredPengeluaran = filterKolam
         ? pengeluaran.filter(p => p.kolamId === filterKolam)
         : pengeluaran;
 
     // Group by kategori for summary
-    const kategoriTotals = kategoriOptions.map(k => ({
-        ...k,
-        total: pengeluaran.reduce((sum, p) => p.kategori === k.value ? sum + p.jumlah : sum, 0),
-    }));
+    const kategoriTotals = kategoriOptions.map(k => {
+        // Start with manual expenses for this category
+        let total = pengeluaran.reduce((sum, p) => p.kategori === k.value ? sum + p.jumlah : sum, 0);
+
+        // If Category is PAKAN, we need to add the calculated Feed Cost from all kolams
+        // NOTE: getTotalPengeluaranByKategori returns (Manual for Kolam + Calculated for Kolam)
+        // We already summed Manual globally above.
+        // We need to ONLY add the Calculated part if we want to combine with global manual sum?
+        // Easier: Iterate all kolams and sum getTotalPengeluaranByKategori(id, k.value). 
+        // Then ADD General Expenses for this category.
+
+        const totalFromKolams = kolam.reduce((sum, col) => sum + getTotalPengeluaranByKategori(col.id, k.value), 0);
+        const totalGeneral = pengeluaran
+            .filter(p => !p.kolamId && p.kategori === k.value)
+            .reduce((sum, p) => sum + p.jumlah, 0);
+
+        return {
+            ...k,
+            total: totalFromKolams + totalGeneral,
+        };
+    });
 
     return (
         <DashboardLayout>
@@ -103,7 +141,7 @@ export default function PengeluaranPage() {
             {/* Total Summary */}
             <div className="card-highlight card-gradient-red">
                 <p className="label">Total Pengeluaran (Modal)</p>
-                <p className="value">Rp {totalPengeluaran.toLocaleString('id-ID')}</p>
+                <p className="value">Rp {grandTotal.toLocaleString('id-ID')}</p>
             </div>
 
             {/* Kategori Summary Cards */}
@@ -148,6 +186,35 @@ export default function PengeluaranPage() {
                 </div>
             </div>
 
+            <h3 className="text-md font-semibold text-slate-700 mt-6 mb-3">Biaya Umum (Non-Kolam)</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* General Farm Expenses Card */}
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                    <h3 className="font-semibold text-slate-900 mb-3">🏢 Umum / Farm Level</h3>
+                    <div className="space-y-2 text-sm">
+                        {kategoriOptions.map(cat => {
+                            const catTotal = pengeluaran
+                                .filter(p => !p.kolamId && p.kategori === cat.value)
+                                .reduce((sum, p) => sum + p.jumlah, 0);
+                            if (catTotal === 0) return null;
+                            return (
+                                <div key={cat.value} className="flex justify-between">
+                                    <span className="text-slate-500">{cat.emoji} {cat.label}</span>
+                                    <span className="font-medium">Rp {catTotal.toLocaleString('id-ID')}</span>
+                                </div>
+                            );
+                        })}
+                        <div className="flex justify-between pt-2 border-t font-semibold">
+                            <span>Total Umum</span>
+                            <span className="text-red-600">
+                                Rp {pengeluaran.filter(p => !p.kolamId).reduce((sum, p) => sum + p.jumlah, 0).toLocaleString('id-ID')}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
             {/* Riwayat Pengeluaran */}
             <div className="card overflow-hidden">
                 <div className="p-6 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -190,7 +257,7 @@ export default function PengeluaranPage() {
                                     return (
                                         <tr key={p.id}>
                                             <td>{p.tanggal}</td>
-                                            <td className="font-medium">{k?.nama || 'Unknown'}</td>
+                                            <td className="font-medium">{k?.nama || 'Umum (Farm Level)'}</td>
                                             <td>
                                                 <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${kategoriColors[p.kategori]}`}>
                                                     {cat?.emoji} {cat?.label}
@@ -218,117 +285,120 @@ export default function PengeluaranPage() {
             </div>
 
             {/* Form Modal */}
-            {showForm && (
-                <div className="modal-overlay" onClick={() => setShowForm(false)}>
-                    <div className="modal-content max-w-lg" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-xl font-bold text-slate-900 mb-6">Tambah Pengeluaran</h3>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
-                                    <select
-                                        value={formData.kolamId}
-                                        onChange={(e) => setFormData({ ...formData, kolamId: e.target.value })}
-                                        className="input"
-                                        required
-                                    >
-                                        <option value="">-- Pilih --</option>
-                                        {kolam.map(k => (
-                                            <option key={k.id} value={k.id}>{k.nama}</option>
-                                        ))}
-                                    </select>
+            {
+                showForm && (
+                    <div className="modal-overlay" onClick={() => setShowForm(false)}>
+                        <div className="modal-content max-w-lg" onClick={e => e.stopPropagation()}>
+                            <h3 className="text-xl font-bold text-slate-900 mb-6">Tambah Pengeluaran</h3>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
+                                        <select
+                                            value={formData.kolamId}
+                                            onChange={(e) => setFormData({ ...formData, kolamId: e.target.value })}
+                                            className="input"
+                                        >
+                                            <option value="">-- Pilih Kolam (Opsional) --</option>
+                                            {kolam.map(k => (
+                                                <option key={k.id} value={k.id}>{k.nama}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal</label>
+                                        <input
+                                            type="date"
+                                            value={formData.tanggal}
+                                            onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
+                                            className="input"
+                                            required
+                                        />
+                                    </div>
                                 </div>
+
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Kategori</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {kategoriOptions.map(k => (
+                                            <button
+                                                key={k.value}
+                                                type="button"
+                                                onClick={() => setFormData({ ...formData, kategori: k.value })}
+                                                className={`p-3 rounded-xl border-2 text-center transition-all ${formData.kategori === k.value
+                                                    ? 'border-blue-500 bg-blue-50'
+                                                    : 'border-slate-200 hover:border-slate-300'
+                                                    }`}
+                                            >
+                                                <div className="text-xl mb-1">{k.emoji}</div>
+                                                <div className="text-xs font-medium">{k.label}</div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Keterangan</label>
                                     <input
-                                        type="date"
-                                        value={formData.tanggal}
-                                        onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
+                                        type="text"
+                                        value={formData.keterangan}
+                                        onChange={(e) => setFormData({ ...formData, keterangan: e.target.value })}
+                                        placeholder="Contoh: Bibit lele 5000 ekor @Rp100"
                                         className="input"
                                         required
                                     />
                                 </div>
-                            </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Kategori</label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {kategoriOptions.map(k => (
-                                        <button
-                                            key={k.value}
-                                            type="button"
-                                            onClick={() => setFormData({ ...formData, kategori: k.value })}
-                                            className={`p-3 rounded-xl border-2 text-center transition-all ${formData.kategori === k.value
-                                                ? 'border-blue-500 bg-blue-50'
-                                                : 'border-slate-200 hover:border-slate-300'
-                                                }`}
-                                        >
-                                            <div className="text-xl mb-1">{k.emoji}</div>
-                                            <div className="text-xs font-medium">{k.label}</div>
-                                        </button>
-                                    ))}
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah (Rp)</label>
+                                    <input
+                                        type="number"
+                                        value={formData.jumlah}
+                                        onChange={(e) => setFormData({ ...formData, jumlah: e.target.value })}
+                                        placeholder="Contoh: 500000"
+                                        className="input"
+                                        min="0"
+                                        required
+                                    />
                                 </div>
-                            </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Keterangan</label>
-                                <input
-                                    type="text"
-                                    value={formData.keterangan}
-                                    onChange={(e) => setFormData({ ...formData, keterangan: e.target.value })}
-                                    placeholder="Contoh: Bibit lele 5000 ekor @Rp100"
-                                    className="input"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah (Rp)</label>
-                                <input
-                                    type="number"
-                                    value={formData.jumlah}
-                                    onChange={(e) => setFormData({ ...formData, jumlah: e.target.value })}
-                                    placeholder="Contoh: 500000"
-                                    className="input"
-                                    min="0"
-                                    required
-                                />
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowForm(false)}
-                                    className="flex-1 btn btn-secondary"
-                                >
-                                    Batal
-                                </button>
-                                <button type="submit" className="flex-1 btn btn-primary">
-                                    Simpan
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Delete Confirmation Modal */}
-            {deleteModal && (
-                <div className="modal-overlay" onClick={() => setDeleteModal(null)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-lg font-bold text-slate-900 mb-4">Hapus Pengeluaran?</h3>
-                        <p className="text-slate-600 mb-6">Data pengeluaran akan dihapus permanen.</p>
-                        <div className="flex gap-3">
-                            <button onClick={() => setDeleteModal(null)} className="flex-1 btn btn-secondary">
-                                Batal
-                            </button>
-                            <button onClick={() => handleDelete(deleteModal)} className="flex-1 btn bg-red-600 text-white hover:bg-red-700">
-                                Hapus
-                            </button>
+                                <div className="flex gap-3 pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowForm(false)}
+                                        className="flex-1 btn btn-secondary"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button type="submit" className="flex-1 btn btn-primary">
+                                        Simpan
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
-                </div>
-            )}
-        </DashboardLayout>
+                )
+            }
+
+            {/* Delete Confirmation Modal */}
+            {
+                deleteModal && (
+                    <div className="modal-overlay" onClick={() => setDeleteModal(null)}>
+                        <div className="modal-content" onClick={e => e.stopPropagation()}>
+                            <h3 className="text-lg font-bold text-slate-900 mb-4">Hapus Pengeluaran?</h3>
+                            <p className="text-slate-600 mb-6">Data pengeluaran akan dihapus permanen.</p>
+                            <div className="flex gap-3">
+                                <button onClick={() => setDeleteModal(null)} className="flex-1 btn btn-secondary">
+                                    Batal
+                                </button>
+                                <button onClick={() => deleteModal && handleDelete(deleteModal)} className="flex-1 btn bg-red-600 text-white hover:bg-red-700">
+                                    Hapus
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+        </DashboardLayout >
     );
 }

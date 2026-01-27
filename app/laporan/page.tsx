@@ -18,12 +18,12 @@ const statusLabels = {
 };
 
 const kategoriLabels: Record<KategoriPengeluaran, string> = {
-    bibit: 'Bibit',
-    pakan: 'Pakan',
-    obat: 'Obat',
-    listrik: 'Listrik',
-    tenaga_kerja: 'Tenaga Kerja',
-    lainnya: 'Lainnya',
+    BIBIT: 'Bibit',
+    PAKAN: 'Pakan',
+    OBAT: 'Obat',
+    LISTRIK: 'Listrik',
+    TENAGA_KERJA: 'Tenaga Kerja',
+    LAINNYA: 'Lainnya',
 };
 
 export default function LaporanPage() {
@@ -92,10 +92,10 @@ export default function LaporanPage() {
         const totalKolamModal = kolamPengeluaran.reduce((sum, p) => sum + p.jumlah, 0);
 
         // Modal breakdown
-        const modalBibit = kolamPengeluaran.filter(p => p.kategori === 'bibit').reduce((sum, p) => sum + p.jumlah, 0);
-        const modalPakan = kolamPengeluaran.filter(p => p.kategori === 'pakan').reduce((sum, p) => sum + p.jumlah, 0);
-        const modalObat = kolamPengeluaran.filter(p => p.kategori === 'obat').reduce((sum, p) => sum + p.jumlah, 0);
-        const modalLainnya = kolamPengeluaran.filter(p => !['bibit', 'pakan', 'obat'].includes(p.kategori)).reduce((sum, p) => sum + p.jumlah, 0);
+        const modalBibit = kolamPengeluaran.filter(p => p.kategori === 'BIBIT').reduce((sum, p) => sum + p.jumlah, 0);
+        const modalPakan = kolamPengeluaran.filter(p => p.kategori === 'PAKAN').reduce((sum, p) => sum + p.jumlah, 0);
+        const modalObat = kolamPengeluaran.filter(p => p.kategori === 'OBAT').reduce((sum, p) => sum + p.jumlah, 0);
+        const modalLainnya = kolamPengeluaran.filter(p => !['BIBIT', 'PAKAN', 'OBAT'].includes(p.kategori)).reduce((sum, p) => sum + p.jumlah, 0);
 
         // Deaths (simplified)
         const deaths = Math.floor(k.jumlahIkan * (1 - survivalRate));
@@ -256,27 +256,27 @@ export default function LaporanPage() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                     <div className="bg-blue-50 rounded-xl p-4">
                         <p className="text-xs text-blue-600 font-medium">🐟 Bibit</p>
-                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.bibit.toLocaleString('id-ID')}</p>
+                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.BIBIT.toLocaleString('id-ID')}</p>
                     </div>
                     <div className="bg-amber-50 rounded-xl p-4">
                         <p className="text-xs text-amber-600 font-medium">🍚 Pakan</p>
-                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.pakan.toLocaleString('id-ID')}</p>
+                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.PAKAN.toLocaleString('id-ID')}</p>
                     </div>
                     <div className="bg-purple-50 rounded-xl p-4">
                         <p className="text-xs text-purple-600 font-medium">💊 Obat</p>
-                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.obat.toLocaleString('id-ID')}</p>
+                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.OBAT.toLocaleString('id-ID')}</p>
                     </div>
                     <div className="bg-yellow-50 rounded-xl p-4">
                         <p className="text-xs text-yellow-600 font-medium">⚡ Listrik</p>
-                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.listrik.toLocaleString('id-ID')}</p>
+                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.LISTRIK.toLocaleString('id-ID')}</p>
                     </div>
                     <div className="bg-green-50 rounded-xl p-4">
                         <p className="text-xs text-green-600 font-medium">👷 Tenaga Kerja</p>
-                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.tenaga_kerja.toLocaleString('id-ID')}</p>
+                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.TENAGA_KERJA.toLocaleString('id-ID')}</p>
                     </div>
                     <div className="bg-slate-100 rounded-xl p-4">
                         <p className="text-xs text-slate-600 font-medium">📦 Lainnya</p>
-                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.lainnya.toLocaleString('id-ID')}</p>
+                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.LAINNYA.toLocaleString('id-ID')}</p>
                     </div>
                 </div>
                 <div className="mt-4 pt-4 border-t flex justify-between items-center">

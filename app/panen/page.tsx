@@ -22,7 +22,7 @@ export default function PanenPage() {
         beratTotalKg: '',
         jumlahEkor: '',
         hargaPerKg: '25000',
-        tipe: 'parsial' as const,
+        tipe: 'PARSIAL' as const,
         catatan: ''
     });
 
@@ -84,7 +84,7 @@ export default function PanenPage() {
             beratTotalKg: Number(panenForm.beratTotalKg),
             jumlahEkor: Number(panenForm.jumlahEkor),
             hargaPerKg: Number(panenForm.hargaPerKg),
-            tipe: panenForm.tipe as 'parsial' | 'total',
+            tipe: panenForm.tipe as 'PARSIAL' | 'TOTAL',
             catatan: panenForm.catatan
         });
         setIsPanenModalOpen(false);
@@ -142,7 +142,7 @@ export default function PanenPage() {
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Growth Rate (gram/hari)</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Growth Rate (g/hari)</label>
                         <input
                             type="number"
                             step="0.1"
@@ -188,8 +188,8 @@ export default function PanenPage() {
                                     <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50">
                                         <td className="px-4 py-3 font-medium">{p.tanggal}</td>
                                         <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${p.tipe === 'total' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
-                                                }`}>{(p.tipe || 'parsial').toUpperCase()}</span>
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${p.tipe === 'TOTAL' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+                                                }`}>{(p.tipe || 'PARSIAL').toUpperCase()}</span>
                                         </td>
                                         <td className="px-4 py-3">{p.beratTotalKg} kg</td>
                                         <td className="px-4 py-3">{p.jumlahEkor} ekor</td>
@@ -334,8 +334,8 @@ export default function PanenPage() {
                                         value={panenForm.tipe}
                                         onChange={(e) => setPanenForm({ ...panenForm, tipe: e.target.value as any })}
                                     >
-                                        <option value="parsial">Parsial (Bertahap)</option>
-                                        <option value="total">Total (Panen Raya)</option>
+                                        <option value="PARSIAL">Parsial (Bertahap)</option>
+                                        <option value="TOTAL">Total (Panen Raya)</option>
                                     </select>
                                 </div>
                             </div>

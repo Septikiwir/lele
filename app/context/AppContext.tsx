@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 
 // Types
 export interface Kolam {
@@ -40,29 +41,27 @@ export interface KondisiAir {
     suhu?: number;
 }
 
-export type KategoriPengeluaran = 'bibit' | 'pakan' | 'obat' | 'listrik' | 'tenaga_kerja' | 'lainnya';
+export type KategoriPengeluaran = 'BIBIT' | 'PAKAN' | 'OBAT' | 'LISTRIK' | 'TENAGA_KERJA' | 'LAINNYA';
 
 export interface Pengeluaran {
     id: string;
-    kolamId: string;
+    kolamId: string | null;
     tanggal: string;
     kategori: KategoriPengeluaran;
     keterangan: string;
-    jumlah: number; // dalam rupiah
+    jumlah: number;
 }
 
-// Stok Pakan - Feed Inventory
 export interface StokPakan {
     id: string;
     jenisPakan: string;
-    stokAwal: number; // kg - initial stock added
-    hargaPerKg: number; // rupiah per kg
+    stokAwal: number;
+    hargaPerKg: number;
     tanggalTambah: string;
     keterangan?: string;
 }
 
-// Pembeli - Buyer data
-export type TipePembeli = 'tengkulak' | 'pasar' | 'restoran' | 'lainnya';
+export type TipePembeli = 'TENGKULAK' | 'PASAR' | 'RESTORAN' | 'LAINNYA';
 
 export interface Pembeli {
     id: string;
@@ -72,134 +71,43 @@ export interface Pembeli {
     alamat?: string;
 }
 
-// Penjualan - Sales/Income data
 export interface Penjualan {
     id: string;
     kolamId: string;
     pembeliId: string;
     tanggal: string;
-    beratKg: number; // total weight sold
+    beratKg: number;
     hargaPerKg: number;
-    jumlahIkan?: number; // optional - number of fish sold
+    jumlahIkan?: number;
     keterangan?: string;
 }
 
-// Jadwal Pakan - Feeding Schedule
 export interface JadwalPakan {
     id: string;
     kolamId: string;
-    waktu: string; // "HH:mm" format
+    waktu: string;
     jenisPakan: string;
     jumlahKg: number;
     keterangan?: string;
     aktif: boolean;
 }
 
-// Riwayat Panen - Harvest Data (including Partial)
-export type TipePanen = 'parsial' | 'total';
+export type TipePanen = 'PARSIAL' | 'TOTAL';
 
 export interface RiwayatPanen {
     id: string;
     kolamId: string;
     tanggal: string;
     beratTotalKg: number;
-    jumlahEkor: number; // estimated
+    jumlahEkor: number;
     hargaPerKg: number;
     tipe: TipePanen;
     catatan?: string;
 }
 
-// Initial demo data
-const initialKolam: Kolam[] = [
-    {
-        id: '1',
-        nama: 'Kolam A1',
-        panjang: 10,
-        lebar: 5,
-        kedalaman: 1.2,
-        tanggalTebar: '2025-01-01',
-        jumlahIkan: 5000,
-        status: 'aman',
-    },
-    {
-        id: '2',
-        nama: 'Kolam A2',
-        panjang: 8,
-        lebar: 4,
-        kedalaman: 1.0,
-        tanggalTebar: '2025-01-15',
-        jumlahIkan: 4000,
-        status: 'waspada',
-    },
-    {
-        id: '3',
-        nama: 'Kolam B1',
-        panjang: 12,
-        lebar: 6,
-        kedalaman: 1.5,
-        tanggalTebar: '2024-12-01',
-        jumlahIkan: 10000,
-        status: 'berisiko',
-    },
-];
-
-const initialPakan: DataPakan[] = [
-    { id: '1', kolamId: '1', tanggal: '2025-01-27', jumlahKg: 15, jenisPakan: 'Pelet Hi-Pro' },
-    { id: '2', kolamId: '1', tanggal: '2025-01-26', jumlahKg: 14, jenisPakan: 'Pelet Hi-Pro' },
-    { id: '3', kolamId: '2', tanggal: '2025-01-27', jumlahKg: 10, jenisPakan: 'Pelet 781' },
-];
-
-const initialKondisiAir: KondisiAir[] = [
-    { id: '1', kolamId: '1', tanggal: '2025-01-27', warna: 'Hijau cerah', bau: 'Normal', ketinggian: 1.1, ph: 7.2, suhu: 28 },
-    { id: '2', kolamId: '2', tanggal: '2025-01-27', warna: 'Hijau pekat', bau: 'Amis', ketinggian: 0.9, ph: 6.8, suhu: 30 },
-];
-
-const initialPengeluaran: Pengeluaran[] = [
-    { id: '1', kolamId: '1', tanggal: '2025-01-01', kategori: 'bibit', keterangan: 'Bibit lele 5000 ekor @Rp100', jumlah: 500000 },
-    { id: '2', kolamId: '1', tanggal: '2025-01-15', kategori: 'pakan', keterangan: 'Pelet Hi-Pro 50kg', jumlah: 600000 },
-    { id: '3', kolamId: '1', tanggal: '2025-01-20', kategori: 'obat', keterangan: 'Probiotik air', jumlah: 75000 },
-    { id: '4', kolamId: '2', tanggal: '2025-01-15', kategori: 'bibit', keterangan: 'Bibit lele 4000 ekor @Rp100', jumlah: 400000 },
-    { id: '5', kolamId: '2', tanggal: '2025-01-20', kategori: 'pakan', keterangan: 'Pelet 781 40kg', jumlah: 480000 },
-    { id: '6', kolamId: '3', tanggal: '2024-12-01', kategori: 'bibit', keterangan: 'Bibit lele 10000 ekor @Rp100', jumlah: 1000000 },
-    { id: '7', kolamId: '3', tanggal: '2024-12-15', kategori: 'pakan', keterangan: 'Pelet Hi-Pro 100kg', jumlah: 1200000 },
-    { id: '8', kolamId: '3', tanggal: '2025-01-10', kategori: 'listrik', keterangan: 'Biaya aerator listrik', jumlah: 150000 },
-];
-
-const initialStokPakan: StokPakan[] = [
-    { id: '1', jenisPakan: 'Pelet Hi-Pro', stokAwal: 150, hargaPerKg: 12000, tanggalTambah: '2025-01-01', keterangan: 'Pembelian awal' },
-    { id: '2', jenisPakan: 'Pelet 781', stokAwal: 50, hargaPerKg: 10000, tanggalTambah: '2025-01-15', keterangan: 'Beli dari distributor' },
-    { id: '3', jenisPakan: 'Pelet Ekonomis', stokAwal: 30, hargaPerKg: 8000, tanggalTambah: '2025-01-20' },
-    { id: '4', jenisPakan: 'Cacing', stokAwal: 10, hargaPerKg: 25000, tanggalTambah: '2025-01-25' },
-    { id: '5', jenisPakan: 'Maggot', stokAwal: 5, hargaPerKg: 20000, tanggalTambah: '2025-01-26' },
-];
-
-const initialPembeli: Pembeli[] = [
-    { id: '1', nama: 'Pak Joko', tipe: 'tengkulak', kontak: '081234567890', alamat: 'Pasar Induk' },
-    { id: '2', nama: 'Rumah Makan Sederhana', tipe: 'restoran', kontak: '082345678901', alamat: 'Jl. Raya No. 10' },
-    { id: '3', nama: 'Toko Ikan Segar', tipe: 'pasar', kontak: '083456789012', alamat: 'Pasar Tradisional' },
-];
-
-const initialPenjualan: Penjualan[] = [
-    { id: '1', kolamId: '3', pembeliId: '1', tanggal: '2025-01-20', beratKg: 500, hargaPerKg: 25000, jumlahIkan: 2500, keterangan: 'Panen parsial' },
-    { id: '2', kolamId: '3', pembeliId: '2', tanggal: '2025-01-22', beratKg: 100, hargaPerKg: 28000, jumlahIkan: 500, keterangan: 'Penjualan ke restoran' },
-];
-
-const initialJadwalPakan: JadwalPakan[] = [
-    { id: '1', kolamId: '1', waktu: '07:00', jenisPakan: 'Pelet Hi-Pro', jumlahKg: 5, aktif: true },
-    { id: '2', kolamId: '1', waktu: '12:00', jenisPakan: 'Pelet Hi-Pro', jumlahKg: 5, aktif: true },
-    { id: '3', kolamId: '1', waktu: '17:00', jenisPakan: 'Pelet Hi-Pro', jumlahKg: 5, aktif: true },
-    { id: '4', kolamId: '2', waktu: '07:00', jenisPakan: 'Pelet 781', jumlahKg: 4, aktif: true },
-    { id: '5', kolamId: '2', waktu: '17:00', jenisPakan: 'Pelet 781', jumlahKg: 4, aktif: true },
-    { id: '6', kolamId: '3', waktu: '06:00', jenisPakan: 'Pelet Hi-Pro', jumlahKg: 10, keterangan: 'Pagi sebelum matahari tinggi', aktif: true },
-    { id: '7', kolamId: '3', waktu: '18:00', jenisPakan: 'Pelet Hi-Pro', jumlahKg: 10, keterangan: 'Sore menjelang malam', aktif: true },
-];
-
-const initialRiwayatPanen: RiwayatPanen[] = [
-    { id: '1', kolamId: '3', tanggal: '2025-01-20', beratTotalKg: 50, jumlahEkor: 500, hargaPerKg: 25000, tipe: 'parsial', catatan: 'Panen sortir ukuran konsumsi' }
-];
-
-// Context
+// Context Type
 interface AppContextType {
+    // Data
     kolam: Kolam[];
     pakan: DataPakan[];
     kondisiAir: KondisiAir[];
@@ -208,23 +116,51 @@ interface AppContextType {
     pembeli: Pembeli[];
     penjualan: Penjualan[];
     jadwalPakan: JadwalPakan[];
-    addKolam: (kolam: Omit<Kolam, 'id' | 'status'>) => void;
-    updateKolam: (id: string, kolam: Partial<Kolam>) => void;
-    deleteKolam: (id: string) => void;
-    addPakan: (pakan: Omit<DataPakan, 'id'>) => void;
-    addKondisiAir: (kondisi: Omit<KondisiAir, 'id'>) => void;
-    addPengeluaran: (pengeluaran: Omit<Pengeluaran, 'id'>) => void;
+    riwayatPanen: RiwayatPanen[];
+
+    // Farm
+    activeFarmId: string | null;
+    isLoading: boolean;
+
+    // Kolam CRUD
+    addKolam: (kolam: Omit<Kolam, 'id' | 'status'>) => Promise<void>;
+    updateKolam: (id: string, kolam: Partial<Kolam>) => Promise<void>;
+    deleteKolam: (id: string) => Promise<void>;
+
+    // Pakan
+    addPakan: (pakan: Omit<DataPakan, 'id'>) => Promise<void>;
+
+    // Kondisi Air
+    addKondisiAir: (kondisi: Omit<KondisiAir, 'id'>) => Promise<void>;
+
+    // Pengeluaran
+    addPengeluaran: (pengeluaran: Omit<Pengeluaran, 'id'>) => Promise<void>;
     deletePengeluaran: (id: string) => void;
-    addStokPakan: (stok: Omit<StokPakan, 'id'>) => void;
+
+    // Stok Pakan
+    addStokPakan: (stok: Omit<StokPakan, 'id'>) => Promise<void>;
     deleteStokPakan: (id: string) => void;
-    addPembeli: (pembeli: Omit<Pembeli, 'id'>) => void;
+
+    // Pembeli
+    addPembeli: (pembeli: Omit<Pembeli, 'id'>) => Promise<void>;
     deletePembeli: (id: string) => void;
-    addPenjualan: (penjualan: Omit<Penjualan, 'id'>) => void;
+
+    // Penjualan
+    addPenjualan: (penjualan: Omit<Penjualan, 'id'>) => Promise<void>;
     deletePenjualan: (id: string) => void;
-    addJadwalPakan: (jadwal: Omit<JadwalPakan, 'id'>) => void;
+
+    // Jadwal Pakan
+    addJadwalPakan: (jadwal: Omit<JadwalPakan, 'id'>) => Promise<void>;
     updateJadwalPakan: (id: string, updates: Partial<JadwalPakan>) => void;
     deleteJadwalPakan: (id: string) => void;
     getJadwalByKolam: (kolamId: string) => JadwalPakan[];
+
+    // Panen
+    addRiwayatPanen: (panen: Omit<RiwayatPanen, 'id'>) => Promise<void>;
+    deleteRiwayatPanen: (id: string) => void;
+    getPanenByKolam: (kolamId: string) => RiwayatPanen[];
+
+    // Helper functions
     getKolamById: (id: string) => Kolam | undefined;
     getPakanByKolam: (kolamId: string) => DataPakan[];
     getKondisiAirByKolam: (kolamId: string) => KondisiAir[];
@@ -239,31 +175,54 @@ interface AppContextType {
     getProfitByKolam: (kolamId: string) => number;
     calculateKepadatan: (kolam: Kolam) => number;
     calculateFCR: (kolamId: string) => number;
-    // Panen
-    riwayatPanen: RiwayatPanen[];
-    addRiwayatPanen: (panen: Omit<RiwayatPanen, 'id'>) => void;
-    deleteRiwayatPanen: (id: string) => void;
-    getPanenByKolam: (kolamId: string) => RiwayatPanen[];
+
     // UI State
     isSidebarCollapsed: boolean;
     toggleSidebar: () => void;
+
+    // Refresh
+    refreshData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Helper functions
-function generateId(): string {
-    return Math.random().toString(36).substring(2, 9);
-}
-
-function calculateStatus(kepadatan: number): 'aman' | 'waspada' | 'berisiko' {
-    if (kepadatan <= 50) return 'aman';
-    if (kepadatan <= 100) return 'waspada';
+// Helper to map DB status to local status
+function mapStatus(status: string): 'aman' | 'waspada' | 'berisiko' {
+    const s = status?.toLowerCase();
+    if (s === 'aman') return 'aman';
+    if (s === 'waspada') return 'waspada';
     return 'berisiko';
 }
 
-// Provider
+// Helper to map DB kolam to local kolam
+function mapKolam(dbKolam: Record<string, unknown>): Kolam {
+    return {
+        id: dbKolam.id as string,
+        nama: dbKolam.nama as string,
+        panjang: dbKolam.panjang as number,
+        lebar: dbKolam.lebar as number,
+        kedalaman: dbKolam.kedalaman as number,
+        tanggalTebar: typeof dbKolam.tanggalTebar === 'string'
+            ? dbKolam.tanggalTebar.split('T')[0]
+            : new Date(dbKolam.tanggalTebar as string).toISOString().split('T')[0],
+        jumlahIkan: dbKolam.jumlahIkan as number,
+        status: mapStatus(dbKolam.status as string),
+        position: dbKolam.positionX != null ? {
+            x: dbKolam.positionX as number,
+            y: dbKolam.positionY as number,
+            w: dbKolam.positionW as number || 2,
+            h: dbKolam.positionH as number || 2,
+            color: dbKolam.color as string || undefined
+        } : undefined
+    };
+}
+
 export function AppProvider({ children }: { children: ReactNode }) {
+    const { data: session, status } = useSession();
+    const isAuthenticated = status === 'authenticated';
+
+    // State
+    const [activeFarmId, setActiveFarmId] = useState<string | null>('cmkwud2ft000cdbvl90uq3lge');
     const [kolam, setKolam] = useState<Kolam[]>([]);
     const [pakan, setPakan] = useState<DataPakan[]>([]);
     const [kondisiAir, setKondisiAir] = useState<KondisiAir[]>([]);
@@ -273,134 +232,399 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [penjualan, setPenjualan] = useState<Penjualan[]>([]);
     const [jadwalPakan, setJadwalPakan] = useState<JadwalPakan[]>([]);
     const [riwayatPanen, setRiwayatPanen] = useState<RiwayatPanen[]>([]);
-    // UI State
+    const [isLoading, setIsLoading] = useState(true);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-    const [isLoaded, setIsLoaded] = useState(false);
 
-    // Load from localStorage on mount
+    // Fetch active farm
+    const fetchFarm = useCallback(async () => {
+        if (!isAuthenticated) {
+            setIsLoading(false);
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/farms');
+            if (res.ok) {
+                const farms = await res.json();
+                if (farms.length > 0) {
+                    setActiveFarmId(farms[0].id);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to fetch farms:', error);
+        }
+    }, [isAuthenticated]);
+
+    // Fetch all data for active farm
+    const fetchAllData = useCallback(async () => {
+        if (!activeFarmId) {
+            setIsLoading(false);
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const [
+                kolamRes,
+                pakanRes,
+                stokPakanRes,
+                kondisiAirRes,
+                pengeluaranRes,
+                pembeliRes,
+                penjualanRes,
+                jadwalRes,
+                panenRes
+            ] = await Promise.all([
+                fetch(`/api/farms/${activeFarmId}/kolam`),
+                fetch(`/api/farms/${activeFarmId}/pakan`),
+                fetch(`/api/farms/${activeFarmId}/stok-pakan`),
+                fetch(`/api/farms/${activeFarmId}/kondisi-air`),
+                fetch(`/api/farms/${activeFarmId}/pengeluaran`),
+                fetch(`/api/farms/${activeFarmId}/pembeli`),
+                fetch(`/api/farms/${activeFarmId}/penjualan`),
+                fetch(`/api/farms/${activeFarmId}/jadwal-pakan`),
+                fetch(`/api/farms/${activeFarmId}/riwayat-panen`)
+            ]);
+
+            if (kolamRes.ok) {
+                const data = await kolamRes.json();
+                setKolam(data.map(mapKolam));
+            }
+            if (pakanRes.ok) {
+                const data = await pakanRes.json();
+                setPakan(data.map((p: Record<string, unknown>) => ({
+                    ...p,
+                    tanggal: (p.tanggal as string).split('T')[0]
+                })));
+            }
+            if (stokPakanRes.ok) {
+                const data = await stokPakanRes.json();
+                setStokPakan(data.map((s: Record<string, unknown>) => ({
+                    ...s,
+                    tanggalTambah: (s.tanggalTambah as string).split('T')[0]
+                })));
+            }
+            if (kondisiAirRes.ok) {
+                const data = await kondisiAirRes.json();
+                setKondisiAir(data.map((k: Record<string, unknown>) => ({
+                    ...k,
+                    tanggal: (k.tanggal as string).split('T')[0]
+                })));
+            }
+            if (pengeluaranRes.ok) {
+                const data = await pengeluaranRes.json();
+                setPengeluaran(data.map((p: any) => ({
+                    ...p,
+                    tanggal: (p.tanggal as string).split('T')[0],
+                    kategori: p.kategori // Prisma returns UPPERCASE by default matched to Enum
+                })));
+            }
+            if (pembeliRes.ok) {
+                const data = await pembeliRes.json();
+                setPembeli(data); // Prisma returns UPPERCASE
+            }
+            if (penjualanRes.ok) {
+                const data = await penjualanRes.json();
+                setPenjualan(data.map((p: Record<string, unknown>) => ({
+                    ...p,
+                    tanggal: (p.tanggal as string).split('T')[0]
+                })));
+            }
+            if (jadwalRes.ok) {
+                const data = await jadwalRes.json();
+                setJadwalPakan(data);
+            }
+            if (panenRes.ok) {
+                const data = await panenRes.json();
+                setRiwayatPanen(data.map((p: any) => ({
+                    ...p,
+                    tanggal: (p.tanggal as string).split('T')[0],
+                    tipe: p.tipe
+                })));
+            }
+        } catch (error) {
+            console.error('Failed to fetch data:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [activeFarmId]);
+
+    // Load sidebar state from localStorage
     useEffect(() => {
-        const savedKolam = localStorage.getItem('lele_kolam');
-        const savedPakan = localStorage.getItem('lele_pakan');
-        const savedKondisiAir = localStorage.getItem('lele_kondisi_air');
-        const savedPengeluaran = localStorage.getItem('lele_pengeluaran');
-        const savedStokPakan = localStorage.getItem('lele_stok_pakan');
-        const savedPembeli = localStorage.getItem('lele_pembeli');
-        const savedPenjualan = localStorage.getItem('lele_penjualan');
-        const savedJadwalPakan = localStorage.getItem('lele_jadwal_pakan');
-        const savedRiwayatPanen = localStorage.getItem('lele_riwayat_panen');
-        const savedSidebar = localStorage.getItem('lele_sidebar_collapsed');
-
-        setKolam(savedKolam ? JSON.parse(savedKolam) : initialKolam);
-        setPakan(savedPakan ? JSON.parse(savedPakan) : initialPakan);
-        setKondisiAir(savedKondisiAir ? JSON.parse(savedKondisiAir) : initialKondisiAir);
-        setPengeluaran(savedPengeluaran ? JSON.parse(savedPengeluaran) : initialPengeluaran);
-        setStokPakan(savedStokPakan ? JSON.parse(savedStokPakan) : initialStokPakan);
-        setPembeli(savedPembeli ? JSON.parse(savedPembeli) : initialPembeli);
-        setPenjualan(savedPenjualan ? JSON.parse(savedPenjualan) : initialPenjualan);
-        setJadwalPakan(savedJadwalPakan ? JSON.parse(savedJadwalPakan) : initialJadwalPakan);
-        setRiwayatPanen(savedRiwayatPanen ? JSON.parse(savedRiwayatPanen) : initialRiwayatPanen);
-        if (savedSidebar) setIsSidebarCollapsed(JSON.parse(savedSidebar));
-
-        setIsLoaded(true);
+        const saved = localStorage.getItem('lele_sidebar_collapsed');
+        if (saved) setIsSidebarCollapsed(JSON.parse(saved));
     }, []);
 
-    // Save to localStorage when data changes
+    // Save sidebar state
     useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lele_kolam', JSON.stringify(kolam));
-        }
-    }, [kolam, isLoaded]);
+        localStorage.setItem('lele_sidebar_collapsed', JSON.stringify(isSidebarCollapsed));
+    }, [isSidebarCollapsed]);
 
+    // Fetch farm on auth
     useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lele_pakan', JSON.stringify(pakan));
-        }
-    }, [pakan, isLoaded]);
+        fetchFarm();
+    }, [fetchFarm]);
 
+    // Fetch data when farm changes
     useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lele_kondisi_air', JSON.stringify(kondisiAir));
-        }
-    }, [kondisiAir, isLoaded]);
+        fetchAllData();
+    }, [fetchAllData]);
 
-    useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lele_pengeluaran', JSON.stringify(pengeluaran));
-        }
-    }, [pengeluaran, isLoaded]);
-
-    useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lele_stok_pakan', JSON.stringify(stokPakan));
-        }
-    }, [stokPakan, isLoaded]);
-
-    useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lele_pembeli', JSON.stringify(pembeli));
-        }
-    }, [pembeli, isLoaded]);
-
-    useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lele_penjualan', JSON.stringify(penjualan));
-        }
-    }, [penjualan, isLoaded]);
-
-    useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lele_jadwal_pakan', JSON.stringify(jadwalPakan));
-        }
-    }, [jadwalPakan, isLoaded]);
-
-    useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lele_riwayat_panen', JSON.stringify(riwayatPanen));
-        }
-    }, [riwayatPanen, isLoaded]);
-
-    useEffect(() => {
-        if (isLoaded) {
-            localStorage.setItem('lele_sidebar_collapsed', JSON.stringify(isSidebarCollapsed));
-        }
-    }, [isSidebarCollapsed, isLoaded]);
-
-    const calculateKepadatan = (k: Kolam): number => {
-        const volume = k.panjang * k.lebar * k.kedalaman;
-        return volume > 0 ? k.jumlahIkan / volume : 0;
+    const refreshData = async () => {
+        await fetchAllData();
     };
 
-    const addKolam = (newKolam: Omit<Kolam, 'id' | 'status'>) => {
-        const tempKolam = { ...newKolam, id: '', status: 'aman' as const };
-        const kepadatan = calculateKepadatan(tempKolam as Kolam);
-        const status = calculateStatus(kepadatan);
+    // === CRUD Operations ===
 
-        setKolam(prev => [...prev, { ...newKolam, id: generateId(), status }]);
+    const addKolam = async (newKolam: Omit<Kolam, 'id' | 'status'>) => {
+        if (!activeFarmId) return;
+
+        try {
+            const res = await fetch(`/api/farms/${activeFarmId}/kolam`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newKolam)
+            });
+            if (res.ok) {
+                const created = await res.json();
+                setKolam(prev => [...prev, mapKolam(created)]);
+            }
+        } catch (error) {
+            console.error('Failed to add kolam:', error);
+        }
     };
 
-    const updateKolam = (id: string, updates: Partial<Kolam>) => {
-        setKolam(prev => prev.map(k => {
-            if (k.id !== id) return k;
-            const updated = { ...k, ...updates };
-            const kepadatan = calculateKepadatan(updated);
-            return { ...updated, status: calculateStatus(kepadatan) };
-        }));
+    const updateKolam = async (id: string, updates: Partial<Kolam>) => {
+        if (!activeFarmId) return;
+
+        // Map position to DB fields
+        const dbUpdates: Record<string, unknown> = { ...updates };
+        if (updates.position) {
+            dbUpdates.positionX = updates.position.x;
+            dbUpdates.positionY = updates.position.y;
+            dbUpdates.positionW = updates.position.w;
+            dbUpdates.positionH = updates.position.h;
+            dbUpdates.color = updates.position.color;
+            delete dbUpdates.position;
+        }
+
+        try {
+            const res = await fetch(`/api/farms/${activeFarmId}/kolam/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dbUpdates)
+            });
+            if (res.ok) {
+                const updated = await res.json();
+                setKolam(prev => prev.map(k => k.id === id ? mapKolam(updated) : k));
+            }
+        } catch (error) {
+            console.error('Failed to update kolam:', error);
+        }
     };
 
-    const deleteKolam = (id: string) => {
-        setKolam(prev => prev.filter(k => k.id !== id));
-        setPakan(prev => prev.filter(p => p.kolamId !== id));
-        setKondisiAir(prev => prev.filter(ka => ka.kolamId !== id));
-        setPengeluaran(prev => prev.filter(p => p.kolamId !== id));
+    const deleteKolam = async (id: string) => {
+        if (!activeFarmId) return;
+
+        try {
+            const res = await fetch(`/api/farms/${activeFarmId}/kolam/${id}`, {
+                method: 'DELETE'
+            });
+            if (res.ok) {
+                setKolam(prev => prev.filter(k => k.id !== id));
+            }
+        } catch (error) {
+            console.error('Failed to delete kolam:', error);
+        }
     };
 
-    const addPakan = (newPakan: Omit<DataPakan, 'id'>) => {
-        setPakan(prev => [...prev, { ...newPakan, id: generateId() }]);
+    const addPakan = async (newPakan: Omit<DataPakan, 'id'>) => {
+        if (!activeFarmId) return;
+
+        try {
+            const res = await fetch(`/api/farms/${activeFarmId}/pakan`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newPakan)
+            });
+            if (res.ok) {
+                const created = await res.json();
+                setPakan(prev => [...prev, { ...created, tanggal: created.tanggal.split('T')[0] }]);
+            }
+        } catch (error) {
+            console.error('Failed to add pakan:', error);
+        }
     };
 
-    const addKondisiAir = (newKondisi: Omit<KondisiAir, 'id'>) => {
-        setKondisiAir(prev => [...prev, { ...newKondisi, id: generateId() }]);
+    const addKondisiAir = async (newKondisi: Omit<KondisiAir, 'id'>) => {
+        if (!activeFarmId) return;
+
+        try {
+            const res = await fetch(`/api/farms/${activeFarmId}/kondisi-air`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newKondisi)
+            });
+            if (res.ok) {
+                const created = await res.json();
+                setKondisiAir(prev => [...prev, { ...created, tanggal: created.tanggal.split('T')[0] }]);
+            }
+        } catch (error) {
+            console.error('Failed to add kondisi air:', error);
+        }
     };
+
+    const addPengeluaran = async (newPengeluaran: Omit<Pengeluaran, 'id'>) => {
+        console.log('addPengeluaran called', { activeFarmId, newPengeluaran });
+        if (!activeFarmId) {
+            console.error('No activeFarmId found');
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/farms/${activeFarmId}/pengeluaran`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newPengeluaran)
+            });
+            if (res.ok) {
+                const created = await res.json();
+                setPengeluaran(prev => [...prev, {
+                    ...created,
+                    tanggal: created.tanggal.split('T')[0],
+                    kategori: created.kategori
+                }]);
+            }
+        } catch (error) {
+            console.error('Failed to add pengeluaran:', error);
+        }
+    };
+
+    const deletePengeluaran = (id: string) => {
+        setPengeluaran(prev => prev.filter(p => p.id !== id));
+    };
+
+    const addStokPakan = async (newStok: Omit<StokPakan, 'id'>) => {
+        if (!activeFarmId) return;
+
+        try {
+            const res = await fetch(`/api/farms/${activeFarmId}/stok-pakan`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newStok)
+            });
+            if (res.ok) {
+                const created = await res.json();
+                setStokPakan(prev => [...prev, { ...created, tanggalTambah: created.tanggalTambah.split('T')[0] }]);
+            }
+        } catch (error) {
+            console.error('Failed to add stok pakan:', error);
+        }
+    };
+
+    const deleteStokPakan = (id: string) => {
+        setStokPakan(prev => prev.filter(s => s.id !== id));
+    };
+
+    const addPembeli = async (newPembeli: Omit<Pembeli, 'id'>) => {
+        if (!activeFarmId) return;
+
+        try {
+            const res = await fetch(`/api/farms/${activeFarmId}/pembeli`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newPembeli)
+            });
+            if (res.ok) {
+                const created = await res.json();
+                setPembeli(prev => [...prev, created]);
+            }
+        } catch (error) {
+            console.error('Failed to add pembeli:', error);
+        }
+    };
+
+    const deletePembeli = (id: string) => {
+        setPembeli(prev => prev.filter(p => p.id !== id));
+    };
+
+    const addPenjualan = async (newPenjualan: Omit<Penjualan, 'id'>) => {
+        if (!activeFarmId) return;
+
+        try {
+            const res = await fetch(`/api/farms/${activeFarmId}/penjualan`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newPenjualan)
+            });
+            if (res.ok) {
+                const created = await res.json();
+                setPenjualan(prev => [...prev, { ...created, tanggal: created.tanggal.split('T')[0] }]);
+            }
+        } catch (error) {
+            console.error('Failed to add penjualan:', error);
+        }
+    };
+
+    const deletePenjualan = (id: string) => {
+        setPenjualan(prev => prev.filter(p => p.id !== id));
+    };
+
+    const addJadwalPakan = async (newJadwal: Omit<JadwalPakan, 'id'>) => {
+        if (!activeFarmId) return;
+
+        try {
+            const res = await fetch(`/api/farms/${activeFarmId}/jadwal-pakan`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newJadwal)
+            });
+            if (res.ok) {
+                const created = await res.json();
+                setJadwalPakan(prev => [...prev, created]);
+            }
+        } catch (error) {
+            console.error('Failed to add jadwal pakan:', error);
+        }
+    };
+
+    const updateJadwalPakan = (id: string, updates: Partial<JadwalPakan>) => {
+        setJadwalPakan(prev => prev.map(j => j.id === id ? { ...j, ...updates } : j));
+    };
+
+    const deleteJadwalPakan = (id: string) => {
+        setJadwalPakan(prev => prev.filter(j => j.id !== id));
+    };
+
+    const addRiwayatPanen = async (newPanen: Omit<RiwayatPanen, 'id'>) => {
+        if (!activeFarmId) return;
+
+        try {
+            const res = await fetch(`/api/farms/${activeFarmId}/riwayat-panen`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newPanen)
+            });
+            if (res.ok) {
+                const created = await res.json();
+                setRiwayatPanen(prev => [...prev, {
+                    ...created,
+                    tanggal: created.tanggal.split('T')[0],
+                    tipe: created.tipe
+                }]);
+                // Refresh kolam to get updated fish count
+                await refreshData();
+            }
+        } catch (error) {
+            console.error('Failed to add riwayat panen:', error);
+        }
+    };
+
+    const deleteRiwayatPanen = (id: string) => {
+        setRiwayatPanen(prev => prev.filter(p => p.id !== id));
+    };
+
+    // === Helper Functions ===
 
     const getKolamById = (id: string) => kolam.find(k => k.id === id);
 
@@ -414,35 +638,50 @@ export function AppProvider({ children }: { children: ReactNode }) {
             new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
         );
 
-    const addPengeluaran = (newPengeluaran: Omit<Pengeluaran, 'id'>) => {
-        setPengeluaran(prev => [...prev, { ...newPengeluaran, id: generateId() }]);
-    };
-
-    const deletePengeluaran = (id: string) => {
-        setPengeluaran(prev => prev.filter(p => p.id !== id));
-    };
-
     const getPengeluaranByKolam = (kolamId: string) =>
         pengeluaran.filter(p => p.kolamId === kolamId).sort((a, b) =>
             new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
         );
 
-    const getTotalPengeluaranByKolam = (kolamId: string): number =>
-        pengeluaran.filter(p => p.kolamId === kolamId).reduce((sum, p) => sum + p.jumlah, 0);
+    const getFeedPrice = useCallback((jenisPakan: string) => {
+        const stocks = stokPakan.filter(s => s.jenisPakan === jenisPakan);
+        if (stocks.length === 0) return 0;
+        const totalValue = stocks.reduce((sum, s) => sum + (s.stokAwal * s.hargaPerKg), 0);
+        const totalKg = stocks.reduce((sum, s) => sum + s.stokAwal, 0);
+        return totalKg > 0 ? totalValue / totalKg : 0;
+    }, [stokPakan]);
 
-    const getTotalPengeluaranByKategori = (kolamId: string, kategori: KategoriPengeluaran): number =>
-        pengeluaran.filter(p => p.kolamId === kolamId && p.kategori === kategori).reduce((sum, p) => sum + p.jumlah, 0);
+    const getTotalPengeluaranByKolam = useCallback((kolamId: string): number => {
+        // 1. Manual expenses
+        const specificExpenses = pengeluaran.filter(p => p.kolamId === kolamId);
+        const expenseTotal = specificExpenses.reduce((sum, p) => sum + p.jumlah, 0);
 
-    // Stok Pakan functions
-    const addStokPakan = (newStok: Omit<StokPakan, 'id'>) => {
-        setStokPakan(prev => [...prev, { ...newStok, id: generateId() }]);
-    };
+        // 2. Feed Cost (Calculated)
+        const kolamPakan = pakan.filter(p => p.kolamId === kolamId);
+        const feedCost = kolamPakan.reduce((sum, p) => {
+            const price = getFeedPrice(p.jenisPakan);
+            return sum + (p.jumlahKg * price);
+        }, 0);
 
-    const deleteStokPakan = (id: string) => {
-        setStokPakan(prev => prev.filter(s => s.id !== id));
-    };
+        return expenseTotal + feedCost;
+    }, [pengeluaran, pakan, getFeedPrice]);
 
-    // Calculate available stock by feed type (stok awal - used)
+    const getTotalPengeluaranByKategori = useCallback((kolamId: string, kategori: KategoriPengeluaran): number => {
+        let total = pengeluaran
+            .filter(p => p.kolamId === kolamId && p.kategori === kategori)
+            .reduce((sum, p) => sum + p.jumlah, 0);
+
+        if (kategori === 'PAKAN') {
+            const kolamPakan = pakan.filter(p => p.kolamId === kolamId);
+            const feedCost = kolamPakan.reduce((sum, p) => {
+                const price = getFeedPrice(p.jenisPakan);
+                return sum + (p.jumlahKg * price);
+            }, 0);
+            total += feedCost;
+        }
+        return total;
+    }, [pengeluaran, pakan, getFeedPrice]);
+
     const getStokTersediaByJenis = (jenisPakan: string): number => {
         const totalStok = stokPakan
             .filter(s => s.jenisPakan === jenisPakan)
@@ -453,29 +692,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return totalStok - totalUsed;
     };
 
-    // Get all unique feed types
     const getAllJenisPakan = (): string[] => {
         const fromStok = stokPakan.map(s => s.jenisPakan);
         const fromPakan = pakan.map(p => p.jenisPakan);
         return [...new Set([...fromStok, ...fromPakan])];
-    };
-
-    // Pembeli functions
-    const addPembeli = (newPembeli: Omit<Pembeli, 'id'>) => {
-        setPembeli(prev => [...prev, { ...newPembeli, id: generateId() }]);
-    };
-
-    const deletePembeli = (id: string) => {
-        setPembeli(prev => prev.filter(p => p.id !== id));
-    };
-
-    // Penjualan functions
-    const addPenjualan = (newPenjualan: Omit<Penjualan, 'id'>) => {
-        setPenjualan(prev => [...prev, { ...newPenjualan, id: generateId() }]);
-    };
-
-    const deletePenjualan = (id: string) => {
-        setPenjualan(prev => prev.filter(p => p.id !== id));
     };
 
     const getPenjualanByKolam = (kolamId: string) =>
@@ -489,22 +709,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const getTotalPenjualan = (): number =>
         penjualan.reduce((sum, p) => sum + (p.beratKg * p.hargaPerKg), 0);
 
-    // Jadwal Pakan functions
-    const addJadwalPakan = (newJadwal: Omit<JadwalPakan, 'id'>) => {
-        setJadwalPakan(prev => [...prev, { ...newJadwal, id: generateId() }]);
-    };
-
-    const updateJadwalPakan = (id: string, updates: Partial<JadwalPakan>) => {
-        setJadwalPakan(prev => prev.map(j => j.id === id ? { ...j, ...updates } : j));
-    };
-
-    const deleteJadwalPakan = (id: string) => {
-        setJadwalPakan(prev => prev.filter(j => j.id !== id));
-    };
-
     const getJadwalByKolam = (kolamId: string) =>
         jadwalPakan.filter(j => j.kolamId === kolamId).sort((a, b) =>
             a.waktu.localeCompare(b.waktu)
+        );
+
+    const getPanenByKolam = (kolamId: string) =>
+        riwayatPanen.filter(p => p.kolamId === kolamId).sort((a, b) =>
+            new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
         );
 
     const getProfitByKolam = (kolamId: string): number => {
@@ -513,58 +725,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return pendapatan - pengeluaranTotal;
     };
 
+    const calculateKepadatan = (k: Kolam): number => {
+        const volume = k.panjang * k.lebar * k.kedalaman;
+        return volume > 0 ? k.jumlahIkan / volume : 0;
+    };
+
     const calculateFCR = (kolamId: string): number => {
         const pakanKolam = getPakanByKolam(kolamId);
         const totalPakan = pakanKolam.reduce((sum, p) => sum + p.jumlahKg, 0);
-        // Simplified FCR calculation (normally would need weight gain data)
         const k = getKolamById(kolamId);
         if (!k) return 0;
-        const estimatedWeightGain = k.jumlahIkan * 0.05; // Assume 50g avg weight gain per fish
+        const estimatedWeightGain = k.jumlahIkan * 0.05;
         return estimatedWeightGain > 0 ? totalPakan / estimatedWeightGain : 0;
     };
 
-    // Panen Logic
-    const addRiwayatPanen = (newPanen: Omit<RiwayatPanen, 'id'>) => {
-        const panenId = generateId();
-        const panenRecord = { ...newPanen, id: panenId };
-
-        // 1. Add record
-        setRiwayatPanen(prev => [panenRecord, ...prev]);
-
-        // 2. Reduce fish count in Kolam (Direct state update to ensure consistency)
-        setKolam(prev => prev.map(k => {
-            if (k.id !== newPanen.kolamId) return k;
-
-            let newCount = k.jumlahIkan - newPanen.jumlahEkor;
-            if (newCount < 0) newCount = 0;
-
-            return {
-                ...k,
-                jumlahIkan: newCount,
-                // Recalculate density
-                status: calculateStatus(newCount / (k.panjang * k.lebar * k.kedalaman))
-            };
-        }));
-    };
-
-    const deleteRiwayatPanen = (id: string) => {
-        // Optional: Revert fish count? Might be complex if cycle changed.
-        // For simplicity, just delete record for now.
-        setRiwayatPanen(prev => prev.filter(p => p.id !== id));
-    };
-
-    const getPanenByKolam = (kolamId: string) =>
-        riwayatPanen.filter(p => p.kolamId === kolamId).sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime());
-
     const toggleSidebar = () => setIsSidebarCollapsed(prev => !prev);
-
-    if (!isLoaded) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="animate-pulse text-slate-500">Loading...</div>
-            </div>
-        );
-    }
 
     return (
         <AppContext.Provider value={{
@@ -576,6 +751,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             pembeli,
             penjualan,
             jadwalPakan,
+            riwayatPanen,
+            activeFarmId,
+            isLoading,
             addKolam,
             updateKolam,
             deleteKolam,
@@ -593,6 +771,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             updateJadwalPakan,
             deleteJadwalPakan,
             getJadwalByKolam,
+            addRiwayatPanen,
+            deleteRiwayatPanen,
+            getPanenByKolam,
             getKolamById,
             getPakanByKolam,
             getKondisiAirByKolam,
@@ -607,12 +788,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             getProfitByKolam,
             calculateKepadatan,
             calculateFCR,
-            riwayatPanen,
-            addRiwayatPanen,
-            deleteRiwayatPanen,
-            getPanenByKolam,
             isSidebarCollapsed,
             toggleSidebar,
+            refreshData,
         }}>
             {children}
         </AppContext.Provider>

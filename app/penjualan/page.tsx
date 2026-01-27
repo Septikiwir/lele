@@ -17,17 +17,17 @@ const TrashIcon = () => (
 );
 
 const tipePembeliOptions: { value: TipePembeli; label: string; emoji: string }[] = [
-    { value: 'tengkulak', label: 'Tengkulak', emoji: '🚛' },
-    { value: 'pasar', label: 'Pasar', emoji: '🏪' },
-    { value: 'restoran', label: 'Restoran', emoji: '🍽️' },
-    { value: 'lainnya', label: 'Lainnya', emoji: '📦' },
+    { value: 'TENGKULAK', label: 'Tengkulak', emoji: '🚛' },
+    { value: 'PASAR', label: 'Pasar', emoji: '🏪' },
+    { value: 'RESTORAN', label: 'Restoran', emoji: '🍽️' },
+    { value: 'LAINNYA', label: 'Lainnya', emoji: '📦' },
 ];
 
 const tipePembeliColors: Record<TipePembeli, string> = {
-    tengkulak: 'bg-blue-100 text-blue-700',
-    pasar: 'bg-green-100 text-green-700',
-    restoran: 'bg-purple-100 text-purple-700',
-    lainnya: 'bg-slate-100 text-slate-700',
+    TENGKULAK: 'bg-blue-100 text-blue-700',
+    PASAR: 'bg-green-100 text-green-700',
+    RESTORAN: 'bg-purple-100 text-purple-700',
+    LAINNYA: 'bg-slate-100 text-slate-700',
 };
 
 export default function PenjualanPage() {
@@ -56,7 +56,7 @@ export default function PenjualanPage() {
 
     const [pembeliForm, setPembeliForm] = useState({
         nama: '',
-        tipe: 'tengkulak' as TipePembeli,
+        tipe: 'TENGKULAK' as TipePembeli,
         kontak: '',
         alamat: '',
     });
@@ -100,7 +100,7 @@ export default function PenjualanPage() {
 
         setPembeliForm({
             nama: '',
-            tipe: 'tengkulak',
+            tipe: 'TENGKULAK',
             kontak: '',
             alamat: '',
         });
