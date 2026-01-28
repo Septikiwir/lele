@@ -54,7 +54,7 @@ const rekomendasi = {
 
 export default function KolamDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = use(params);
-    const { getKolamById, calculateKepadatan, getPakanByKolam, getKondisiAirByKolam, addRiwayatIkan, getRiwayatIkanByKolam } = useApp();
+    const { getKolamById, calculateKepadatan, getPakanByKolam, getKondisiAirByKolam, addRiwayatIkan, getRiwayatIkanByKolam, getUnifiedStatus, calculateBiomass, addRiwayatSampling, isLoading } = useApp();
     const kolam = getKolamById(resolvedParams.id);
 
     const [hoveredCell, setHoveredCell] = useState<GridCell | null>(null);
@@ -66,7 +66,11 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
     const [isEditFishOpen, setIsEditFishOpen] = useState(false);
     const [editFishCount, setEditFishCount] = useState('');
     const [editReason, setEditReason] = useState('Koreksi / Hitung Ulang');
-    // const { updateKolam } = useApp(); // Not used anymore
+
+    // Sampling State
+    const [isSamplingOpen, setIsSamplingOpen] = useState(false);
+    const [samplingPerKg, setSamplingPerKg] = useState('');
+    const [samplingCatatan, setSamplingCatatan] = useState('');
 
     const handleUpdateFish = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -97,6 +101,39 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
         }
     };
 
+    const handleInputSampling = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!kolam) return;
+
+        try {
+            const size = parseInt(samplingPerKg);
+            if (!isNaN(size) && size > 0) {
+                await addRiwayatSampling({
+                    kolamId: kolam.id,
+                    tanggal: new Date().toISOString(),
+                    jumlahIkanPerKg: size,
+                    catatan: samplingCatatan
+                });
+                setIsSamplingOpen(false);
+                setSamplingPerKg('');
+                setSamplingCatatan('');
+            }
+        } catch (error) {
+            console.error("Failed to add sampling:", error);
+            alert("Gagal menyimpan sampling.");
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <DashboardLayout>
+                <div className="flex items-center justify-center min-h-[50vh]">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600"></div>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
     if (!kolam) {
         notFound();
     }
@@ -108,20 +145,36 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
     const kondisiAir = getKondisiAirByKolam(kolam.id);
     const riwayatIkan = getRiwayatIkanByKolam(kolam.id);
 
+    // Biomass calculations
+    // Unified status calculation
+    const unifiedStatus = getUnifiedStatus(kolam.id);
+    const { totalBiomass, density: biomassDensity, averageWeight } = calculateBiomass(kolam.id);
+
+    // Use unified status instead of kolam.status for UI logic
+    const displayStatus = unifiedStatus.status;
+
     // Generate grid cells
     const cols = Math.ceil(kolam.panjang / gridScale);
     const rows = Math.ceil(kolam.lebar / gridScale);
 
     const generateCellData = (row: number, col: number): GridCell => {
         // Simulate varying kepadatan across the pond with some randomness
-        const baseKepadatan = kepadatan;
-        const variation = (Math.sin(row * 0.5) + Math.cos(col * 0.7)) * 15;
+        // Use the unified source (weight or count) to determine base density for visualization
+        const baseKepadatan = unifiedStatus.source === 'berat' ? unifiedStatus.kepadatanBerat : unifiedStatus.kepadatanEkor;
+
+        const variation = (Math.sin(row * 0.5) + Math.cos(col * 0.7)) * (baseKepadatan * 0.2); // 20% variation
         const cellKepadatan = Math.max(0, baseKepadatan + variation);
 
-        let status: 'aman' | 'waspada' | 'berisiko';
-        if (cellKepadatan <= 50) status = 'aman';
-        else if (cellKepadatan <= 100) status = 'waspada';
-        else status = 'berisiko';
+        let status: 'aman' | 'waspada' | 'berisiko' = 'aman';
+
+        // Thresholds based on source
+        if (unifiedStatus.source === 'berat') {
+            if (cellKepadatan > 20) status = 'berisiko';
+            else if (cellKepadatan > 10) status = 'waspada';
+        } else {
+            if (cellKepadatan > 100) status = 'berisiko';
+            else if (cellKepadatan > 50) status = 'waspada';
+        }
 
         return { row, col, kepadatan: cellKepadatan, status };
     };
@@ -155,8 +208,8 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                         <h1 className="text-3xl font-bold text-slate-900">{kolam.nama}</h1>
                         <p className="text-slate-500 mt-1">Tebar: {kolam.tanggalTebar} • {kolam.panjang}m × {kolam.lebar}m × {kolam.kedalaman}m</p>
                     </div>
-                    <span className={`badge ${kolam.status === 'aman' ? 'badge-success' : kolam.status === 'waspada' ? 'badge-warning' : 'badge-danger'}`}>
-                        {statusLabels[kolam.status]}
+                    <span className={`badge ${displayStatus === 'aman' ? 'badge-success' : displayStatus === 'waspada' ? 'badge-warning' : 'badge-danger'}`}>
+                        {statusLabels[displayStatus]}
                     </span>
                 </div>
             </div>
@@ -186,9 +239,45 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                     <p className="stat-value">{kolam.jumlahIkan.toLocaleString('id-ID')}</p>
                 </div>
                 <div className="stat-card">
-                    <p className="stat-label">Kepadatan</p>
+                    <p className="stat-label">Kepadatan (Ekor)</p>
                     <p className={`stat-value ${kolam.status === 'aman' ? 'text-green-600' : kolam.status === 'waspada' ? 'text-amber-600' : 'text-red-600'}`}>
                         {kepadatan.toFixed(1)}<span className="text-lg text-slate-400"> /m³</span>
+                    </p>
+                </div>
+            </div>
+
+            {/* Biomass Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                <div className="stat-card relative group bg-indigo-50 border-indigo-100">
+                    <button
+                        onClick={() => {
+                            if (averageWeight > 0) {
+                                setSamplingPerKg(Math.round(1 / averageWeight).toString());
+                            } else {
+                                setSamplingPerKg('');
+                            }
+                            setIsSamplingOpen(true);
+                        }}
+                        className="absolute top-2 right-2 p-1 text-indigo-400 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Input Sampling (Ukuran Ikan)"
+                    >
+                        <EditIcon />
+                    </button>
+                    <p className="stat-label text-indigo-600">Sampling Terakhir</p>
+                    <p className="stat-value text-indigo-900">
+                        {averageWeight > 0 ? `Isi ${Math.round(1 / averageWeight)}` : '-'}<span className="text-lg text-indigo-400"> /kg</span>
+                    </p>
+                </div>
+                <div className="stat-card bg-indigo-50 border-indigo-100">
+                    <p className="stat-label text-indigo-600">Total Biomassa</p>
+                    <p className="stat-value text-indigo-900">
+                        {totalBiomass > 0 ? totalBiomass.toLocaleString('id-ID', { maximumFractionDigits: 1 }) : '-'}<span className="text-lg text-indigo-400"> kg</span>
+                    </p>
+                </div>
+                <div className="stat-card bg-indigo-50 border-indigo-100">
+                    <p className="stat-label text-indigo-600">Kepadatan (Berat)</p>
+                    <p className={`stat-value ${unifiedStatus.source === 'berat' ? (displayStatus === 'aman' ? 'text-green-600' : displayStatus === 'waspada' ? 'text-amber-600' : 'text-red-600') : 'text-indigo-900'}`}>
+                        {biomassDensity > 0 ? biomassDensity.toFixed(2) : '-'}<span className="text-lg text-indigo-400"> kg/m³</span>
                     </p>
                 </div>
             </div>
@@ -198,9 +287,9 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                 {/* Pond Visualization */}
                 <div className="lg:col-span-2 card p-6">
                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold text-slate-900">Denah Tambak</h2>
-                        <span className={`badge ${kolam.status === 'aman' ? 'badge-success' : kolam.status === 'waspada' ? 'badge-warning' : 'badge-danger'}`}>
-                            {statusLabels[kolam.status]}
+                        <h2 className="text-lg font-semibold text-slate-900">Denah Tambak ({unifiedStatus.source === 'berat' ? 'Berdasarkan Biomassa' : 'Berdasarkan Populasi'})</h2>
+                        <span className={`badge ${displayStatus === 'aman' ? 'badge-success' : displayStatus === 'waspada' ? 'badge-warning' : 'badge-danger'}`}>
+                            {statusLabels[displayStatus]}
                         </span>
                     </div>
 
@@ -219,9 +308,9 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                         }}>
                             {/* Pond Shape */}
                             <div
-                                className={`w-full h-full rounded-xl shadow-lg border-4 flex flex-col items-center justify-center transition-all relative overflow-hidden ${kolam.status === 'aman'
+                                className={`w-full h-full rounded-xl shadow-lg border-4 flex flex-col items-center justify-center transition-all relative overflow-hidden ${displayStatus === 'aman'
                                     ? 'bg-gradient-to-br from-cyan-400 to-teal-500 border-cyan-600'
-                                    : kolam.status === 'waspada'
+                                    : displayStatus === 'waspada'
                                         ? 'bg-gradient-to-br from-amber-400 to-orange-500 border-amber-600'
                                         : 'bg-gradient-to-br from-red-400 to-rose-500 border-red-600'
                                     }`}
@@ -242,7 +331,9 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                                         {kolam.jumlahIkan.toLocaleString('id-ID')} ekor
                                     </p>
                                     <div className="mt-4 bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2 inline-block">
-                                        <span className="text-sm font-medium">Kepadatan: {kepadatan.toFixed(1)} /m³</span>
+                                        <span className="text-sm font-medium">
+                                            Kepadatan: {unifiedStatus.source === 'berat' ? `${unifiedStatus.kepadatanBerat.toFixed(2)} kg/m³` : `${unifiedStatus.kepadatanEkor.toFixed(1)} /m³`}
+                                        </span>
                                     </div>
                                 </div>
 
@@ -279,15 +370,15 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
 
                     {/* Status Recommendation */}
-                    <div className={`mt-4 p-4 rounded-lg ${kolam.status === 'aman' ? 'bg-green-50 border border-green-200' :
-                        kolam.status === 'waspada' ? 'bg-amber-50 border border-amber-200' :
+                    <div className={`mt-4 p-4 rounded-lg ${displayStatus === 'aman' ? 'bg-green-50 border border-green-200' :
+                        displayStatus === 'waspada' ? 'bg-amber-50 border border-amber-200' :
                             'bg-red-50 border border-red-200'
                         }`}>
-                        <p className={`text-sm ${kolam.status === 'aman' ? 'text-green-700' :
-                            kolam.status === 'waspada' ? 'text-amber-700' :
+                        <p className={`text-sm ${displayStatus === 'aman' ? 'text-green-700' :
+                            displayStatus === 'waspada' ? 'text-amber-700' :
                                 'text-red-700'
                             }`}>
-                            <strong>Rekomendasi:</strong> {rekomendasi[kolam.status]}
+                            <strong>Rekomendasi:</strong> {rekomendasi[displayStatus]}
                         </p>
                     </div>
                 </div>
@@ -318,7 +409,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                                 <div className="flex justify-between">
                                     <span className="text-slate-500">Kepadatan</span>
                                     <span className={`font-medium ${hoveredCell.status === 'aman' ? 'text-green-600' : hoveredCell.status === 'waspada' ? 'text-amber-600' : 'text-red-600'}`}>
-                                        {hoveredCell.kepadatan.toFixed(1)}/m³
+                                        {hoveredCell.kepadatan.toFixed(1)}{unifiedStatus.source === 'berat' ? ' kg/m³' : '/m³'}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -346,7 +437,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                                         <div>
                                             <p className="font-medium text-slate-900">R{cell.row + 1} C{cell.col + 1}</p>
                                             <p className={`text-sm ${cell.status === 'aman' ? 'text-green-600' : cell.status === 'waspada' ? 'text-amber-600' : 'text-red-600'}`}>
-                                                {cell.kepadatan.toFixed(1)}/m³
+                                                {cell.kepadatan.toFixed(1)}{unifiedStatus.source === 'berat' ? ' kg/m³' : '/m³'}
                                             </p>
                                         </div>
                                         <button
@@ -484,6 +575,62 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                             className="btn btn-primary flex-1"
                         >
                             Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+            {/* Sampling Modal */}
+            <Modal
+                isOpen={isSamplingOpen}
+                onClose={() => setIsSamplingOpen(false)}
+                title="Input Sampling Ikan"
+            >
+                <form onSubmit={handleInputSampling} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah Ikan per Kg (Isi)</label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                value={samplingPerKg}
+                                onChange={(e) => setSamplingPerKg(e.target.value)}
+                                className="input border-slate-300 pl-4 pr-12"
+                                placeholder="Contoh: 8"
+                                min="1"
+                                step="1"
+                                required
+                            />
+                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <span className="text-gray-500 sm:text-sm">/kg</span>
+                            </div>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2">
+                            Masukkan jumlah rata-rata ikan dalam 1 kg (misal "8" berarti ukuran ikan sekitar 125 gram/ekor).
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Catatan (Optional)</label>
+                        <textarea
+                            value={samplingCatatan}
+                            onChange={(e) => setSamplingCatatan(e.target.value)}
+                            className="input w-full h-24"
+                            placeholder="Catatan tambahan..."
+                        />
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setIsSamplingOpen(false)}
+                            className="btn btn-secondary flex-1"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="submit"
+                            className="btn btn-primary flex-1 bg-indigo-600 hover:bg-indigo-700 border-indigo-600"
+                        >
+                            Simpan Sampling
                         </button>
                     </div>
                 </form>

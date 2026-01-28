@@ -114,6 +114,14 @@ export interface RiwayatIkan {
     keterangan: string;
 }
 
+export interface RiwayatSampling {
+    id: string;
+    kolamId: string;
+    tanggal: string;
+    jumlahIkanPerKg: number;
+    catatan?: string;
+}
+
 // Context Type
 interface AppContextType {
     // Data
@@ -127,6 +135,7 @@ interface AppContextType {
     jadwalPakan: JadwalPakan[];
     riwayatPanen: RiwayatPanen[];
     riwayatIkan: RiwayatIkan[];
+    riwayatSampling: RiwayatSampling[];
 
     // Farm
     activeFarmId: string | null;
@@ -173,6 +182,13 @@ interface AppContextType {
     // Riwayat Ikan (Fish History)
     addRiwayatIkan: (history: Omit<RiwayatIkan, 'id' | 'jumlahAkhir'>) => Promise<void>;
     getRiwayatIkanByKolam: (kolamId: string) => RiwayatIkan[];
+
+    // Sampling (Biomass)
+    addRiwayatSampling: (sampling: Omit<RiwayatSampling, 'id'>) => Promise<void>;
+    getSamplingByKolam: (kolamId: string) => RiwayatSampling[];
+    getLatestSampling: (kolamId: string) => RiwayatSampling | undefined;
+    calculateBiomass: (kolamId: string) => { totalBiomass: number; density: number; averageWeight: number };
+    getUnifiedStatus: (kolamId: string) => { status: 'aman' | 'waspada' | 'berisiko'; kepadatanEkor: number; kepadatanBerat: number; source: 'ekor' | 'berat' };
 
     // Helper functions
     getKolamById: (id: string) => Kolam | undefined;
@@ -247,6 +263,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [jadwalPakan, setJadwalPakan] = useState<JadwalPakan[]>([]);
     const [riwayatPanen, setRiwayatPanen] = useState<RiwayatPanen[]>([]);
     const [riwayatIkan, setRiwayatIkan] = useState<RiwayatIkan[]>([]);
+    const [riwayatSampling, setRiwayatSampling] = useState<RiwayatSampling[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -289,7 +306,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 penjualanRes,
                 jadwalRes,
                 panenRes,
-                riwayatIkanRes
+                riwayatIkanRes,
+                samplingRes
             ] = await Promise.all([
                 fetch(`/api/farms/${activeFarmId}/kolam`),
                 fetch(`/api/farms/${activeFarmId}/pakan`),
@@ -300,7 +318,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 fetch(`/api/farms/${activeFarmId}/penjualan`),
                 fetch(`/api/farms/${activeFarmId}/jadwal-pakan`),
                 fetch(`/api/farms/${activeFarmId}/riwayat-panen`),
-                fetch(`/api/farms/${activeFarmId}/riwayat-ikan`)
+                fetch(`/api/farms/${activeFarmId}/riwayat-ikan`),
+                fetch(`/api/farms/${activeFarmId}/sampling`)
             ]);
 
             if (kolamRes.ok) {
@@ -364,6 +383,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 setRiwayatIkan(data.map((r: any) => ({
                     ...r,
                     tanggal: new Date(r.tanggal).toISOString().split('T')[0]
+                })));
+            }
+            if (samplingRes.ok) {
+                const data = await samplingRes.json();
+                setRiwayatSampling(data.map((s: any) => ({
+                    ...s,
+                    tanggal: new Date(s.tanggal).toISOString()
                 })));
             }
         } catch (error) {
@@ -695,6 +721,85 @@ export function AppProvider({ children }: { children: ReactNode }) {
             new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
         );
 
+    const addRiwayatSampling = async (newSampling: Omit<RiwayatSampling, 'id'>) => {
+        if (!activeFarmId) return;
+        try {
+            const res = await fetch(`/api/farms/${activeFarmId}/kolam/${newSampling.kolamId}/sampling`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newSampling)
+            });
+            if (res.ok) {
+                const created = await res.json();
+                setRiwayatSampling(prev => [...prev, {
+                    ...created,
+                    tanggal: new Date(created.tanggal).toISOString()
+                }]);
+            }
+        } catch (error) {
+            console.error('Failed to add sampling:', error);
+        }
+    };
+
+    const getSamplingByKolam = (kolamId: string) =>
+        riwayatSampling.filter(s => s.kolamId === kolamId).sort((a, b) =>
+            new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
+        );
+
+    const getLatestSampling = (kolamId: string) => {
+        const samples = getSamplingByKolam(kolamId);
+        return samples.length > 0 ? samples[0] : undefined;
+    };
+
+    const calculateBiomass = (kolamId: string) => {
+        const kolam = getKolamById(kolamId);
+        const sampling = getLatestSampling(kolamId);
+
+        if (!kolam || !sampling || sampling.jumlahIkanPerKg <= 0) {
+            return { totalBiomass: 0, density: 0, averageWeight: 0 };
+        }
+
+        const averageWeight = 1 / sampling.jumlahIkanPerKg; // kg
+        const totalBiomass = kolam.jumlahIkan * averageWeight; // kg
+        const volume = kolam.panjang * kolam.lebar * kolam.kedalaman; // m3
+        const density = volume > 0 ? totalBiomass / volume : 0; // kg/m3
+
+        return { totalBiomass, density, averageWeight };
+    };
+
+    /**
+     * Unified status calculation.
+     * If sampling data is available, uses biomass density (kg/m³) for more accurate status.
+     * Falls back to fish count density (ekor/m³) if no sampling data.
+     * 
+     * Thresholds:
+     * - Biomass Density (kg/m³): AMAN ≤ 10, WASPADA ≤ 20, BERISIKO > 20
+     * - Fish Count Density (ekor/m³): AMAN ≤ 50, WASPADA ≤ 100, BERISIKO > 100
+     */
+    const getUnifiedStatus = (kolamId: string): { status: 'aman' | 'waspada' | 'berisiko'; kepadatanEkor: number; kepadatanBerat: number; source: 'ekor' | 'berat' } => {
+        const kolam = getKolamById(kolamId);
+        if (!kolam) {
+            return { status: 'aman', kepadatanEkor: 0, kepadatanBerat: 0, source: 'ekor' };
+        }
+
+        const kepadatanEkor = calculateKepadatan(kolam);
+        const { density: kepadatanBerat } = calculateBiomass(kolamId);
+
+        // If biomass density is available (sampling data exists)
+        if (kepadatanBerat > 0) {
+            let status: 'aman' | 'waspada' | 'berisiko' = 'aman';
+            if (kepadatanBerat > 20) status = 'berisiko';
+            else if (kepadatanBerat > 10) status = 'waspada';
+            return { status, kepadatanEkor, kepadatanBerat, source: 'berat' };
+        }
+
+        // Fallback to fish count density
+        let status: 'aman' | 'waspada' | 'berisiko' = 'aman';
+        if (kepadatanEkor > 100) status = 'berisiko';
+        else if (kepadatanEkor > 50) status = 'waspada';
+        return { status, kepadatanEkor, kepadatanBerat, source: 'ekor' };
+    };
+
     // === Helper Functions ===
 
     const getKolamById = (id: string) => kolam.find(k => k.id === id);
@@ -848,6 +953,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
             riwayatIkan,
             addRiwayatIkan,
             getRiwayatIkanByKolam,
+            riwayatSampling,
+            addRiwayatSampling,
+            getSamplingByKolam,
+            getLatestSampling,
+            calculateBiomass,
+            getUnifiedStatus,
             getKolamById,
             getPakanByKolam,
             getKondisiAirByKolam,

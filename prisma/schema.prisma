@@ -151,6 +151,7 @@ model Kolam {
   riwayatPanen  RiwayatPanen[]
   penjualan     Penjualan[]
   riwayatIkan   RiwayatIkan[]
+  riwayatSampling RiwayatSampling[]
 }
 
 // ============================================
@@ -325,6 +326,23 @@ model RiwayatIkan {
   keterangan      String   // "Kematian", "Bibit Baru", "Koreksi", "Panen", "Penjualan"
 
   createdAt DateTime @default(now())
+
+  kolamId String
+  kolam   Kolam  @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// FISH SAMPLING / RIWAYAT SAMPLING
+// ============================================
+
+model RiwayatSampling {
+  id              String   @id @default(cuid())
+  tanggal         DateTime
+  jumlahIkanPerKg Float    // e.g., 8 (ekor per kg), 10.5, etc.
+  catatan         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   kolamId String
   kolam   Kolam  @relation(fields: [kolamId], references: [id], onDelete: Cascade)

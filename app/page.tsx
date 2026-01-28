@@ -19,7 +19,7 @@ const statusLabels = {
 };
 
 export default function Home() {
-  const { kolam, pakan, calculateKepadatan, getStokTersediaByJenis, getAllJenisPakan } = useApp();
+  const { kolam, pakan, calculateKepadatan, getStokTersediaByJenis, getAllJenisPakan, getUnifiedStatus } = useApp();
 
   // Calculate stats
   const totalKolam = kolam.length;
@@ -32,7 +32,10 @@ export default function Home() {
     .reduce((sum, p) => sum + p.jumlahKg, 0);
 
   // Get kolam that need attention (waspada or berisiko)
-  const kolamPerhatian = kolam.filter(k => k.status !== 'aman');
+  const kolamPerhatian = kolam.filter(k => {
+    const status = getUnifiedStatus(k.id).status;
+    return status !== 'aman';
+  });
 
   // Recent pakan entries
   const recentPakan = pakan.slice(0, 5);
@@ -144,8 +147,8 @@ export default function Home() {
           ) : (
             <div className="space-y-3">
               {kolamPerhatian.map(k => {
-                const kepadatan = calculateKepadatan(k);
-                const colors = statusColors[k.status];
+                const unifiedStatus = getUnifiedStatus(k.id);
+                const colors = statusColors[unifiedStatus.status];
 
                 return (
                   <Link
@@ -166,10 +169,12 @@ export default function Home() {
                     </div>
                     <div className="text-right">
                       <span className={`badge ${colors.bg} ${colors.text}`}>
-                        {statusLabels[k.status]}
+                        {statusLabels[unifiedStatus.status]}
                       </span>
                       <p className="text-sm text-slate-500 mt-1">
-                        {kepadatan.toFixed(1)} ekor/m³
+                        {unifiedStatus.source === 'berat'
+                          ? `${unifiedStatus.kepadatanBerat.toFixed(1)} kg/m³`
+                          : `${unifiedStatus.kepadatanEkor.toFixed(1)} ekor/m³`}
                       </p>
                     </div>
                   </Link>

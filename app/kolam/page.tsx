@@ -22,7 +22,7 @@ const statusLabels = {
 };
 
 export default function KolamPage() {
-    const { kolam, deleteKolam, calculateKepadatan } = useApp();
+    const { kolam, deleteKolam, calculateKepadatan, getUnifiedStatus } = useApp();
     const [deleteModal, setDeleteModal] = useState<string | null>(null);
 
     const handleDelete = (id: string) => {
@@ -55,10 +55,12 @@ export default function KolamPage() {
             ) : (
                 <div className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-6">
                     {kolam.map(k => {
-                        const kepadatan = calculateKepadatan(k);
+                        const unifiedStatus = getUnifiedStatus(k.id);
+                        const displayStatus = unifiedStatus.status;
+
                         const volume = k.panjang * k.lebar * k.kedalaman;
                         const luas = k.panjang * k.lebar;
-                        const colors = statusColors[k.status];
+                        const colors = statusColors[displayStatus];
 
                         return (
                             <div key={k.id} className={`card p-6 border-l-4 ${colors.border}`}>
@@ -71,7 +73,7 @@ export default function KolamPage() {
                                         <div>
                                             <h3 className="font-bold text-lg text-slate-900">{k.nama}</h3>
                                             <span className={`badge ${colors.bg} ${colors.text}`}>
-                                                {statusLabels[k.status]}
+                                                {statusLabels[displayStatus]}
                                             </span>
                                         </div>
                                     </div>
@@ -100,8 +102,14 @@ export default function KolamPage() {
                                 {/* Kepadatan */}
                                 <div className={`${colors.bg} rounded-lg p-3 mb-4`}>
                                     <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium ${colors.text}">Kepadatan</span>
-                                        <span className={`text-lg font-bold ${colors.text}`}>{kepadatan.toFixed(1)} ekor/m³</span>
+                                        <span className={`text-sm font-medium ${colors.text}`}>
+                                            Kepadatan {unifiedStatus.source === 'berat' ? '(Biomassa)' : '(Populasi)'}
+                                        </span>
+                                        <span className={`text-lg font-bold ${colors.text}`}>
+                                            {unifiedStatus.source === 'berat'
+                                                ? `${unifiedStatus.kepadatanBerat.toFixed(2)} kg/m³`
+                                                : `${unifiedStatus.kepadatanEkor.toFixed(1)} ekor/m³`}
+                                        </span>
                                     </div>
                                 </div>
 
