@@ -154,13 +154,13 @@ export default function Sidebar({ isCollapsed = false, toggleCollapse }: Sidebar
 
       {/* Sidebar - Fixed on desktop, Toggled on mobile */}
       <aside
-        className={`fixed left-0 top-0 h-screen bg-[#0f172a] text-slate-300 z-40 transition-all duration-300 ease-in-out flex flex-col border-r border-slate-800 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        className={`fixed left-0 top-0 h-screen bg-[#0f2937] text-slate-300 z-40 transition-all duration-300 ease-in-out flex flex-col border-r border-slate-800 ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
           } ${isCollapsed ? 'md:w-20' : 'md:w-64'}`}
       >
         {/* Logo & Toggle */}
-        <div className={`flex items-center gap-3 px-6 py-6 border-b border-slate-800 bg-[#0f172a] z-10 flex-shrink-0 transition-all ${isCollapsed ? 'justify-center px-0' : 'justify-between'}`}>
+        <div className={`flex items-center gap-3 px-6 py-6 border-b border-slate-800 bg-[#0f2937] z-10 flex-shrink-0 transition-all ${isCollapsed ? 'justify-center px-0' : 'justify-between'}`}>
           <div className="flex items-center gap-3">
-            <div className={`rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20 transition-all ${isCollapsed ? 'w-10 h-10' : 'w-10 h-10'}`}>
+            <div className={`rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-teal-500/20 transition-all ${isCollapsed ? 'w-10 h-10' : 'w-10 h-10'}`}>
               <span className="text-xl">🐟</span>
             </div>
             {!isCollapsed && (
@@ -211,15 +211,15 @@ export default function Sidebar({ isCollapsed = false, toggleCollapse }: Sidebar
                           href={item.href}
                           onClick={() => setIsOpen(false)}
                           className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative ${isActive
-                            ? 'text-white bg-blue-600/10'
+                            ? 'text-white bg-teal-600/10'
                             : 'text-slate-400 hover:text-white hover:bg-white/5'
                             } ${isCollapsed ? 'justify-center px-0 py-3' : ''}`}
                           title={isCollapsed ? item.name : undefined}
                         >
                           {isActive && (
-                            <div className={`absolute top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-500 rounded-r-full ${isCollapsed ? 'left-0 h-8' : 'left-0'}`} />
+                            <div className={`absolute top-1/2 -translate-y-1/2 w-1 h-6 bg-teal-500 rounded-r-full ${isCollapsed ? 'left-0 h-8' : 'left-0'}`} />
                           )}
-                          <span className={`transition-colors ${isActive ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'}`}>
+                          <span className={`transition-colors ${isActive ? 'text-teal-400' : 'text-slate-500 group-hover:text-slate-300'}`}>
                             <Icon />
                           </span>
                           {!isCollapsed && <span>{item.name}</span>}
@@ -242,14 +242,14 @@ export default function Sidebar({ isCollapsed = false, toggleCollapse }: Sidebar
 
         {/* Bottom Section: Profile & Logout - Fixed at bottom */}
         {user ? (
-          <div className="p-4 border-t border-slate-800 bg-[#0f172a] flex-shrink-0">
+          <div className="p-4 border-t border-slate-800 bg-[#0f2937] flex-shrink-0">
             <div className={`flex items-center gap-3 px-3 py-3 rounded-xl bg-slate-800/40 hover:bg-slate-800/60 transition-colors cursor-pointer group ${isCollapsed ? 'justify-center px-0 bg-transparent hover:bg-transparent' : ''}`}>
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-sm ring-2 ring-slate-800 shadow-md">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-sm ring-2 ring-slate-800 shadow-md">
                 {user.avatar || '👤'}
               </div>
               {!isCollapsed && (
                 <div className="flex-1 overflow-hidden">
-                  <p className="text-sm font-semibold text-white truncate group-hover:text-blue-400 transition-colors">
+                  <p className="text-sm font-semibold text-white truncate group-hover:text-teal-400 transition-colors">
                     {user.name}
                   </p>
                   <p className="text-xs text-slate-500 truncate capitalize">{user.role} • {user.plan || 'Free'}</p>
@@ -266,8 +266,8 @@ export default function Sidebar({ isCollapsed = false, toggleCollapse }: Sidebar
             </button>
           </div>
         ) : (
-          <div className="p-4 border-t border-slate-800 bg-[#0f172a] flex-shrink-0">
-            <Link href="/login" className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-500 transition-colors ${isCollapsed ? 'px-0' : 'w-full'}`}>
+          <div className="p-4 border-t border-slate-800 bg-[#0f2937] flex-shrink-0">
+            <Link href="/login" className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-bold bg-teal-600 text-white hover:bg-teal-500 transition-colors ${isCollapsed ? 'px-0' : 'w-full'}`}>
               {isCollapsed ? <span>Login</span> : <span>Login / Masuk</span>}
             </Link>
           </div>

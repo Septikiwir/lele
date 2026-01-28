@@ -209,7 +209,7 @@ export default function EditKolamPage({ params }: { params: Promise<{ id: string
                         <div className="bg-slate-100 rounded-xl p-4 mb-6 aspect-video flex items-center justify-center">
                             {panjang > 0 && lebar > 0 ? (
                                 <div
-                                    className="bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center text-white text-4xl shadow-lg"
+                                    className="bg-gradient-to-br from-cyan-400 to-teal-500 rounded-lg flex items-center justify-center text-white text-4xl shadow-lg"
                                     style={{
                                         width: `${Math.min(panjang / Math.max(panjang, lebar) * 100, 100)}%`,
                                         height: `${Math.min(lebar / Math.max(panjang, lebar) * 100, 100)}%`,
@@ -237,8 +237,8 @@ export default function EditKolamPage({ params }: { params: Promise<{ id: string
                             <div className="flex justify-between py-2 border-b border-slate-100">
                                 <span className="text-slate-500">Kepadatan</span>
                                 <span className={`font-semibold ${kepadatanCalc === 0 ? 'text-slate-400' :
-                                        kepadatanCalc <= 50 ? 'text-green-600' :
-                                            kepadatanCalc <= 100 ? 'text-amber-600' : 'text-red-600'
+                                    kepadatanCalc <= 50 ? 'text-green-600' :
+                                        kepadatanCalc <= 100 ? 'text-amber-600' : 'text-red-600'
                                     }`}>
                                     {kepadatanCalc.toFixed(1)} ekor/m³
                                 </span>
@@ -246,8 +246,8 @@ export default function EditKolamPage({ params }: { params: Promise<{ id: string
                             <div className="flex justify-between py-2">
                                 <span className="text-slate-500">Status</span>
                                 <span className={`badge ${kepadatanCalc === 0 ? 'badge-info' :
-                                        kepadatanCalc <= 50 ? 'badge-success' :
-                                            kepadatanCalc <= 100 ? 'badge-warning' : 'badge-danger'
+                                    kepadatanCalc <= 50 ? 'badge-success' :
+                                        kepadatanCalc <= 100 ? 'badge-warning' : 'badge-danger'
                                     }`}>
                                     {kepadatanCalc === 0 ? '-' :
                                         kepadatanCalc <= 50 ? 'Aman' :

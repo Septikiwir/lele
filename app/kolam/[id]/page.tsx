@@ -171,7 +171,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                             {/* Pond Shape */}
                             <div
                                 className={`w-full h-full rounded-xl shadow-lg border-4 flex flex-col items-center justify-center transition-all relative overflow-hidden ${kolam.status === 'aman'
-                                    ? 'bg-gradient-to-br from-cyan-400 to-blue-500 border-cyan-600'
+                                    ? 'bg-gradient-to-br from-cyan-400 to-teal-500 border-cyan-600'
                                     : kolam.status === 'waspada'
                                         ? 'bg-gradient-to-br from-amber-400 to-orange-500 border-amber-600'
                                         : 'bg-gradient-to-br from-red-400 to-rose-500 border-red-600'
@@ -247,7 +247,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="space-y-6">
                     {/* Hovered Cell Info */}
                     {hoveredCell && (
-                        <div className="card p-4 border-l-4 border-blue-500">
+                        <div className="card p-4 border-l-4 border-teal-500">
                             <h3 className="font-semibold text-slate-900 mb-3">Detail Area</h3>
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
@@ -327,7 +327,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                                 ))}
                             </div>
                         )}
-                        <Link href="/pakan" className="text-sm text-blue-600 hover:text-blue-700 mt-3 block">
+                        <Link href="/pakan" className="text-sm text-teal-600 hover:text-teal-700 mt-3 block">
                             Input Pakan →
                         </Link>
                     </div>
@@ -355,7 +355,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                                 )}
                             </div>
                         )}
-                        <Link href="/kualitas-air" className="text-sm text-blue-600 hover:text-blue-700 mt-3 block">
+                        <Link href="/kualitas-air" className="text-sm text-teal-600 hover:text-teal-700 mt-3 block">
                             Cek Kualitas Air →
                         </Link>
                     </div>

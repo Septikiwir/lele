@@ -4,17 +4,9 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { useState } from 'react';
 import { useApp, TipePembeli } from '../context/AppContext';
 
-const PlusIcon = () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-    </svg>
-);
-
-const TrashIcon = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
-);
+import { PlusIcon, TrashIcon } from '../components/ui/Icons';
+import Modal from '../components/ui/Modal';
+import EmptyState from '../components/ui/EmptyState';
 
 const tipePembeliOptions: { value: TipePembeli; label: string; emoji: string }[] = [
     { value: 'TENGKULAK', label: 'Tengkulak', emoji: '🚛' },
@@ -24,7 +16,7 @@ const tipePembeliOptions: { value: TipePembeli; label: string; emoji: string }[]
 ];
 
 const tipePembeliColors: Record<TipePembeli, string> = {
-    TENGKULAK: 'bg-blue-100 text-blue-700',
+    TENGKULAK: 'bg-teal-100 text-teal-700',
     PASAR: 'bg-green-100 text-green-700',
     RESTORAN: 'bg-purple-100 text-purple-700',
     LAINNYA: 'bg-slate-100 text-slate-700',
@@ -216,12 +208,11 @@ export default function PenjualanPage() {
                     <h2 className="text-lg font-semibold text-slate-900">📋 Data Pembeli</h2>
                 </div>
                 {pembeli.length === 0 ? (
-                    <div className="p-12 text-center">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center text-3xl">
-                            👤
-                        </div>
-                        <p className="text-slate-500">Belum ada data pembeli</p>
-                    </div>
+                    <EmptyState
+                        title="Belum Ada Pembeli"
+                        description="Belum ada data pembeli yang tercatat"
+                        icon="👤"
+                    />
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="table">
@@ -280,12 +271,11 @@ export default function PenjualanPage() {
                     </select>
                 </div>
                 {filteredPenjualan.length === 0 ? (
-                    <div className="p-12 text-center">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center text-3xl">
-                            💵
-                        </div>
-                        <p className="text-slate-500">Belum ada data penjualan</p>
-                    </div>
+                    <EmptyState
+                        title="Belum Ada Penjualan"
+                        description="Belum ada data penjualan yang tercatat"
+                        icon="💵"
+                    />
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="table">
@@ -335,223 +325,210 @@ export default function PenjualanPage() {
             </div>
 
             {/* Form Modal - Penjualan */}
-            {showPenjualanForm && (
-                <div className="modal-overlay" onClick={() => setShowPenjualanForm(false)}>
-                    <div className="modal-content max-w-lg" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-xl font-bold text-slate-900 mb-6">Catat Penjualan Baru</h3>
-                        <form onSubmit={handlePenjualanSubmit} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
-                                    <select
-                                        value={penjualanForm.kolamId}
-                                        onChange={(e) => setPenjualanForm({ ...penjualanForm, kolamId: e.target.value })}
-                                        className="input"
-                                        required
-                                    >
-                                        <option value="">-- Pilih --</option>
-                                        {kolam.map(k => (
-                                            <option key={k.id} value={k.id}>{k.nama}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Pembeli</label>
-                                    <select
-                                        value={penjualanForm.pembeliId}
-                                        onChange={(e) => setPenjualanForm({ ...penjualanForm, pembeliId: e.target.value })}
-                                        className="input"
-                                        required
-                                    >
-                                        <option value="">-- Pilih --</option>
-                                        {pembeli.map(p => (
-                                            <option key={p.id} value={p.id}>{p.nama}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal</label>
-                                <input
-                                    type="date"
-                                    value={penjualanForm.tanggal}
-                                    onChange={(e) => setPenjualanForm({ ...penjualanForm, tanggal: e.target.value })}
-                                    className="input"
-                                    required
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Berat (kg)</label>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        min="0"
-                                        value={penjualanForm.beratKg}
-                                        onChange={(e) => setPenjualanForm({ ...penjualanForm, beratKg: e.target.value })}
-                                        placeholder="Contoh: 100"
-                                        className="input"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Harga/kg (Rp)</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        value={penjualanForm.hargaPerKg}
-                                        onChange={(e) => setPenjualanForm({ ...penjualanForm, hargaPerKg: e.target.value })}
-                                        placeholder="Contoh: 25000"
-                                        className="input"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            {penjualanForm.beratKg && penjualanForm.hargaPerKg && (
-                                <div className="p-4 bg-green-50 rounded-xl">
-                                    <p className="text-sm text-green-700">Total: <span className="font-bold">Rp {(parseFloat(penjualanForm.beratKg) * parseFloat(penjualanForm.hargaPerKg)).toLocaleString('id-ID')}</span></p>
-                                </div>
-                            )}
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah Ikan (opsional)</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={penjualanForm.jumlahIkan}
-                                    onChange={(e) => setPenjualanForm({ ...penjualanForm, jumlahIkan: e.target.value })}
-                                    placeholder="Contoh: 500"
-                                    className="input"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Keterangan (opsional)</label>
-                                <input
-                                    type="text"
-                                    value={penjualanForm.keterangan}
-                                    onChange={(e) => setPenjualanForm({ ...penjualanForm, keterangan: e.target.value })}
-                                    placeholder="Contoh: Panen parsial"
-                                    className="input"
-                                />
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPenjualanForm(false)}
-                                    className="flex-1 btn btn-secondary"
-                                >
-                                    Batal
-                                </button>
-                                <button type="submit" className="flex-1 btn btn-primary">
-                                    Simpan
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Form Modal - Pembeli */}
-            {showPembeliForm && (
-                <div className="modal-overlay" onClick={() => setShowPembeliForm(false)}>
-                    <div className="modal-content max-w-lg" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-xl font-bold text-slate-900 mb-6">Tambah Pembeli Baru</h3>
-                        <form onSubmit={handlePembeliSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Nama Pembeli</label>
-                                <input
-                                    type="text"
-                                    value={pembeliForm.nama}
-                                    onChange={(e) => setPembeliForm({ ...pembeliForm, nama: e.target.value })}
-                                    placeholder="Contoh: Pak Joko"
-                                    className="input"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Tipe Pembeli</label>
-                                <div className="grid grid-cols-4 gap-2">
-                                    {tipePembeliOptions.map(t => (
-                                        <button
-                                            key={t.value}
-                                            type="button"
-                                            onClick={() => setPembeliForm({ ...pembeliForm, tipe: t.value })}
-                                            className={`p-3 rounded-xl border-2 text-center transition-all ${pembeliForm.tipe === t.value
-                                                ? 'border-blue-500 bg-blue-50'
-                                                : 'border-slate-200 hover:border-slate-300'
-                                                }`}
-                                        >
-                                            <div className="text-xl mb-1">{t.emoji}</div>
-                                            <div className="text-xs font-medium">{t.label}</div>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Kontak (opsional)</label>
-                                <input
-                                    type="text"
-                                    value={pembeliForm.kontak}
-                                    onChange={(e) => setPembeliForm({ ...pembeliForm, kontak: e.target.value })}
-                                    placeholder="Contoh: 081234567890"
-                                    className="input"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Alamat (opsional)</label>
-                                <input
-                                    type="text"
-                                    value={pembeliForm.alamat}
-                                    onChange={(e) => setPembeliForm({ ...pembeliForm, alamat: e.target.value })}
-                                    placeholder="Contoh: Pasar Induk"
-                                    className="input"
-                                />
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPembeliForm(false)}
-                                    className="flex-1 btn btn-secondary"
-                                >
-                                    Batal
-                                </button>
-                                <button type="submit" className="flex-1 btn btn-primary">
-                                    Simpan
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Delete Confirmation Modal */}
-            {deleteModal && (
-                <div className="modal-overlay" onClick={() => setDeleteModal(null)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-lg font-bold text-slate-900 mb-4">
-                            Hapus {deleteModal.type === 'penjualan' ? 'Penjualan' : 'Pembeli'}?
-                        </h3>
-                        <p className="text-slate-600 mb-6">Data akan dihapus permanen.</p>
-                        <div className="flex gap-3">
-                            <button onClick={() => setDeleteModal(null)} className="flex-1 btn btn-secondary">
-                                Batal
-                            </button>
-                            <button onClick={handleDelete} className="flex-1 btn bg-red-600 text-white hover:bg-red-700">
-                                Hapus
-                            </button>
+            <Modal isOpen={showPenjualanForm} onClose={() => setShowPenjualanForm(false)} title="Catat Penjualan Baru">
+                <form onSubmit={handlePenjualanSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
+                            <select
+                                value={penjualanForm.kolamId}
+                                onChange={(e) => setPenjualanForm({ ...penjualanForm, kolamId: e.target.value })}
+                                className="input"
+                                required
+                            >
+                                <option value="">-- Pilih --</option>
+                                {kolam.map(k => (
+                                    <option key={k.id} value={k.id}>{k.nama}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Pembeli</label>
+                            <select
+                                value={penjualanForm.pembeliId}
+                                onChange={(e) => setPenjualanForm({ ...penjualanForm, pembeliId: e.target.value })}
+                                className="input"
+                                required
+                            >
+                                <option value="">-- Pilih --</option>
+                                {pembeli.map(p => (
+                                    <option key={p.id} value={p.id}>{p.nama}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal</label>
+                        <input
+                            type="date"
+                            value={penjualanForm.tanggal}
+                            onChange={(e) => setPenjualanForm({ ...penjualanForm, tanggal: e.target.value })}
+                            className="input"
+                            required
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Berat (kg)</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                value={penjualanForm.beratKg}
+                                onChange={(e) => setPenjualanForm({ ...penjualanForm, beratKg: e.target.value })}
+                                placeholder="Contoh: 100"
+                                className="input"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Harga/kg (Rp)</label>
+                            <input
+                                type="number"
+                                min="0"
+                                value={penjualanForm.hargaPerKg}
+                                onChange={(e) => setPenjualanForm({ ...penjualanForm, hargaPerKg: e.target.value })}
+                                placeholder="Contoh: 25000"
+                                className="input"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    {penjualanForm.beratKg && penjualanForm.hargaPerKg && (
+                        <div className="p-4 bg-green-50 rounded-xl">
+                            <p className="text-sm text-green-700">Total: <span className="font-bold">Rp {(parseFloat(penjualanForm.beratKg) * parseFloat(penjualanForm.hargaPerKg)).toLocaleString('id-ID')}</span></p>
+                        </div>
+                    )}
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah Ikan (opsional)</label>
+                        <input
+                            type="number"
+                            min="0"
+                            value={penjualanForm.jumlahIkan}
+                            onChange={(e) => setPenjualanForm({ ...penjualanForm, jumlahIkan: e.target.value })}
+                            placeholder="Contoh: 500"
+                            className="input"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Keterangan (opsional)</label>
+                        <input
+                            type="text"
+                            value={penjualanForm.keterangan}
+                            onChange={(e) => setPenjualanForm({ ...penjualanForm, keterangan: e.target.value })}
+                            placeholder="Contoh: Panen parsial"
+                            className="input"
+                        />
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setShowPenjualanForm(false)}
+                            className="flex-1 btn btn-secondary"
+                        >
+                            Batal
+                        </button>
+                        <button type="submit" className="flex-1 btn btn-primary">
+                            Simpan
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Form Modal - Pembeli */}
+            <Modal isOpen={showPembeliForm} onClose={() => setShowPembeliForm(false)} title="Tambah Pembeli Baru">
+                <form onSubmit={handlePembeliSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Nama Pembeli</label>
+                        <input
+                            type="text"
+                            value={pembeliForm.nama}
+                            onChange={(e) => setPembeliForm({ ...pembeliForm, nama: e.target.value })}
+                            placeholder="Contoh: Pak Joko"
+                            className="input"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Tipe Pembeli</label>
+                        <div className="grid grid-cols-4 gap-2">
+                            {tipePembeliOptions.map(t => (
+                                <button
+                                    key={t.value}
+                                    type="button"
+                                    onClick={() => setPembeliForm({ ...pembeliForm, tipe: t.value })}
+                                    className={`p-3 rounded-xl border-2 text-center transition-all ${pembeliForm.tipe === t.value
+                                        ? 'border-teal-500 bg-teal-50'
+                                        : 'border-slate-200 hover:border-slate-300'
+                                        }`}
+                                >
+                                    <div className="text-xl mb-1">{t.emoji}</div>
+                                    <div className="text-xs font-medium">{t.label}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Kontak (opsional)</label>
+                        <input
+                            type="text"
+                            value={pembeliForm.kontak}
+                            onChange={(e) => setPembeliForm({ ...pembeliForm, kontak: e.target.value })}
+                            placeholder="Contoh: 081234567890"
+                            className="input"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Alamat (opsional)</label>
+                        <input
+                            type="text"
+                            value={pembeliForm.alamat}
+                            onChange={(e) => setPembeliForm({ ...pembeliForm, alamat: e.target.value })}
+                            placeholder="Contoh: Pasar Induk"
+                            className="input"
+                        />
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setShowPembeliForm(false)}
+                            className="flex-1 btn btn-secondary"
+                        >
+                            Batal
+                        </button>
+                        <button type="submit" className="flex-1 btn btn-primary">
+                            Simpan
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={!!deleteModal}
+                onClose={() => setDeleteModal(null)}
+                title={`Hapus ${deleteModal?.type === 'penjualan' ? 'Penjualan' : 'Pembeli'}?`}
+            >
+                <p className="text-slate-600 mb-6">Data akan dihapus permanen.</p>
+                <div className="flex gap-3">
+                    <button onClick={() => setDeleteModal(null)} className="flex-1 btn btn-secondary">
+                        Batal
+                    </button>
+                    <button onClick={handleDelete} className="flex-1 btn bg-red-600 text-white hover:bg-red-700">
+                        Hapus
+                    </button>
                 </div>
-            )}
+            </Modal>
         </DashboardLayout>
     );
 }

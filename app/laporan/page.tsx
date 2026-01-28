@@ -4,12 +4,8 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useApp, KategoriPengeluaran } from '../context/AppContext';
-
-const DownloadIcon = () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-    </svg>
-);
+import { DownloadIcon, KolamIcon, FishIcon, CalendarIcon, WalletIcon, TrendingUpIcon } from '../components/ui/Icons';
+import EmptyState from '../components/ui/EmptyState';
 
 const statusLabels = {
     aman: 'Aman',
@@ -214,34 +210,83 @@ export default function LaporanPage() {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
                 <div className="stat-card">
-                    <p className="stat-label">Total Kolam</p>
-                    <p className="stat-value text-2xl">{totals.kolam}</p>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="stat-label">Total Kolam</p>
+                            <p className="stat-value">{totals.kolam}</p>
+                        </div>
+                        <div className="w-14 h-14 rounded-2xl bg-teal-100 flex items-center justify-center text-teal-600">
+                            <KolamIcon />
+                        </div>
+                    </div>
                 </div>
+
                 <div className="stat-card">
-                    <p className="stat-label">Total Ikan</p>
-                    <p className="stat-value text-2xl">{totals.ikan.toLocaleString('id-ID')}</p>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="stat-label">Total Ikan</p>
+                            <p className="stat-value">{totals.ikan.toLocaleString('id-ID')}</p>
+                        </div>
+                        <div className="w-14 h-14 rounded-2xl bg-cyan-100 flex items-center justify-center text-cyan-600">
+                            <FishIcon />
+                        </div>
+                    </div>
                 </div>
+
                 <div className="stat-card">
-                    <p className="stat-label">Total Pakan</p>
-                    <p className="stat-value text-2xl">{totals.pakan}<span className="text-sm text-slate-400">kg</span></p>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="stat-label">Total Pakan</p>
+                            <p className="stat-value">{totals.pakan}<span className="text-sm font-normal text-slate-400"> kg</span></p>
+                        </div>
+                        <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600">
+                            <CalendarIcon />
+                        </div>
+                    </div>
                 </div>
+
                 <div className="stat-card">
-                    <p className="stat-label">{totals.actualRevenue > 0 ? 'Pendapatan' : 'Est. Omzet'}</p>
-                    <p className="stat-value text-xl text-green-600">
-                        Rp {((totals.actualRevenue > 0 ? totals.actualRevenue : totals.estimatedRevenue) / 1000000).toFixed(1)}jt
-                    </p>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="stat-label">{totals.actualRevenue > 0 ? 'Pendapatan' : 'Est. Omzet'}</p>
+                            <p className="stat-value text-green-600">
+                                {((totals.actualRevenue > 0 ? totals.actualRevenue : totals.estimatedRevenue) / 1000000).toFixed(1)}<span className="text-sm font-normal text-slate-400"> jt</span>
+                            </p>
+                        </div>
+                        <div className="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center text-green-600">
+                            <WalletIcon />
+                        </div>
+                    </div>
                 </div>
+
                 <div className="stat-card">
-                    <p className="stat-label">Total Modal</p>
-                    <p className="stat-value text-xl text-red-600">Rp {(totals.modal / 1000000).toFixed(2)}jt</p>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="stat-label">Total Modal</p>
+                            <p className="stat-value text-red-600">
+                                {(totals.modal / 1000000).toFixed(1)}<span className="text-sm font-normal text-slate-400"> jt</span>
+                            </p>
+                        </div>
+                        <div className="w-14 h-14 rounded-2xl bg-red-100 flex items-center justify-center text-red-600">
+                            <WalletIcon />
+                        </div>
+                    </div>
                 </div>
+
                 <div className="stat-card">
-                    <p className="stat-label">{totals.actualRevenue > 0 ? 'Profit' : 'Est. Profit'}</p>
-                    <p className={`stat-value text-xl ${totals.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        Rp {(totals.profit / 1000000).toFixed(1)}jt
-                    </p>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="stat-label">{totals.actualRevenue > 0 ? 'Profit' : 'Est. Profit'}</p>
+                            <p className={`stat-value ${totals.profit >= 0 ? 'text-teal-600' : 'text-red-600'}`}>
+                                {(totals.profit / 1000000).toFixed(1)}<span className="text-sm font-normal text-slate-400"> jt</span>
+                            </p>
+                        </div>
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${totals.profit >= 0 ? 'bg-teal-100 text-teal-600' : 'bg-red-100 text-red-600'}`}>
+                            <TrendingUpIcon />
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -249,13 +294,13 @@ export default function LaporanPage() {
             <div className="card p-6 mb-8">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold text-slate-900">💰 Rincian Modal / Pengeluaran</h2>
-                    <Link href="/pengeluaran" className="text-sm text-blue-600 hover:text-blue-700">
+                    <Link href="/pengeluaran" className="text-sm text-teal-600 hover:text-teal-700">
                         Kelola Pengeluaran →
                     </Link>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                    <div className="bg-blue-50 rounded-xl p-4">
-                        <p className="text-xs text-blue-600 font-medium">🐟 Bibit</p>
+                    <div className="bg-teal-50 rounded-xl p-4">
+                        <p className="text-xs text-teal-600 font-medium">🐟 Bibit</p>
                         <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.BIBIT.toLocaleString('id-ID')}</p>
                     </div>
                     <div className="bg-amber-50 rounded-xl p-4">
@@ -291,12 +336,11 @@ export default function LaporanPage() {
                     <h2 className="text-lg font-semibold text-slate-900">Laporan Per Kolam</h2>
                 </div>
                 {reportData.length === 0 ? (
-                    <div className="p-12 text-center">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center text-3xl">
-                            📊
-                        </div>
-                        <p className="text-slate-500">Belum ada data kolam</p>
-                    </div>
+                    <EmptyState
+                        title="Belum Ada Data Kolam"
+                        description="Belum ada data kolam yang tersedia untuk laporan"
+                        icon="📊"
+                    />
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="table">

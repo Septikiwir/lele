@@ -3,43 +3,8 @@
 import DashboardLayout from './components/layout/DashboardLayout';
 import Link from 'next/link';
 import { useApp } from './context/AppContext';
-
-// Icons
-const KolamIcon = () => (
-  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-  </svg>
-);
-
-const FishIcon = () => (
-  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-  </svg>
-);
-
-const FCRIcon = () => (
-  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-  </svg>
-);
-
-const CalendarIcon = () => (
-  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-  </svg>
-);
-
-const ArrowRightIcon = () => (
-  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-  </svg>
-);
-
-const WarningIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-  </svg>
-);
+import { WarningIcon, KolamIcon, FishIcon, FCRIcon, CalendarIcon, ArrowRightIcon } from './components/ui/Icons';
+import EmptyState from './components/ui/EmptyState';
 
 const statusColors = {
   aman: { bg: 'bg-green-100', text: 'text-green-700', dot: 'bg-green-500' },
@@ -116,7 +81,7 @@ export default function Home() {
               <p className="stat-label">Total Kolam</p>
               <p className="stat-value">{totalKolam}</p>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600">
+            <div className="w-14 h-14 rounded-2xl bg-teal-100 flex items-center justify-center text-teal-600">
               <KolamIcon />
             </div>
           </div>
@@ -165,18 +130,17 @@ export default function Home() {
         <div className="lg:col-span-2 xl:col-span-3 card p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-slate-900">Kolam Perlu Perhatian</h2>
-            <Link href="/kolam" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
+            <Link href="/kolam" className="text-sm text-teal-600 hover:text-teal-700 flex items-center gap-1">
               Lihat Semua <ArrowRightIcon />
             </Link>
           </div>
 
           {kolamPerhatian.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center text-3xl">
-                ✅
-              </div>
-              <p className="text-slate-500">Semua kolam dalam kondisi aman!</p>
-            </div>
+            <EmptyState
+              title="Semua Kolam Aman"
+              description="Tidak ada kolam yang memerlukan perhatian khusus saat ini"
+              icon="✅"
+            />
           ) : (
             <div className="space-y-3">
               {kolamPerhatian.map(k => {
@@ -219,14 +183,14 @@ export default function Home() {
         <div className="card p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-slate-900">Riwayat Pakan</h2>
-            <Link href="/pakan" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
+            <Link href="/pakan" className="text-sm text-teal-600 hover:text-teal-700 flex items-center gap-1">
               Lihat Semua <ArrowRightIcon />
             </Link>
           </div>
 
           {recentPakan.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-slate-500">Belum ada data pakan</p>
+            <div className="py-8">
+              <EmptyState title="Belum Ada Data" description="Belum ada pencatatan pakan" icon="🍚" />
             </div>
           ) : (
             <div className="space-y-4">
@@ -266,14 +230,16 @@ export default function Home() {
               </span>
             )}
           </div>
-          <Link href="/pakan" className="text-sm text-blue-600 hover:text-blue-700 flex items-center gap-1">
+          <Link href="/pakan" className="text-sm text-teal-600 hover:text-teal-700 flex items-center gap-1">
             Kelola Stok <ArrowRightIcon />
           </Link>
         </div>
         {stokPerJenis.length === 0 ? (
-          <div className="card p-6 text-center">
-            <p className="text-slate-500">Belum ada data stok pakan</p>
-          </div>
+          <EmptyState
+            title="Belum Ada Data Stok"
+            description="Data stok pakan belum tersedia"
+            icon="📦"
+          />
         ) : (
           <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
             {stokPerJenis.map(s => {
@@ -320,9 +286,9 @@ export default function Home() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Link
             href="/kolam/tambah"
-            className="card card-interactive p-4 text-center hover:border-blue-300"
+            className="card card-interactive p-4 text-center hover:border-teal-300"
           >
-            <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-blue-100 flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-xl bg-teal-100 flex items-center justify-center text-2xl">
               ➕
             </div>
             <p className="font-medium text-slate-900">Tambah Kolam</p>

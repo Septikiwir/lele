@@ -4,17 +4,9 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { useState } from 'react';
 import { useApp, KategoriPengeluaran } from '../context/AppContext';
 
-const PlusIcon = () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-    </svg>
-);
-
-const TrashIcon = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
-);
+import { PlusIcon, TrashIcon } from '../components/ui/Icons';
+import Modal from '../components/ui/Modal';
+import EmptyState from '../components/ui/EmptyState';
 
 const kategoriOptions: { value: KategoriPengeluaran; label: string; emoji: string }[] = [
     { value: 'BIBIT', label: 'Bibit / Benih', emoji: '🐟' },
@@ -26,7 +18,7 @@ const kategoriOptions: { value: KategoriPengeluaran; label: string; emoji: strin
 ];
 
 const kategoriColors: Record<KategoriPengeluaran, string> = {
-    BIBIT: 'bg-blue-100 text-blue-700',
+    BIBIT: 'bg-teal-100 text-teal-700',
     PAKAN: 'bg-amber-100 text-amber-700',
     OBAT: 'bg-purple-100 text-purple-700',
     LISTRIK: 'bg-yellow-100 text-yellow-700',
@@ -231,12 +223,11 @@ export default function PengeluaranPage() {
                     </select>
                 </div>
                 {filteredPengeluaran.length === 0 ? (
-                    <div className="p-12 text-center">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center text-3xl">
-                            💰
-                        </div>
-                        <p className="text-slate-500">Belum ada data pengeluaran</p>
-                    </div>
+                    <EmptyState
+                        title="Belum Ada Pengeluaran"
+                        description="Belum ada data pengeluaran yang tercatat."
+                        icon="💰"
+                    />
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="table">
@@ -285,120 +276,110 @@ export default function PengeluaranPage() {
             </div>
 
             {/* Form Modal */}
-            {
-                showForm && (
-                    <div className="modal-overlay" onClick={() => setShowForm(false)}>
-                        <div className="modal-content max-w-lg" onClick={e => e.stopPropagation()}>
-                            <h3 className="text-xl font-bold text-slate-900 mb-6">Tambah Pengeluaran</h3>
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
-                                        <select
-                                            value={formData.kolamId}
-                                            onChange={(e) => setFormData({ ...formData, kolamId: e.target.value })}
-                                            className="input"
-                                        >
-                                            <option value="">-- Pilih Kolam (Opsional) --</option>
-                                            {kolam.map(k => (
-                                                <option key={k.id} value={k.id}>{k.nama}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal</label>
-                                        <input
-                                            type="date"
-                                            value={formData.tanggal}
-                                            onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
-                                            className="input"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Kategori</label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {kategoriOptions.map(k => (
-                                            <button
-                                                key={k.value}
-                                                type="button"
-                                                onClick={() => setFormData({ ...formData, kategori: k.value })}
-                                                className={`p-3 rounded-xl border-2 text-center transition-all ${formData.kategori === k.value
-                                                    ? 'border-blue-500 bg-blue-50'
-                                                    : 'border-slate-200 hover:border-slate-300'
-                                                    }`}
-                                            >
-                                                <div className="text-xl mb-1">{k.emoji}</div>
-                                                <div className="text-xs font-medium">{k.label}</div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Keterangan</label>
-                                    <input
-                                        type="text"
-                                        value={formData.keterangan}
-                                        onChange={(e) => setFormData({ ...formData, keterangan: e.target.value })}
-                                        placeholder="Contoh: Bibit lele 5000 ekor @Rp100"
-                                        className="input"
-                                        required
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah (Rp)</label>
-                                    <input
-                                        type="number"
-                                        value={formData.jumlah}
-                                        onChange={(e) => setFormData({ ...formData, jumlah: e.target.value })}
-                                        placeholder="Contoh: 500000"
-                                        className="input"
-                                        min="0"
-                                        required
-                                    />
-                                </div>
-
-                                <div className="flex gap-3 pt-4">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowForm(false)}
-                                        className="flex-1 btn btn-secondary"
-                                    >
-                                        Batal
-                                    </button>
-                                    <button type="submit" className="flex-1 btn btn-primary">
-                                        Simpan
-                                    </button>
-                                </div>
-                            </form>
+            <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Tambah Pengeluaran">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
+                            <select
+                                value={formData.kolamId}
+                                onChange={(e) => setFormData({ ...formData, kolamId: e.target.value })}
+                                className="input"
+                            >
+                                <option value="">-- Pilih Kolam (Opsional) --</option>
+                                {kolam.map(k => (
+                                    <option key={k.id} value={k.id}>{k.nama}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal</label>
+                            <input
+                                type="date"
+                                value={formData.tanggal}
+                                onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
+                                className="input"
+                                required
+                            />
                         </div>
                     </div>
-                )
-            }
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Kategori</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            {kategoriOptions.map(k => (
+                                <button
+                                    key={k.value}
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, kategori: k.value })}
+                                    className={`p-3 rounded-xl border-2 text-center transition-all ${formData.kategori === k.value
+                                        ? 'border-teal-500 bg-teal-50'
+                                        : 'border-slate-200 hover:border-slate-300'
+                                        }`}
+                                >
+                                    <div className="text-xl mb-1">{k.emoji}</div>
+                                    <div className="text-xs font-medium">{k.label}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Keterangan</label>
+                        <input
+                            type="text"
+                            value={formData.keterangan}
+                            onChange={(e) => setFormData({ ...formData, keterangan: e.target.value })}
+                            placeholder="Contoh: Bibit lele 5000 ekor @Rp100"
+                            className="input"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah (Rp)</label>
+                        <input
+                            type="number"
+                            value={formData.jumlah}
+                            onChange={(e) => setFormData({ ...formData, jumlah: e.target.value })}
+                            placeholder="Contoh: 500000"
+                            className="input"
+                            min="0"
+                            required
+                        />
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setShowForm(false)}
+                            className="flex-1 btn btn-secondary"
+                        >
+                            Batal
+                        </button>
+                        <button type="submit" className="flex-1 btn btn-primary">
+                            Simpan
+                        </button>
+                    </div>
+                </form>
+            </Modal>
 
             {/* Delete Confirmation Modal */}
-            {
-                deleteModal && (
-                    <div className="modal-overlay" onClick={() => setDeleteModal(null)}>
-                        <div className="modal-content" onClick={e => e.stopPropagation()}>
-                            <h3 className="text-lg font-bold text-slate-900 mb-4">Hapus Pengeluaran?</h3>
-                            <p className="text-slate-600 mb-6">Data pengeluaran akan dihapus permanen.</p>
-                            <div className="flex gap-3">
-                                <button onClick={() => setDeleteModal(null)} className="flex-1 btn btn-secondary">
-                                    Batal
-                                </button>
-                                <button onClick={() => deleteModal && handleDelete(deleteModal)} className="flex-1 btn bg-red-600 text-white hover:bg-red-700">
-                                    Hapus
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
+            <Modal
+                isOpen={!!deleteModal}
+                onClose={() => setDeleteModal(null)}
+                title="Hapus Pengeluaran?"
+            >
+                <p className="text-slate-600 mb-6">Data pengeluaran akan dihapus permanen.</p>
+                <div className="flex gap-3">
+                    <button onClick={() => setDeleteModal(null)} className="flex-1 btn btn-secondary">
+                        Batal
+                    </button>
+                    <button onClick={() => deleteModal && handleDelete(deleteModal)} className="flex-1 btn bg-red-600 text-white hover:bg-red-700">
+                        Hapus
+                    </button>
+                </div>
+            </Modal>
         </DashboardLayout >
     );
 }

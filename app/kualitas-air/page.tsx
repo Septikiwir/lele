@@ -4,11 +4,9 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
-const PlusIcon = () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-    </svg>
-);
+import { PlusIcon } from '../components/ui/Icons';
+import Modal from '../components/ui/Modal';
+import EmptyState from '../components/ui/EmptyState';
 
 const warnaOptions = [
     { value: 'Hijau cerah', label: 'Hijau Cerah', status: 'good' },
@@ -132,14 +130,14 @@ export default function KualitasAirPage() {
 
             {/* Rekomendasi Alert */}
             {showRekomendasi && (
-                <div className="card mb-8 border-l-4 border-blue-500 overflow-hidden">
-                    <div className="bg-blue-50 p-4 border-b border-blue-100 flex justify-between items-center">
-                        <h3 className="font-bold text-blue-800 flex items-center gap-2">
+                <div className="card mb-8 border-l-4 border-teal-500 overflow-hidden">
+                    <div className="bg-teal-50 p-4 border-b border-teal-100 flex justify-between items-center">
+                        <h3 className="font-bold text-teal-800 flex items-center gap-2">
                             💡 Rekomendasi Tindakan
                         </h3>
                         <button
                             onClick={() => setShowRekomendasi(null)}
-                            className="text-blue-400 hover:text-blue-600 font-bold"
+                            className="text-teal-400 hover:text-teal-600 font-bold"
                         >
                             ✕
                         </button>
@@ -148,7 +146,7 @@ export default function KualitasAirPage() {
                         <ul className="space-y-3">
                             {showRekomendasi.map((r, i) => (
                                 <li key={i} className="flex items-start gap-3 text-slate-700">
-                                    <span className="mt-1 block w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></span>
+                                    <span className="mt-1 block w-2 h-2 rounded-full bg-teal-400 flex-shrink-0"></span>
                                     <span>{r}</span>
                                 </li>
                             ))}
@@ -207,12 +205,11 @@ export default function KualitasAirPage() {
                     <h2 className="text-lg font-semibold text-slate-900">Histori Kondisi Air</h2>
                 </div>
                 {kondisiAir.length === 0 ? (
-                    <div className="p-12 text-center">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-cyan-100 flex items-center justify-center text-3xl">
-                            💧
-                        </div>
-                        <p className="text-slate-500">Belum ada data kondisi air</p>
-                    </div>
+                    <EmptyState
+                        title="Belum Ada Data Kondisi Air"
+                        description="Mulai catat kondisi air untuk mendapatkan rekomendasi."
+                        icon="💧"
+                    />
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="table">
@@ -255,122 +252,117 @@ export default function KualitasAirPage() {
             </div>
 
             {/* Form Modal */}
-            {showForm && (
-                <div className="modal-overlay" onClick={() => setShowForm(false)}>
-                    <div className="modal-content max-w-lg" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-xl font-bold text-slate-900 mb-6">Input Kondisi Air</h3>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
-                                    <select
-                                        value={formData.kolamId}
-                                        onChange={(e) => setFormData({ ...formData, kolamId: e.target.value })}
-                                        className="input"
-                                        required
-                                    >
-                                        <option value="">-- Pilih --</option>
-                                        {kolam.map(k => (
-                                            <option key={k.id} value={k.id}>{k.nama}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal</label>
-                                    <input
-                                        type="date"
-                                        value={formData.tanggal}
-                                        onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
-                                        className="input"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Warna Air</label>
-                                    <select
-                                        value={formData.warna}
-                                        onChange={(e) => setFormData({ ...formData, warna: e.target.value })}
-                                        className="input"
-                                    >
-                                        {warnaOptions.map(w => (
-                                            <option key={w.value} value={w.value}>{w.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Bau</label>
-                                    <select
-                                        value={formData.bau}
-                                        onChange={(e) => setFormData({ ...formData, bau: e.target.value })}
-                                        className="input"
-                                    >
-                                        {bauOptions.map(b => (
-                                            <option key={b.value} value={b.value}>{b.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Ketinggian Air (m)</label>
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    min="0"
-                                    value={formData.ketinggian}
-                                    onChange={(e) => setFormData({ ...formData, ketinggian: e.target.value })}
-                                    placeholder="Contoh: 1.2"
-                                    className="input"
-                                    required
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">pH (opsional)</label>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        min="0"
-                                        max="14"
-                                        value={formData.ph}
-                                        onChange={(e) => setFormData({ ...formData, ph: e.target.value })}
-                                        placeholder="6.5 - 8.5"
-                                        className="input"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Suhu °C (opsional)</label>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        value={formData.suhu}
-                                        onChange={(e) => setFormData({ ...formData, suhu: e.target.value })}
-                                        placeholder="25-30"
-                                        className="input"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowForm(false)}
-                                    className="flex-1 btn btn-secondary"
-                                >
-                                    Batal
-                                </button>
-                                <button type="submit" className="flex-1 btn btn-primary">
-                                    Simpan & Lihat Rekomendasi
-                                </button>
-                            </div>
-                        </form>
+            <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Input Kondisi Air">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
+                            <select
+                                value={formData.kolamId}
+                                onChange={(e) => setFormData({ ...formData, kolamId: e.target.value })}
+                                className="input"
+                                required
+                            >
+                                <option value="">-- Pilih --</option>
+                                {kolam.map(k => (
+                                    <option key={k.id} value={k.id}>{k.nama}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal</label>
+                            <input
+                                type="date"
+                                value={formData.tanggal}
+                                onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
+                                className="input"
+                                required
+                            />
+                        </div>
                     </div>
-                </div>
-            )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Warna Air</label>
+                            <select
+                                value={formData.warna}
+                                onChange={(e) => setFormData({ ...formData, warna: e.target.value })}
+                                className="input"
+                            >
+                                {warnaOptions.map(w => (
+                                    <option key={w.value} value={w.value}>{w.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Bau</label>
+                            <select
+                                value={formData.bau}
+                                onChange={(e) => setFormData({ ...formData, bau: e.target.value })}
+                                className="input"
+                            >
+                                {bauOptions.map(b => (
+                                    <option key={b.value} value={b.value}>{b.label}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Ketinggian Air (m)</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            value={formData.ketinggian}
+                            onChange={(e) => setFormData({ ...formData, ketinggian: e.target.value })}
+                            placeholder="Contoh: 1.2"
+                            className="input"
+                            required
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">pH (opsional)</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="14"
+                                value={formData.ph}
+                                onChange={(e) => setFormData({ ...formData, ph: e.target.value })}
+                                placeholder="6.5 - 8.5"
+                                className="input"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Suhu °C (opsional)</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                value={formData.suhu}
+                                onChange={(e) => setFormData({ ...formData, suhu: e.target.value })}
+                                placeholder="25-30"
+                                className="input"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setShowForm(false)}
+                            className="flex-1 btn btn-secondary"
+                        >
+                            Batal
+                        </button>
+                        <button type="submit" className="flex-1 btn btn-primary">
+                            Simpan & Lihat Rekomendasi
+                        </button>
+                    </div>
+                </form>
+            </Modal>
         </DashboardLayout>
     );
 }

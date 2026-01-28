@@ -4,29 +4,9 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { useState, useEffect } from 'react';
 import { useApp, JadwalPakan } from '../context/AppContext';
 
-const PlusIcon = () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-    </svg>
-);
-
-const TrashIcon = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-    </svg>
-);
-
-const WarningIcon = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-    </svg>
-);
-
-const ClockIcon = () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-);
+import { PlusIcon, TrashIcon, WarningIcon, ClockIcon } from '../components/ui/Icons';
+import Modal from '../components/ui/Modal';
+import EmptyState from '../components/ui/EmptyState';
 
 export default function PakanPage() {
     const {
@@ -196,13 +176,13 @@ export default function PakanPage() {
 
             {/* Next Feeding Reminder Banner */}
             {nextFeeding && activeTab === 'jadwal' && (
-                <div className="mb-8 p-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl text-white shadow-lg shadow-blue-200">
+                <div className="mb-8 p-6 bg-gradient-to-r from-teal-500 to-cyan-600 rounded-2xl text-white shadow-lg shadow-teal-200">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center animate-pulse">
                             <ClockIcon />
                         </div>
                         <div>
-                            <p className="text-blue-100 font-medium text-sm uppercase tracking-wider">Jadwal Selanjutnya</p>
+                            <p className="text-teal-100 font-medium text-sm uppercase tracking-wider">Jadwal Selanjutnya</p>
                             <h2 className="text-2xl font-bold mt-1">
                                 Pukul {nextFeeding.waktu} • {nextKolam?.nama}
                             </h2>
@@ -219,7 +199,7 @@ export default function PakanPage() {
                 <button
                     onClick={() => setActiveTab('jadwal')}
                     className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 ${activeTab === 'jadwal'
-                        ? 'border-blue-600 text-blue-600'
+                        ? 'border-teal-600 text-teal-600'
                         : 'border-transparent text-slate-500 hover:text-slate-700'
                         }`}
                 >
@@ -228,7 +208,7 @@ export default function PakanPage() {
                 <button
                     onClick={() => setActiveTab('riwayat')}
                     className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 ${activeTab === 'riwayat'
-                        ? 'border-blue-600 text-blue-600'
+                        ? 'border-teal-600 text-teal-600'
                         : 'border-transparent text-slate-500 hover:text-slate-700'
                         }`}
                 >
@@ -237,7 +217,7 @@ export default function PakanPage() {
                 <button
                     onClick={() => setActiveTab('stok')}
                     className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 ${activeTab === 'stok'
-                        ? 'border-blue-600 text-blue-600'
+                        ? 'border-teal-600 text-teal-600'
                         : 'border-transparent text-slate-500 hover:text-slate-700'
                         }`}
                 >
@@ -259,9 +239,9 @@ export default function PakanPage() {
                         {sortedJadwal.map(jadwal => {
                             const k = kolam.find(item => item.id === jadwal.kolamId);
                             return (
-                                <div key={jadwal.id} className={`card p-4 border-l-4 ${jadwal.aktif ? 'border-l-blue-500' : 'border-l-slate-300 opacity-75'}`}>
+                                <div key={jadwal.id} className={`card p-4 border-l-4 ${jadwal.aktif ? 'border-l-teal-500' : 'border-l-slate-300 opacity-75'}`}>
                                     <div className="flex justify-between items-start mb-2">
-                                        <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-lg font-bold text-lg">
+                                        <div className="bg-teal-50 text-teal-700 px-3 py-1 rounded-lg font-bold text-lg">
                                             {jadwal.waktu}
                                         </div>
                                         <div className="flex gap-2">
@@ -272,7 +252,7 @@ export default function PakanPage() {
                                                     checked={jadwal.aktif}
                                                     onChange={() => toggleJadwalAktif(jadwal.id, jadwal.aktif)}
                                                 />
-                                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+                                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-600"></div>
                                             </label>
                                             <button
                                                 onClick={() => setDeleteModal({ type: 'jadwal', id: jadwal.id })}
@@ -297,7 +277,8 @@ export default function PakanPage() {
             {/* Content: Riwayat */}
             {activeTab === 'riwayat' && (
                 <>
-                    <div className="flex justify-end mb-6">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-lg font-semibold text-slate-900">Riwayat Pemberian Pakan</h2>
                         <button onClick={() => setShowForm(true)} className="btn btn-primary">
                             <PlusIcon /> Catat Pemberian
                         </button>
@@ -318,8 +299,12 @@ export default function PakanPage() {
                                 <tbody>
                                     {pakan.length === 0 ? (
                                         <tr>
-                                            <td colSpan={5} className="text-center py-8 text-slate-500">
-                                                Belum ada data pemberian pakan
+                                            <td colSpan={5} className="p-0">
+                                                <EmptyState
+                                                    title="Belum Ada Riwayat"
+                                                    description="Belum ada data pemberian pakan yang tercatat"
+                                                    icon="📝"
+                                                />
                                             </td>
                                         </tr>
                                     ) : (
@@ -353,13 +338,14 @@ export default function PakanPage() {
             {/* Content: Stok Pakan */}
             {activeTab === 'stok' && (
                 <>
-                    <div className="flex justify-end mb-6">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-lg font-semibold text-slate-900">Pakan Tersedia</h2>
                         <button onClick={() => setShowStokForm(true)} className="btn btn-primary">
                             <PlusIcon /> Tambah Stok
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {allJenisPakan.map(jenis => {
                             const tersedia = getStokTersediaByJenis(jenis);
                             const isLow = tersedia <= 10;
@@ -382,7 +368,7 @@ export default function PakanPage() {
                         })}
                     </div>
 
-                    <div className="card overflow-hidden">
+                    <div className="card overflow-hidden mt-8">
                         <div className="p-4 border-b">
                             <h3 className="font-semibold text-slate-900">Riwayat Penambahan Stok</h3>
                         </div>
@@ -426,281 +412,264 @@ export default function PakanPage() {
             )}
 
             {/* Modal - Tambah Pemberian Pakan */}
-            {showForm && (
-                <div className="modal-overlay" onClick={() => setShowForm(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-xl font-bold text-slate-900 mb-6">Catat Pemberian Pakan</h3>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
-                                <select
-                                    value={formData.kolamId}
-                                    onChange={(e) => setFormData({ ...formData, kolamId: e.target.value })}
-                                    className="input"
-                                    required
-                                >
-                                    <option value="">-- Pilih Kolam --</option>
-                                    {kolam.map(k => (
-                                        <option key={k.id} value={k.id}>{k.nama} ({k.jumlahIkan} ekor)</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal</label>
-                                <input
-                                    type="date"
-                                    value={formData.tanggal}
-                                    onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
-                                    className="input"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Jenis Pakan</label>
-                                <select
-                                    value={formData.jenisPakan}
-                                    onChange={(e) => setFormData({ ...formData, jenisPakan: e.target.value })}
-                                    className="input"
-                                >
-                                    {allJenisPakan.length > 0 ? (
-                                        allJenisPakan.map(jenis => (
-                                            <option key={jenis} value={jenis}>{jenis}</option>
-                                        ))
-                                    ) : (
-                                        <option value="Pelet Hi-Pro">Pelet Hi-Pro</option>
-                                    )}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah (kg)</label>
-                                <input
-                                    type="number"
-                                    step="0.1"
-                                    value={formData.jumlahKg}
-                                    onChange={(e) => setFormData({ ...formData, jumlahKg: e.target.value })}
-                                    placeholder="Contoh: 2.5"
-                                    className="input"
-                                    required
-                                />
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowForm(false)}
-                                    className="flex-1 btn btn-secondary"
-                                >
-                                    Batal
-                                </button>
-                                <button type="submit" className="flex-1 btn btn-primary">
-                                    Simpan
-                                </button>
-                            </div>
-                        </form>
+            <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="catat Pemberian Pakan">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
+                        <select
+                            value={formData.kolamId}
+                            onChange={(e) => setFormData({ ...formData, kolamId: e.target.value })}
+                            className="input"
+                            required
+                        >
+                            <option value="">-- Pilih Kolam --</option>
+                            {kolam.map(k => (
+                                <option key={k.id} value={k.id}>{k.nama} ({k.jumlahIkan} ekor)</option>
+                            ))}
+                        </select>
                     </div>
-                </div>
-            )}
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal</label>
+                        <input
+                            type="date"
+                            value={formData.tanggal}
+                            onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
+                            className="input"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Jenis Pakan</label>
+                        <select
+                            value={formData.jenisPakan}
+                            onChange={(e) => setFormData({ ...formData, jenisPakan: e.target.value })}
+                            className="input"
+                        >
+                            {allJenisPakan.length > 0 ? (
+                                allJenisPakan.map(jenis => (
+                                    <option key={jenis} value={jenis}>{jenis}</option>
+                                ))
+                            ) : (
+                                <option value="Pelet Hi-Pro">Pelet Hi-Pro</option>
+                            )}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah (kg)</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            value={formData.jumlahKg}
+                            onChange={(e) => setFormData({ ...formData, jumlahKg: e.target.value })}
+                            placeholder="Contoh: 2.5"
+                            className="input"
+                            required
+                        />
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setShowForm(false)}
+                            className="flex-1 btn btn-secondary"
+                        >
+                            Batal
+                        </button>
+                        <button type="submit" className="flex-1 btn btn-primary">
+                            Simpan
+                        </button>
+                    </div>
+                </form>
+            </Modal>
 
             {/* Modal - Tambah Stok */}
-            {showStokForm && (
-                <div className="modal-overlay" onClick={() => setShowStokForm(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-xl font-bold text-slate-900 mb-6">Tambah Stok Pakan</h3>
-                        <form onSubmit={handleStokSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Jenis Pakan</label>
-                                <div className="space-y-2">
-                                    <input
-                                        type="text"
-                                        list="jenisPakanList"
-                                        value={stokFormData.jenisPakan}
-                                        onChange={(e) => setStokFormData({ ...stokFormData, jenisPakan: e.target.value })}
-                                        className="input"
-                                        placeholder="Pilih atau ketik baru..."
-                                        required
-                                    />
-                                    <datalist id="jenisPakanList">
-                                        {allJenisPakan.map(jenis => (
-                                            <option key={jenis} value={jenis} />
-                                        ))}
-                                    </datalist>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah Beli (kg)</label>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        value={stokFormData.stokAwal}
-                                        onChange={(e) => setStokFormData({ ...stokFormData, stokAwal: e.target.value })}
-                                        placeholder="Contoh: 50"
-                                        className="input"
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Harga per kg</label>
-                                    <input
-                                        type="number"
-                                        value={stokFormData.hargaPerKg}
-                                        onChange={(e) => setStokFormData({ ...stokFormData, hargaPerKg: e.target.value })}
-                                        placeholder="Contoh: 12000"
-                                        className="input"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal Beli</label>
-                                <input
-                                    type="date"
-                                    value={stokFormData.tanggalTambah}
-                                    onChange={(e) => setStokFormData({ ...stokFormData, tanggalTambah: e.target.value })}
-                                    className="input"
-                                    required
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Keterangan (opsional)</label>
-                                <input
-                                    type="text"
-                                    value={stokFormData.keterangan}
-                                    onChange={(e) => setStokFormData({ ...stokFormData, keterangan: e.target.value })}
-                                    placeholder="Contoh: Beli di toko tani"
-                                    className="input"
-                                />
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowStokForm(false)}
-                                    className="flex-1 btn btn-secondary"
-                                >
-                                    Batal
-                                </button>
-                                <button type="submit" className="flex-1 btn btn-primary">
-                                    Simpan Stok
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal - Tambah Jadwal */}
-            {showJadwalForm && (
-                <div className="modal-overlay" onClick={() => setShowJadwalForm(false)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-xl font-bold text-slate-900 mb-6">Tambah Jadwal Pakan</h3>
-                        <form onSubmit={handleJadwalSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
-                                <select
-                                    value={jadwalForm.kolamId}
-                                    onChange={(e) => setJadwalForm({ ...jadwalForm, kolamId: e.target.value })}
-                                    className="input"
-                                    required
-                                >
-                                    <option value="">-- Pilih Kolam --</option>
-                                    {kolam.map(k => (
-                                        <option key={k.id} value={k.id}>{k.nama}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Jam</label>
-                                <input
-                                    type="time"
-                                    value={jadwalForm.waktu}
-                                    onChange={(e) => setJadwalForm({ ...jadwalForm, waktu: e.target.value })}
-                                    className="input"
-                                    required
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Jenis Pakan</label>
-                                    <select
-                                        value={jadwalForm.jenisPakan}
-                                        onChange={(e) => setJadwalForm({ ...jadwalForm, jenisPakan: e.target.value })}
-                                        className="input"
-                                    >
-                                        {allJenisPakan.map(jenis => (
-                                            <option key={jenis} value={jenis}>{jenis}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Dosis (kg)</label>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        value={jadwalForm.jumlahKg}
-                                        onChange={(e) => setJadwalForm({ ...jadwalForm, jumlahKg: e.target.value })}
-                                        className="input"
-                                        placeholder="Contoh: 3"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Keterangan (opsional)</label>
-                                <input
-                                    type="text"
-                                    value={jadwalForm.keterangan}
-                                    onChange={(e) => setJadwalForm({ ...jadwalForm, keterangan: e.target.value })}
-                                    placeholder="Contoh: Pakan pagi"
-                                    className="input"
-                                />
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowJadwalForm(false)}
-                                    className="flex-1 btn btn-secondary"
-                                >
-                                    Batal
-                                </button>
-                                <button type="submit" className="flex-1 btn btn-primary">
-                                    Simpan Jadwal
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Delete Confirmation Modal */}
-            {deleteModal && (
-                <div className="modal-overlay" onClick={() => setDeleteModal(null)}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-lg font-bold text-slate-900 mb-4">
-                            Hapus {deleteModal.type === 'stok' ? 'Stok' : 'Jadwal'}?
-                        </h3>
-                        <p className="text-slate-600 mb-6">Data yang dihapus tidak dapat dikembalikan.</p>
-                        <div className="flex gap-3">
-                            <button onClick={() => setDeleteModal(null)} className="flex-1 btn btn-secondary">
-                                Batal
-                            </button>
-                            <button onClick={handleDelete} className="flex-1 btn bg-red-600 text-white hover:bg-red-700">
-                                Hapus
-                            </button>
+            <Modal isOpen={showStokForm} onClose={() => setShowStokForm(false)} title="Tambah Stok Pakan">
+                <form onSubmit={handleStokSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Jenis Pakan</label>
+                        <div className="space-y-2">
+                            <input
+                                type="text"
+                                list="jenisPakanList"
+                                value={stokFormData.jenisPakan}
+                                onChange={(e) => setStokFormData({ ...stokFormData, jenisPakan: e.target.value })}
+                                className="input"
+                                placeholder="Pilih atau ketik baru..."
+                                required
+                            />
+                            <datalist id="jenisPakanList">
+                                {allJenisPakan.map(jenis => (
+                                    <option key={jenis} value={jenis} />
+                                ))}
+                            </datalist>
                         </div>
                     </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah Beli (kg)</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                value={stokFormData.stokAwal}
+                                onChange={(e) => setStokFormData({ ...stokFormData, stokAwal: e.target.value })}
+                                placeholder="Contoh: 50"
+                                className="input"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Harga per kg</label>
+                            <input
+                                type="number"
+                                value={stokFormData.hargaPerKg}
+                                onChange={(e) => setStokFormData({ ...stokFormData, hargaPerKg: e.target.value })}
+                                placeholder="Contoh: 12000"
+                                className="input"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal Beli</label>
+                        <input
+                            type="date"
+                            value={stokFormData.tanggalTambah}
+                            onChange={(e) => setStokFormData({ ...stokFormData, tanggalTambah: e.target.value })}
+                            className="input"
+                            required
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Keterangan (opsional)</label>
+                        <input
+                            type="text"
+                            value={stokFormData.keterangan}
+                            onChange={(e) => setStokFormData({ ...stokFormData, keterangan: e.target.value })}
+                            placeholder="Contoh: Beli di toko tani"
+                            className="input"
+                        />
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setShowStokForm(false)}
+                            className="flex-1 btn btn-secondary"
+                        >
+                            Batal
+                        </button>
+                        <button type="submit" className="flex-1 btn btn-primary">
+                            Simpan Stok
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Modal - Tambah Jadwal */}
+            <Modal isOpen={showJadwalForm} onClose={() => setShowJadwalForm(false)} title="Tambah Jadwal Pakan">
+                <form onSubmit={handleJadwalSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
+                        <select
+                            value={jadwalForm.kolamId}
+                            onChange={(e) => setJadwalForm({ ...jadwalForm, kolamId: e.target.value })}
+                            className="input"
+                            required
+                        >
+                            <option value="">-- Pilih Kolam --</option>
+                            {kolam.map(k => (
+                                <option key={k.id} value={k.id}>{k.nama}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Jam</label>
+                        <input
+                            type="time"
+                            value={jadwalForm.waktu}
+                            onChange={(e) => setJadwalForm({ ...jadwalForm, waktu: e.target.value })}
+                            className="input"
+                            required
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Jenis Pakan</label>
+                            <select
+                                value={jadwalForm.jenisPakan}
+                                onChange={(e) => setJadwalForm({ ...jadwalForm, jenisPakan: e.target.value })}
+                                className="input"
+                            >
+                                {allJenisPakan.map(jenis => (
+                                    <option key={jenis} value={jenis}>{jenis}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Dosis (kg)</label>
+                            <input
+                                type="number"
+                                step="0.1"
+                                value={jadwalForm.jumlahKg}
+                                onChange={(e) => setJadwalForm({ ...jadwalForm, jumlahKg: e.target.value })}
+                                className="input"
+                                placeholder="Contoh: 3"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Keterangan (opsional)</label>
+                        <input
+                            type="text"
+                            value={jadwalForm.keterangan}
+                            onChange={(e) => setJadwalForm({ ...jadwalForm, keterangan: e.target.value })}
+                            placeholder="Contoh: Pakan pagi"
+                            className="input"
+                        />
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setShowJadwalForm(false)}
+                            className="flex-1 btn btn-secondary"
+                        >
+                            Batal
+                        </button>
+                        <button type="submit" className="flex-1 btn btn-primary">
+                            Simpan Jadwal
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Delete Confirmation Modal */}
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={!!deleteModal}
+                onClose={() => setDeleteModal(null)}
+                title={`Hapus ${deleteModal?.type === 'stok' ? 'Stok' : 'Jadwal'}?`}
+            >
+                <p className="text-slate-600 mb-6">Data yang dihapus tidak dapat dikembalikan.</p>
+                <div className="flex gap-3">
+                    <button onClick={() => setDeleteModal(null)} className="flex-1 btn btn-secondary">
+                        Batal
+                    </button>
+                    <button onClick={handleDelete} className="flex-1 btn bg-red-600 text-white hover:bg-red-700">
+                        Hapus
+                    </button>
                 </div>
-            )}
+            </Modal>
         </DashboardLayout>
     );
 }

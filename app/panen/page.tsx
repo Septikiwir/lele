@@ -4,6 +4,9 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { RiwayatPanen } from '../context/AppContext';
+import Modal from '../components/ui/Modal';
+import { PlusIcon } from '../components/ui/Icons';
+import EmptyState from '../components/ui/EmptyState';
 
 export default function PanenPage() {
     const { kolam, pakan, riwayatPanen, addRiwayatPanen, getPanenByKolam } = useApp();
@@ -188,7 +191,7 @@ export default function PanenPage() {
                                     <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50">
                                         <td className="px-4 py-3 font-medium">{p.tanggal}</td>
                                         <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${p.tipe === 'TOTAL' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'
+                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${p.tipe === 'TOTAL' ? 'bg-red-100 text-red-700' : 'bg-teal-100 text-teal-700'
                                                 }`}>{(p.tipe || 'PARSIAL').toUpperCase()}</span>
                                         </td>
                                         <td className="px-4 py-3">{p.beratTotalKg} kg</td>
@@ -219,7 +222,7 @@ export default function PanenPage() {
                                 </div>
                                 <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all"
+                                        className="h-full bg-gradient-to-r from-teal-500 to-cyan-400 rounded-full transition-all"
                                         style={{ width: `${estimation.progress}%` }}
                                     />
                                 </div>
@@ -271,7 +274,7 @@ export default function PanenPage() {
                                         - Rp {estimation.feedCost.toLocaleString('id-ID')}
                                     </span>
                                 </div>
-                                <div className="flex justify-between py-3 bg-blue-50 -mx-6 px-6 rounded-lg">
+                                <div className="flex justify-between py-3 bg-teal-50 -mx-6 px-6 rounded-lg">
                                     <span className="font-semibold text-slate-900">Est. Profit</span>
                                     <span className={`font-bold text-xl ${estimation.estimatedProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                         Rp {estimation.estimatedProfit.toLocaleString('id-ID')}
@@ -284,131 +287,120 @@ export default function PanenPage() {
             )}
 
             {!selectedKolam && (
-                <div className="card p-12 text-center mb-8">
-                    <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-purple-100 flex items-center justify-center text-4xl">
-                        🐟
-                    </div>
-                    <h3 className="text-xl font-semibold text-slate-900 mb-2">Pilih Kolam</h3>
-                    <p className="text-slate-500">Pilih kolam di atas untuk melihat prediksi panen</p>
-                </div>
+                <EmptyState
+                    title="Pilih Kolam"
+                    description="Pilih kolam di atas untuk melihat prediksi dan riwayat panen"
+                    icon="🐟"
+                />
             )}
 
             {/* Modal Catat Panen */}
-            {isPanenModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                            <h3 className="font-bold text-lg text-slate-800">Catat Panen Baru</h3>
-                            <button onClick={() => setIsPanenModalOpen(false)} className="text-slate-400 hover:text-slate-600">✕</button>
-                        </div>
-
-                        <form onSubmit={handlePanenSubmit} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Kolam</label>
-                                <select
-                                    className="input w-full"
-                                    value={panenForm.kolamId}
-                                    onChange={(e) => setPanenForm({ ...panenForm, kolamId: e.target.value })}
-                                    required
-                                >
-                                    <option value="">-- Pilih Kolam --</option>
-                                    {kolam.map(k => <option key={k.id} value={k.id}>{k.nama}</option>)}
-                                </select>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal</label>
-                                    <input
-                                        type="date"
-                                        className="input w-full"
-                                        value={panenForm.tanggal}
-                                        onChange={(e) => setPanenForm({ ...panenForm, tanggal: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Tipe Panen</label>
-                                    <select
-                                        className="input w-full"
-                                        value={panenForm.tipe}
-                                        onChange={(e) => setPanenForm({ ...panenForm, tipe: e.target.value as any })}
-                                    >
-                                        <option value="PARSIAL">Parsial (Bertahap)</option>
-                                        <option value="TOTAL">Total (Panen Raya)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Berat Total (kg)</label>
-                                    <input
-                                        type="number"
-                                        className="input w-full"
-                                        placeholder="0"
-                                        value={panenForm.beratTotalKg}
-                                        onChange={(e) => setPanenForm({ ...panenForm, beratTotalKg: e.target.value })}
-                                        required
-                                        min="0"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Jumlah Ikan (Ekor)</label>
-                                    <input
-                                        type="number"
-                                        className="input w-full"
-                                        placeholder="0"
-                                        value={panenForm.jumlahEkor}
-                                        onChange={(e) => setPanenForm({ ...panenForm, jumlahEkor: e.target.value })}
-                                        required
-                                        min="0"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Harga Jual (Rp/kg)</label>
-                                <input
-                                    type="number"
-                                    className="input w-full"
-                                    value={panenForm.hargaPerKg}
-                                    onChange={(e) => setPanenForm({ ...panenForm, hargaPerKg: e.target.value })}
-                                    required
-                                    min="0"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Catatan</label>
-                                <textarea
-                                    className="input w-full"
-                                    rows={2}
-                                    value={panenForm.catatan}
-                                    onChange={(e) => setPanenForm({ ...panenForm, catatan: e.target.value })}
-                                    placeholder="Contoh: Sortir ukuran konsumsi..."
-                                />
-                            </div>
-
-                            <div className="pt-4 flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsPanenModalOpen(false)}
-                                    className="btn-secondary flex-1"
-                                >
-                                    Batal
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="btn-primary flex-1 bg-emerald-600 hover:bg-emerald-700"
-                                >
-                                    Simpan Panen
-                                </button>
-                            </div>
-                        </form>
+            <Modal isOpen={isPanenModalOpen} onClose={() => setIsPanenModalOpen(false)} title="Catat Panen Baru">
+                <form onSubmit={handlePanenSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Kolam</label>
+                        <select
+                            className="input w-full"
+                            value={panenForm.kolamId}
+                            onChange={(e) => setPanenForm({ ...panenForm, kolamId: e.target.value })}
+                            required
+                        >
+                            <option value="">-- Pilih Kolam --</option>
+                            {kolam.map(k => <option key={k.id} value={k.id}>{k.nama}</option>)}
+                        </select>
                     </div>
-                </div>
-            )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal</label>
+                            <input
+                                type="date"
+                                className="input w-full"
+                                value={panenForm.tanggal}
+                                onChange={(e) => setPanenForm({ ...panenForm, tanggal: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Tipe Panen</label>
+                            <select
+                                className="input w-full"
+                                value={panenForm.tipe}
+                                onChange={(e) => setPanenForm({ ...panenForm, tipe: e.target.value as any })}
+                            >
+                                <option value="PARSIAL">Parsial (Bertahap)</option>
+                                <option value="TOTAL">Total (Panen Raya)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Berat Total (kg)</label>
+                            <input
+                                type="number"
+                                className="input w-full"
+                                placeholder="0"
+                                value={panenForm.beratTotalKg}
+                                onChange={(e) => setPanenForm({ ...panenForm, beratTotalKg: e.target.value })}
+                                required
+                                min="0"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Jumlah Ikan (Ekor)</label>
+                            <input
+                                type="number"
+                                className="input w-full"
+                                placeholder="0"
+                                value={panenForm.jumlahEkor}
+                                onChange={(e) => setPanenForm({ ...panenForm, jumlahEkor: e.target.value })}
+                                required
+                                min="0"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Harga Jual (Rp/kg)</label>
+                        <input
+                            type="number"
+                            className="input w-full"
+                            value={panenForm.hargaPerKg}
+                            onChange={(e) => setPanenForm({ ...panenForm, hargaPerKg: e.target.value })}
+                            required
+                            min="0"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Catatan</label>
+                        <textarea
+                            className="input w-full"
+                            rows={2}
+                            value={panenForm.catatan}
+                            onChange={(e) => setPanenForm({ ...panenForm, catatan: e.target.value })}
+                            placeholder="Contoh: Sortir ukuran konsumsi..."
+                        />
+                    </div>
+
+                    <div className="pt-4 flex gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setIsPanenModalOpen(false)}
+                            className="btn-secondary flex-1"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="submit"
+                            className="btn-primary flex-1 bg-emerald-600 hover:bg-emerald-700"
+                        >
+                            Simpan Panen
+                        </button>
+                    </div>
+                </form>
+            </Modal>
         </DashboardLayout>
     );
 }
