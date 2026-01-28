@@ -5,6 +5,9 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import Link from 'next/link';
 import { useApp } from '../../context/AppContext';
 import { notFound } from 'next/navigation';
+import Modal from '../../components/ui/Modal';
+import { EditIcon } from '../../components/ui/Icons';
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 
 const ArrowLeftIcon = () => (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,13 +54,48 @@ const rekomendasi = {
 
 export default function KolamDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = use(params);
-    const { getKolamById, calculateKepadatan, getPakanByKolam, getKondisiAirByKolam } = useApp();
+    const { getKolamById, calculateKepadatan, getPakanByKolam, getKondisiAirByKolam, addRiwayatIkan, getRiwayatIkanByKolam } = useApp();
     const kolam = getKolamById(resolvedParams.id);
 
     const [hoveredCell, setHoveredCell] = useState<GridCell | null>(null);
     const [pinnedCells, setPinnedCells] = useState<GridCell[]>([]);
     const [gridScale, setGridScale] = useState<number>(1);
     const [showTooltip, setShowTooltip] = useState<{ x: number; y: number } | null>(null);
+
+    // Edit Fish Count State
+    const [isEditFishOpen, setIsEditFishOpen] = useState(false);
+    const [editFishCount, setEditFishCount] = useState('');
+    const [editReason, setEditReason] = useState('Koreksi / Hitung Ulang');
+    // const { updateKolam } = useApp(); // Not used anymore
+
+    const handleUpdateFish = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!kolam) return;
+
+        try {
+            const newCount = parseInt(parseCurrencyInput(editFishCount));
+            if (!isNaN(newCount) && newCount >= 0) {
+                const currentCount = kolam.jumlahIkan;
+                const delta = newCount - currentCount;
+
+                if (delta === 0) {
+                    setIsEditFishOpen(false);
+                    return;
+                }
+
+                await addRiwayatIkan({
+                    kolamId: kolam.id,
+                    tanggal: new Date().toISOString(),
+                    jumlahPerubahan: delta,
+                    keterangan: editReason
+                });
+                setIsEditFishOpen(false);
+            }
+        } catch (error) {
+            console.error("Failed to update fish count:", error);
+            alert("Gagal mengupdate jumlah ikan. Silakan coba lagi atau restart server jika baru saja ada update.");
+        }
+    };
 
     if (!kolam) {
         notFound();
@@ -68,6 +106,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
     const luas = kolam.panjang * kolam.lebar;
     const pakan = getPakanByKolam(kolam.id);
     const kondisiAir = getKondisiAirByKolam(kolam.id);
+    const riwayatIkan = getRiwayatIkanByKolam(kolam.id);
 
     // Generate grid cells
     const cols = Math.ceil(kolam.panjang / gridScale);
@@ -132,7 +171,17 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                     <p className="stat-label">Volume</p>
                     <p className="stat-value">{volume.toFixed(1)}<span className="text-lg text-slate-400"> m³</span></p>
                 </div>
-                <div className="stat-card">
+                <div className="stat-card relative group">
+                    <button
+                        onClick={() => {
+                            setEditFishCount(kolam.jumlahIkan.toString());
+                            setIsEditFishOpen(true);
+                        }}
+                        className="absolute top-2 right-2 p-1 text-slate-400 hover:text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Edit Jumlah Ikan"
+                    >
+                        <EditIcon />
+                    </button>
                     <p className="stat-label">Jumlah Ikan</p>
                     <p className="stat-value">{kolam.jumlahIkan.toLocaleString('id-ID')}</p>
                 </div>
@@ -359,8 +408,86 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                             Cek Kualitas Air →
                         </Link>
                     </div>
+
+                    {/* Riwayat Jumlah Ikan */}
+                    <div className="card p-4">
+                        <h3 className="font-semibold text-slate-900 mb-3">Riwayat Jumlah Ikan</h3>
+                        {riwayatIkan.length === 0 ? (
+                            <p className="text-sm text-slate-500">Belum ada riwayat perubahan</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {riwayatIkan.slice(0, 5).map(r => (
+                                    <div key={r.id} className="text-sm border-b border-slate-100 last:border-0 pb-2 last:pb-0">
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-slate-500">{new Date(r.tanggal).toLocaleDateString('id-ID')}</span>
+                                            <span className={`font-semibold ${r.jumlahPerubahan > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                                {r.jumlahPerubahan > 0 ? '+' : ''}{r.jumlahPerubahan.toLocaleString('id-ID')}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-slate-700 bg-slate-100 px-2 py-0.5 rounded text-xs">{r.keterangan}</span>
+                                            <span className="text-slate-400 text-xs">Total: {r.jumlahAkhir.toLocaleString('id-ID')}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
+            {/* Edit Fish Modal */}
+            <Modal
+                isOpen={isEditFishOpen}
+                onClose={() => setIsEditFishOpen(false)}
+                title="Update Jumlah Ikan"
+            >
+                <form onSubmit={handleUpdateFish} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah Ikan Saat Ini</label>
+                        <input
+                            type="text"
+                            value={formatCurrencyInput(editFishCount)}
+                            onChange={(e) => setEditFishCount(parseCurrencyInput(e.target.value))}
+                            className="input border-slate-300"
+                            placeholder="Contoh: 5.000"
+                            required
+                        />
+                        <p className="text-xs text-slate-500 mt-2">
+                            Masukkan jumlah ikan terbaru (misal setelah ada kematian atau penambahan).
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Alasan Perubahan</label>
+                        <select
+                            value={editReason}
+                            onChange={(e) => setEditReason(e.target.value)}
+                            className="input w-full"
+                        >
+                            <option value="Koreksi / Hitung Ulang">Koreksi / Hitung Ulang</option>
+                            <option value="Kematian">Kematian</option>
+                            <option value="Bibit Baru">Bibit Baru</option>
+                            <option value="Pindah Kolam">Pindah Kolam</option>
+                            <option value="Panen Parsial">Panen Parsial</option>
+                        </select>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                        <button
+                            type="button"
+                            onClick={() => setIsEditFishOpen(false)}
+                            className="btn btn-secondary flex-1"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="submit"
+                            className="btn btn-primary flex-1"
+                        >
+                            Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </Modal>
         </DashboardLayout >
     );
 }

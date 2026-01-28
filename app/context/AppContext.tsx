@@ -105,6 +105,15 @@ export interface RiwayatPanen {
     catatan?: string;
 }
 
+export interface RiwayatIkan {
+    id: string;
+    kolamId: string;
+    tanggal: string;
+    jumlahPerubahan: number;
+    jumlahAkhir: number;
+    keterangan: string;
+}
+
 // Context Type
 interface AppContextType {
     // Data
@@ -117,6 +126,7 @@ interface AppContextType {
     penjualan: Penjualan[];
     jadwalPakan: JadwalPakan[];
     riwayatPanen: RiwayatPanen[];
+    riwayatIkan: RiwayatIkan[];
 
     // Farm
     activeFarmId: string | null;
@@ -159,6 +169,10 @@ interface AppContextType {
     addRiwayatPanen: (panen: Omit<RiwayatPanen, 'id'>) => Promise<void>;
     deleteRiwayatPanen: (id: string) => void;
     getPanenByKolam: (kolamId: string) => RiwayatPanen[];
+
+    // Riwayat Ikan (Fish History)
+    addRiwayatIkan: (history: Omit<RiwayatIkan, 'id' | 'jumlahAkhir'>) => Promise<void>;
+    getRiwayatIkanByKolam: (kolamId: string) => RiwayatIkan[];
 
     // Helper functions
     getKolamById: (id: string) => Kolam | undefined;
@@ -232,6 +246,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [penjualan, setPenjualan] = useState<Penjualan[]>([]);
     const [jadwalPakan, setJadwalPakan] = useState<JadwalPakan[]>([]);
     const [riwayatPanen, setRiwayatPanen] = useState<RiwayatPanen[]>([]);
+    const [riwayatIkan, setRiwayatIkan] = useState<RiwayatIkan[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
@@ -273,7 +288,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 pembeliRes,
                 penjualanRes,
                 jadwalRes,
-                panenRes
+                panenRes,
+                riwayatIkanRes
             ] = await Promise.all([
                 fetch(`/api/farms/${activeFarmId}/kolam`),
                 fetch(`/api/farms/${activeFarmId}/pakan`),
@@ -283,7 +299,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 fetch(`/api/farms/${activeFarmId}/pembeli`),
                 fetch(`/api/farms/${activeFarmId}/penjualan`),
                 fetch(`/api/farms/${activeFarmId}/jadwal-pakan`),
-                fetch(`/api/farms/${activeFarmId}/riwayat-panen`)
+                fetch(`/api/farms/${activeFarmId}/riwayat-panen`),
+                fetch(`/api/farms/${activeFarmId}/riwayat-ikan`)
             ]);
 
             if (kolamRes.ok) {
@@ -340,6 +357,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     ...p,
                     tanggal: (p.tanggal as string).split('T')[0],
                     tipe: p.tipe
+                })));
+            }
+            if (riwayatIkanRes.ok) {
+                const data = await riwayatIkanRes.json();
+                setRiwayatIkan(data.map((r: any) => ({
+                    ...r,
+                    tanggal: new Date(r.tanggal).toISOString().split('T')[0]
                 })));
             }
         } catch (error) {
@@ -624,6 +648,53 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setRiwayatPanen(prev => prev.filter(p => p.id !== id));
     };
 
+    const addRiwayatIkan = async (newHistory: Omit<RiwayatIkan, 'id' | 'jumlahAkhir'>) => {
+        if (!activeFarmId) return;
+
+        try {
+            const res = await fetch(`/api/farms/${activeFarmId}/riwayat-ikan`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newHistory)
+            });
+            if (res.ok) {
+                const result = await res.json();
+                // This updates both history and kolam (fish count)
+                // We need to refresh data or manually update local state
+
+                // Add to history
+                setRiwayatIkan(prev => [{
+                    ...result.history, // Assuming API returns history object in result or is the result
+                    id: result.id,
+                    kolamId: result.kolamId,
+                    tanggal: new Date(result.tanggal).toISOString().split('T')[0],
+                    jumlahPerubahan: result.jumlahPerubahan,
+                    jumlahAkhir: result.jumlahAkhir,
+                    keterangan: result.keterangan
+                }, ...prev]);
+
+                // Update kolam count
+                setKolam(prev => prev.map(k => {
+                    if (k.id === newHistory.kolamId) {
+                        return { ...k, jumlahIkan: k.jumlahIkan + newHistory.jumlahPerubahan };
+                    }
+                    return k;
+                }));
+            } else {
+                const errorText = await res.text();
+                throw new Error(errorText || "Failed to add riwayat ikan");
+            }
+        } catch (error) {
+            console.error('Failed to add riwayat ikan:', error);
+            throw error; // Propagate to caller
+        }
+    };
+
+    const getRiwayatIkanByKolam = (kolamId: string) =>
+        riwayatIkan.filter(r => r.kolamId === kolamId).sort((a, b) =>
+            new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
+        );
+
     // === Helper Functions ===
 
     const getKolamById = (id: string) => kolam.find(k => k.id === id);
@@ -774,6 +845,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             addRiwayatPanen,
             deleteRiwayatPanen,
             getPanenByKolam,
+            riwayatIkan,
+            addRiwayatIkan,
+            getRiwayatIkanByKolam,
             getKolamById,
             getPakanByKolam,
             getKondisiAirByKolam,

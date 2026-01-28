@@ -3,6 +3,7 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { useState } from 'react';
 import { useApp, KategoriPengeluaran } from '../context/AppContext';
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 
 import { PlusIcon, TrashIcon } from '../components/ui/Icons';
 import Modal from '../components/ui/Modal';
@@ -178,43 +179,46 @@ export default function PengeluaranPage() {
                 </div>
             </div>
 
-            <h3 className="text-md font-semibold text-slate-700 mt-6 mb-3">Biaya Umum (Non-Kolam)</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* General Farm Expenses Card */}
-                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                    <h3 className="font-semibold text-slate-900 mb-3">🏢 Umum / Farm Level</h3>
-                    <div className="space-y-2 text-sm">
-                        {kategoriOptions.map(cat => {
-                            const catTotal = pengeluaran
-                                .filter(p => !p.kolamId && p.kategori === cat.value)
-                                .reduce((sum, p) => sum + p.jumlah, 0);
-                            if (catTotal === 0) return null;
-                            return (
-                                <div key={cat.value} className="flex justify-between">
-                                    <span className="text-slate-500">{cat.emoji} {cat.label}</span>
-                                    <span className="font-medium">Rp {catTotal.toLocaleString('id-ID')}</span>
-                                </div>
-                            );
-                        })}
-                        <div className="flex justify-between pt-2 border-t font-semibold">
-                            <span>Total Umum</span>
-                            <span className="text-red-600">
-                                Rp {pengeluaran.filter(p => !p.kolamId).reduce((sum, p) => sum + p.jumlah, 0).toLocaleString('id-ID')}
-                            </span>
+            <div className="card p-6 mb-8">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">Biaya Umum (Non-Kolam)</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* General Farm Expenses Card */}
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                        <h3 className="font-semibold text-slate-900 mb-3">🏢 Umum / Farm Level</h3>
+                        <div className="space-y-2 text-sm">
+                            {kategoriOptions.map(cat => {
+                                const catTotal = pengeluaran
+                                    .filter(p => !p.kolamId && p.kategori === cat.value)
+                                    .reduce((sum, p) => sum + p.jumlah, 0);
+                                if (catTotal === 0) return null;
+                                return (
+                                    <div key={cat.value} className="flex justify-between">
+                                        <span className="text-slate-500">{cat.emoji} {cat.label}</span>
+                                        <span className="font-medium">Rp {catTotal.toLocaleString('id-ID')}</span>
+                                    </div>
+                                );
+                            })}
+                            <div className="flex justify-between pt-2 border-t font-semibold">
+                                <span>Total Umum</span>
+                                <span className="text-red-600">
+                                    Rp {pengeluaran.filter(p => !p.kolamId).reduce((sum, p) => sum + p.jumlah, 0).toLocaleString('id-ID')}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
 
+
             {/* Riwayat Pengeluaran */}
             <div className="card overflow-hidden">
                 <div className="p-6 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <h2 className="text-lg font-semibold text-slate-900">Riwayat Pengeluaran</h2>
+                    <h2 className="text-lg font-semibold text-slate-900 w-full">Riwayat Pengeluaran</h2>
                     <select
                         value={filterKolam}
                         onChange={(e) => setFilterKolam(e.target.value)}
-                        className="input py-2 w-48"
+                        className="input py-2"
                     >
                         <option value="">Semua Kolam</option>
                         {kolam.map(k => (
@@ -339,12 +343,11 @@ export default function PengeluaranPage() {
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah (Rp)</label>
                         <input
-                            type="number"
-                            value={formData.jumlah}
-                            onChange={(e) => setFormData({ ...formData, jumlah: e.target.value })}
-                            placeholder="Contoh: 500000"
+                            type="text"
+                            value={formatCurrencyInput(formData.jumlah)}
+                            onChange={(e) => setFormData({ ...formData, jumlah: parseCurrencyInput(e.target.value) })}
+                            placeholder="Contoh: 500.000"
                             className="input"
-                            min="0"
                             required
                         />
                     </div>

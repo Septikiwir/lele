@@ -150,6 +150,7 @@ model Kolam {
   jadwalPakan   JadwalPakan[]
   riwayatPanen  RiwayatPanen[]
   penjualan     Penjualan[]
+  riwayatIkan   RiwayatIkan[]
 }
 
 // ============================================
@@ -305,6 +306,23 @@ model RiwayatPanen {
   hargaPerKg   Float
   tipe         TipePanen
   catatan      String?
+
+  createdAt DateTime @default(now())
+
+  kolamId String
+  kolam   Kolam  @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// FISH HISTORY / RIWAYAT IKAN
+// ============================================
+
+model RiwayatIkan {
+  id              String   @id @default(cuid())
+  tanggal         DateTime
+  jumlahPerubahan Int      // + for addition, - for reduction
+  jumlahAkhir     Int      // Snapshot after change
+  keterangan      String   // "Kematian", "Bibit Baru", "Koreksi", "Panen", "Penjualan"
 
   createdAt DateTime @default(now())
 

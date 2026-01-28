@@ -4,6 +4,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { RiwayatPanen } from '../context/AppContext';
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 import Modal from '../components/ui/Modal';
 import { PlusIcon } from '../components/ui/Icons';
 import EmptyState from '../components/ui/EmptyState';
@@ -158,12 +159,11 @@ export default function PanenPage() {
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-2">Harga Jual (Rp/kg)</label>
                         <input
-                            type="number"
-                            value={hargaPerKg}
-                            onChange={(e) => setHargaPerKg(e.target.value)}
+                            type="text"
+                            value={formatCurrencyInput(hargaPerKg)}
+                            onChange={(e) => setHargaPerKg(parseCurrencyInput(e.target.value))}
                             className="input"
-                            min="1000"
-                            step="1000"
+                            placeholder="Contoh: 25.000"
                         />
                     </div>
                 </div>
@@ -364,12 +364,12 @@ export default function PanenPage() {
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Harga Jual (Rp/kg)</label>
                         <input
-                            type="number"
+                            type="text"
                             className="input w-full"
-                            value={panenForm.hargaPerKg}
-                            onChange={(e) => setPanenForm({ ...panenForm, hargaPerKg: e.target.value })}
+                            value={formatCurrencyInput(panenForm.hargaPerKg)}
+                            onChange={(e) => setPanenForm({ ...panenForm, hargaPerKg: parseCurrencyInput(e.target.value) })}
                             required
-                            min="0"
+                            placeholder="Contoh: 25.000"
                         />
                     </div>
 

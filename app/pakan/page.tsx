@@ -3,6 +3,7 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { useState, useEffect } from 'react';
 import { useApp, JadwalPakan } from '../context/AppContext';
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 
 import { PlusIcon, TrashIcon, WarningIcon, ClockIcon } from '../components/ui/Icons';
 import Modal from '../components/ui/Modal';
@@ -524,10 +525,10 @@ export default function PakanPage() {
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2">Harga per kg</label>
                             <input
-                                type="number"
-                                value={stokFormData.hargaPerKg}
-                                onChange={(e) => setStokFormData({ ...stokFormData, hargaPerKg: e.target.value })}
-                                placeholder="Contoh: 12000"
+                                type="text"
+                                value={formatCurrencyInput(stokFormData.hargaPerKg)}
+                                onChange={(e) => setStokFormData({ ...stokFormData, hargaPerKg: parseCurrencyInput(e.target.value) })}
+                                placeholder="Contoh: 12.000"
                                 className="input"
                                 required
                             />

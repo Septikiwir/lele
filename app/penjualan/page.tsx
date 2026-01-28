@@ -3,6 +3,7 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { useState } from 'react';
 import { useApp, TipePembeli } from '../context/AppContext';
+import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 
 import { PlusIcon, TrashIcon } from '../components/ui/Icons';
 import Modal from '../components/ui/Modal';
@@ -386,11 +387,10 @@ export default function PenjualanPage() {
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2">Harga/kg (Rp)</label>
                             <input
-                                type="number"
-                                min="0"
-                                value={penjualanForm.hargaPerKg}
-                                onChange={(e) => setPenjualanForm({ ...penjualanForm, hargaPerKg: e.target.value })}
-                                placeholder="Contoh: 25000"
+                                type="text"
+                                value={formatCurrencyInput(penjualanForm.hargaPerKg)}
+                                onChange={(e) => setPenjualanForm({ ...penjualanForm, hargaPerKg: parseCurrencyInput(e.target.value) })}
+                                placeholder="Contoh: 25.000"
                                 className="input"
                                 required
                             />
