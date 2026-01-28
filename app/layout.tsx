@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ToastProvider } from "./context/ToastContext";
 import { AppProvider } from "./context/AppContext";
 import { FarmProvider } from "./context/FarmContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -46,9 +47,11 @@ export default function RootLayout({
         <SessionProvider>
           <AuthProvider>
             <FarmProvider>
-              <AppProvider>
-                {children}
-              </AppProvider>
+              <ToastProvider>
+                <AppProvider>
+                  {children}
+                </AppProvider>
+              </ToastProvider>
             </FarmProvider>
           </AuthProvider>
         </SessionProvider>

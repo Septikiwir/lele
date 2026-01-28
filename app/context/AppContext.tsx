@@ -10,7 +10,7 @@ export interface Kolam {
     panjang: number;
     lebar: number;
     kedalaman: number;
-    tanggalTebar: string;
+    tanggalTebar: string | null;
     jumlahIkan: number;
     status: 'aman' | 'waspada' | 'berisiko';
     position?: {
@@ -97,6 +97,7 @@ export type TipePanen = 'PARSIAL' | 'TOTAL';
 export interface RiwayatPanen {
     id: string;
     kolamId: string;
+    kolam?: { nama: string };
     tanggal: string;
     beratTotalKg: number;
     jumlahEkor: number;
@@ -161,7 +162,7 @@ interface AppContextType {
     deleteStokPakan: (id: string) => void;
 
     // Pembeli
-    addPembeli: (pembeli: Omit<Pembeli, 'id'>) => Promise<void>;
+    addPembeli: (pembeli: Omit<Pembeli, 'id'>) => Promise<Pembeli | undefined>;
     deletePembeli: (id: string) => void;
 
     // Penjualan
@@ -210,8 +211,14 @@ interface AppContextType {
     isSidebarCollapsed: boolean;
     toggleSidebar: () => void;
 
+    // Tebar
+    tebarBibit: (kolamId: string, data: { tanggal: string; jumlah: number; beratPerEkor: number }) => Promise<void>;
+
     // Refresh
     refreshData: () => Promise<void>;
+
+    // Feed Recommendation Helper
+    getFeedRecommendation: (weightGrams: number, biomassKg: number) => { type: string; amountKg: string; ratePercent: string };
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -232,7 +239,7 @@ function mapKolam(dbKolam: Record<string, unknown>): Kolam {
         panjang: dbKolam.panjang as number,
         lebar: dbKolam.lebar as number,
         kedalaman: dbKolam.kedalaman as number,
-        tanggalTebar: typeof dbKolam.tanggalTebar === 'string'
+        tanggalTebar: !dbKolam.tanggalTebar ? null : typeof dbKolam.tanggalTebar === 'string'
             ? dbKolam.tanggalTebar.split('T')[0]
             : new Date(dbKolam.tanggalTebar as string).toISOString().split('T')[0],
         jumlahIkan: dbKolam.jumlahIkan as number,
@@ -588,9 +595,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
             if (res.ok) {
                 const created = await res.json();
                 setPembeli(prev => [...prev, created]);
+                return created; // Return created object
             }
         } catch (error) {
             console.error('Failed to add pembeli:', error);
+            throw error;
         }
     };
 
@@ -664,9 +673,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 }]);
                 // Refresh kolam to get updated fish count
                 await refreshData();
+            } else {
+                const errorData = await res.json();
+                throw new Error(errorData.error || 'Failed to add harvest record');
             }
         } catch (error) {
             console.error('Failed to add riwayat panen:', error);
+            throw error;
         }
     };
 
@@ -800,6 +813,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return { status, kepadatanEkor, kepadatanBerat, source: 'ekor' };
     };
 
+    const getFeedRecommendation = (weightGrams: number, biomassKg: number) => {
+        let type = '';
+        let minRate = 0;
+        let maxRate = 0;
+        let labelRate = '';
+
+        if (weightGrams < 5) {
+            type = 'PF-500/800 (Tepung/Butiran Halus)';
+            minRate = 0.08; maxRate = 0.10; labelRate = '8-10%';
+        } else if (weightGrams < 10) {
+            type = 'PF-1000';
+            minRate = 0.06; maxRate = 0.08; labelRate = '6-8%';
+        } else if (weightGrams < 30) {
+            type = '781-1 / LP-1 (2mm)';
+            minRate = 0.04; maxRate = 0.05; labelRate = '4-5%';
+        } else if (weightGrams < 100) {
+            type = '781-2 / LP-2 (3mm)';
+            minRate = 0.03; maxRate = 0.04; labelRate = '3-4%';
+        } else if (weightGrams < 200) {
+            type = '781-3 / LP-3 (4mm)';
+            minRate = 0.02; maxRate = 0.03; labelRate = '2-3%';
+        } else {
+            type = '781-3 / LP-3 (4mm)'; // > 200g usually finish with larger pellet
+            minRate = 0.015; maxRate = 0.02; labelRate = '1.5-2%';
+        }
+
+        const minAmount = (biomassKg * minRate).toFixed(1);
+        const maxAmount = (biomassKg * maxRate).toFixed(1);
+
+        return {
+            type,
+            amountKg: `${minAmount} - ${maxAmount}`,
+            ratePercent: labelRate
+        };
+    };
+
     // === Helper Functions ===
 
     const getKolamById = (id: string) => kolam.find(k => k.id === id);
@@ -917,6 +966,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const toggleSidebar = () => setIsSidebarCollapsed(prev => !prev);
 
+    // Tebar Bibit Implementation
+    const tebarBibit = async (kolamId: string, data: { tanggal: string; jumlah: number; beratPerEkor: number }) => {
+        if (!activeFarmId) return;
+
+        try {
+            await updateKolam(kolamId, {
+                tanggalTebar: data.tanggal,
+                jumlahIkan: data.jumlah,
+                status: 'aman'
+            });
+
+            await addRiwayatIkan({
+                kolamId,
+                tanggal: data.tanggal,
+                jumlahPerubahan: data.jumlah,
+                keterangan: 'Tebar Bibit Awal'
+            });
+
+            if (data.beratPerEkor > 0) {
+                const jumlahIkanPerKg = 1000 / data.beratPerEkor;
+                await addRiwayatSampling({
+                    kolamId,
+                    tanggal: data.tanggal,
+                    jumlahIkanPerKg,
+                    catatan: `Bibit awal: ${data.beratPerEkor} gram/ekor`
+                });
+            }
+
+            await refreshData();
+        } catch (error) {
+            console.error('Tebar bibit failed:', error);
+            throw error;
+        }
+    };
+
     return (
         <AppContext.Provider value={{
             kolam,
@@ -975,7 +1059,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             calculateFCR,
             isSidebarCollapsed,
             toggleSidebar,
+            tebarBibit,
             refreshData,
+            getFeedRecommendation,
         }}>
             {children}
         </AppContext.Provider>

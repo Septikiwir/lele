@@ -125,8 +125,8 @@ model Kolam {
   panjang      Float       // meters
   lebar        Float       // meters
   kedalaman    Float       // meters
-  tanggalTebar DateTime
-  jumlahIkan   Int
+  tanggalTebar DateTime?
+  jumlahIkan   Int         @default(0)
   status       KolamStatus @default(AMAN)
 
   // Position on map (JSON for flexibility)

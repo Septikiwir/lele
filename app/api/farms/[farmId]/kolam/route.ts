@@ -59,13 +59,17 @@ export async function POST(
         const body = await request.json()
         const { nama, panjang, lebar, kedalaman, tanggalTebar, jumlahIkan } = body
 
-        if (!nama || !panjang || !lebar || !kedalaman || !tanggalTebar || !jumlahIkan) {
-            return NextResponse.json({ error: 'Semua field wajib diisi' }, { status: 400 })
+        if (!nama || !panjang || !lebar || !kedalaman) {
+            return NextResponse.json({ error: 'Nama dan dimensi kolam wajib diisi' }, { status: 400 })
         }
 
         // Calculate status based on density
         const volume = panjang * lebar * kedalaman
-        const kepadatan = volume > 0 ? jumlahIkan / volume : 0
+
+        let jumlahIkanInt = 0
+        if (jumlahIkan) jumlahIkanInt = parseInt(jumlahIkan)
+
+        const kepadatan = volume > 0 ? jumlahIkanInt / volume : 0
         let status: 'AMAN' | 'WASPADA' | 'BERISIKO' = 'AMAN'
         if (kepadatan > 100) status = 'BERISIKO'
         else if (kepadatan > 50) status = 'WASPADA'
@@ -77,8 +81,8 @@ export async function POST(
                 panjang: parseFloat(panjang),
                 lebar: parseFloat(lebar),
                 kedalaman: parseFloat(kedalaman),
-                tanggalTebar: new Date(tanggalTebar),
-                jumlahIkan: parseInt(jumlahIkan),
+                tanggalTebar: tanggalTebar ? new Date(tanggalTebar) : null,
+                jumlahIkan: jumlahIkanInt,
                 status
             }
         })

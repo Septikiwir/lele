@@ -1,406 +1,708 @@
 'use client';
 
 import DashboardLayout from '../components/layout/DashboardLayout';
-import { useState } from 'react';
-import { useApp } from '../context/AppContext';
-import { RiwayatPanen } from '../context/AppContext';
+import { useState, useEffect } from 'react';
+import { useApp, Kolam, TipePembeli } from '../context/AppContext';
+import { useToast } from '../context/ToastContext'; // Import Toast
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 import Modal from '../components/ui/Modal';
 import { PlusIcon } from '../components/ui/Icons';
 import EmptyState from '../components/ui/EmptyState';
 
-export default function PanenPage() {
-    const { kolam, pakan, riwayatPanen, addRiwayatPanen, getPanenByKolam } = useApp();
-    const [selectedKolam, setSelectedKolam] = useState('');
+export default function ProduksiPage() {
+    const { kolam, pakan, riwayatPanen, pembeli, addRiwayatPanen, addPenjualan, addPembeli, getPanenByKolam, tebarBibit, getLatestSampling } = useApp();
+    const { showToast } = useToast(); // Destructure showToast
+    const [selectedKolamId, setSelectedKolamId] = useState('');
 
-    // Estimation States
-    const [ukuranBibit, setUkuranBibit] = useState('5'); // gram
-    const [growthRate, setGrowthRate] = useState('2'); // gram per day
+    // --- STATES ---
+    const [growthRate, setGrowthRate] = useState('2');
     const [hargaPerKg, setHargaPerKg] = useState('25000');
+    const [ukuranBibitEst, setUkuranBibitEst] = useState('5');
 
-    // Panen Modal States
+    // Tebar Modal
+    const [isTebarModalOpen, setIsTebarModalOpen] = useState(false);
+    const [tebarForm, setTebarForm] = useState({
+        kolamId: '',
+        tanggal: new Date().toISOString().split('T')[0],
+        jumlah: '',
+        beratPerEkor: '5'
+    });
+
+    // Panen Modal
     const [isPanenModalOpen, setIsPanenModalOpen] = useState(false);
     const [panenForm, setPanenForm] = useState({
         kolamId: '',
+        pembeliId: '',
         tanggal: new Date().toISOString().split('T')[0],
         beratTotalKg: '',
         jumlahEkor: '',
         hargaPerKg: '25000',
-        tipe: 'PARSIAL' as const,
+        tipe: 'PARSIAL' as 'PARSIAL' | 'TOTAL',
         catatan: ''
     });
 
-    const selectedKolamData = kolam.find(k => k.id === selectedKolam);
+    // Quick Add Buyer Modal
+    const [isBuyerModalOpen, setIsBuyerModalOpen] = useState(false);
+    const [buyerForm, setBuyerForm] = useState({
+        nama: '',
+        tipe: 'TENGKULAK' as TipePembeli,
+        kontak: '',
+        alamat: ''
+    });
 
-    // ... (Keep existing calculation logic: calculateEstimation) ...
-    const calculateEstimation = () => {
-        if (!selectedKolamData) return null;
 
-        const bibit = parseFloat(ukuranBibit) || 5;
+
+    // --- DERIVED DATA ---
+    const activePonds = kolam.filter(k => k.jumlahIkan > 0);
+    const emptyPonds = kolam.filter(k => k.jumlahIkan === 0);
+
+    // Select first active pond by default if none selected
+    if (!selectedKolamId && activePonds.length > 0) {
+        setSelectedKolamId(activePonds[0].id);
+    }
+
+    const selectedKolamData = kolam.find(k => k.id === selectedKolamId);
+    const recentPanen = selectedKolamId ? getPanenByKolam(selectedKolamId) : [];
+
+    // --- LOGIC ---
+
+    const calculateEstimation = (k: Kolam) => {
+        if (!k || k.jumlahIkan === 0 || !k.tanggalTebar) return null;
+
+        const bibit = parseFloat(ukuranBibitEst) || 5;
         const growth = parseFloat(growthRate) || 2;
         const targetWeight = 150; // gram (harvest weight)
 
-        const tanggalTebar = new Date(selectedKolamData.tanggalTebar);
-        const daysToHarvest = Math.ceil((targetWeight - bibit) / growth);
-        const estimatedHarvestDate = new Date(tanggalTebar);
-        estimatedHarvestDate.setDate(estimatedHarvestDate.getDate() + daysToHarvest);
+        const tanggalTebar = new Date(k.tanggalTebar);
+        if (isNaN(tanggalTebar.getTime())) return null;
 
         const today = new Date();
         const daysPassed = Math.floor((today.getTime() - tanggalTebar.getTime()) / (1000 * 60 * 60 * 24));
-        const currentWeight = Math.min(bibit + (daysPassed * growth), targetWeight);
-        const daysRemaining = Math.max(0, daysToHarvest - daysPassed);
+
+        // --- UPDATED WEIGHT CALCULATION ---
+        let currentWeight = 0;
+        const latestSampling = getLatestSampling(k.id);
+
+        if (latestSampling && latestSampling.jumlahIkanPerKg > 0) {
+            // Use sampling data as baseline
+            const lastWeight = 1000 / latestSampling.jumlahIkanPerKg; // grams
+            const samplingDate = new Date(latestSampling.tanggal);
+            const daysSinceSampling = Math.max(0, Math.floor((today.getTime() - samplingDate.getTime()) / (1000 * 60 * 60 * 24)));
+
+            currentWeight = lastWeight + (daysSinceSampling * growth);
+        } else {
+            // Fallback to purely estimated growth from start
+            currentWeight = bibit + (daysPassed * growth);
+        }
+
+        // Cap at target weight or slightly above to prevent unrealistic numbers if needed, 
+        // but for now let's just allow it to grow to show they should have harvested.
+        // Actually, let's just cap for the progress bar logic, but keep the value real.
+
+        const daysToHarvest = Math.ceil((targetWeight - bibit) / growth); // Original estimate total days
+        // Better estimation of remaining days based on current weight
+        const weightRemaining = Math.max(0, targetWeight - currentWeight);
+        const daysRemaining = Math.ceil(weightRemaining / growth);
+
+        // Recalculate estimated harvest date based on remaining days
+        const estimatedHarvestDate = new Date();
+        estimatedHarvestDate.setDate(estimatedHarvestDate.getDate() + daysRemaining);
 
         const survival = 0.85; // 85% survival rate
-        const estimatedFish = Math.floor(selectedKolamData.jumlahIkan * survival);
-        const totalWeight = (estimatedFish * targetWeight) / 1000; // kg
-        const price = parseFloat(hargaPerKg) || 25000;
-        const estimatedRevenue = totalWeight * price;
+        const estimatedFish = Math.floor(k.jumlahIkan * survival);
+        const totalWeight = (estimatedFish * Math.min(currentWeight, targetWeight)) / 1000; // kg - use current weight for revenue est if not harvested? 
+        // Actually typically revenue projection is based on TARGET weight harvest.
+        // But if we are over target, maybe we calculate based on current?
+        // Let's stick to Target Weight for "Potential Revenue" if not ready, or current if ready?
+        // "Potensi Omzet" usually means "If I harvest NOW" or "When I harvest at Target"?
+        // Usually "At Target". Let's keep revenue based on Target Weight for consistency of "Goal".
 
-        // Get total feed cost (simplified)
+        const totalTargetWeight = (estimatedFish * targetWeight) / 1000;
+        const price = parseFloat(hargaPerKg) || 25000;
+        const estimatedRevenue = totalTargetWeight * price;
+
+        // Feed Cost
         const feedCost = pakan
-            .filter(p => p.kolamId === selectedKolam)
-            .reduce((sum, p) => sum + p.jumlahKg, 0) * 12000; // assume 12k/kg feed price
+            .filter(p => p.kolamId === k.id)
+            .reduce((sum, p) => sum + p.jumlahKg, 0) * 12000; // assume 12k/kg
+
+        const totalBiomass = (k.jumlahIkan * currentWeight) / 1000; // kg
 
         return {
-            daysToHarvest,
-            tanggalTebar: selectedKolamData.tanggalTebar,
-            estimatedHarvestDate: estimatedHarvestDate.toISOString().split('T')[0],
             daysPassed,
             daysRemaining,
             currentWeight: currentWeight.toFixed(0),
+            currentBiomass: totalBiomass.toFixed(1),
             targetWeight,
             progress: Math.min((currentWeight / targetWeight) * 100, 100),
-            estimatedFish,
-            totalWeight: totalWeight.toFixed(1),
+            estimatedHarvestDate: estimatedHarvestDate.toISOString().split('T')[0],
             estimatedRevenue,
-            feedCost,
             estimatedProfit: estimatedRevenue - feedCost,
+            feedCost,
+            isBasedOnSampling: !!latestSampling, // Flag for UI if needed
+            // FEED RECOMMENDATION LOGIC
+            feedRecommendation: getFeedRecommendation(currentWeight, totalBiomass)
         };
     };
 
-    const estimation = calculateEstimation();
+    // Helper for Feed Recommendation
+    const getFeedRecommendation = (weightGrams: number, biomassKg: number) => {
+        let type = '';
+        let rate = 0;
 
-    const handlePanenSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        addRiwayatPanen({
-            kolamId: panenForm.kolamId,
-            tanggal: panenForm.tanggal,
-            beratTotalKg: Number(panenForm.beratTotalKg),
-            jumlahEkor: Number(panenForm.jumlahEkor),
-            hargaPerKg: Number(panenForm.hargaPerKg),
-            tipe: panenForm.tipe as 'PARSIAL' | 'TOTAL',
-            catatan: panenForm.catatan
-        });
-        setIsPanenModalOpen(false);
-        // Reset form partially
-        setPanenForm(prev => ({ ...prev, beratTotalKg: '', jumlahEkor: '', catatan: '' }));
+        if (weightGrams < 5) {
+            type = 'PF-500/800 (Tepung/Butiran Halus)';
+            rate = 0.06; // 6%
+        } else if (weightGrams < 10) {
+            type = 'PF-1000';
+            rate = 0.045; // 4.5%
+        } else if (weightGrams < 50) {
+            type = '781-1 / LP-1 (2mm)';
+            rate = 0.035; // 3.5%
+        } else if (weightGrams < 100) {
+            type = '781-2 / LP-2 (3mm)';
+            rate = 0.03; // 3%
+        } else {
+            type = '781-3 / LP-3 (4mm)';
+            rate = 0.025; // 2.5%
+        }
+
+        const amountKg = biomassKg * rate;
+
+        return {
+            type,
+            amountKg: amountKg.toFixed(1),
+            ratePercent: (rate * 100).toFixed(1) + '%'
+        };
     };
 
-    const recentPanen = selectedKolam ? getPanenByKolam(selectedKolam) : [];
+    // Auto-Calculate for Selected Pond (for Detail View)
+    const selectedEstimation = selectedKolamData ? calculateEstimation(selectedKolamData) : null;
+
+    // Auto-calculate fish count (jumlahEkor) when weight (beratTotalKg) changes
+    useEffect(() => {
+        if (!panenForm.kolamId || !panenForm.beratTotalKg) return;
+
+        const k = kolam.find(p => p.id === panenForm.kolamId);
+        if (k) {
+            const est = calculateEstimation(k);
+            if (est && est.currentWeight) {
+                const currentWeightGrams = parseFloat(est.currentWeight);
+                if (currentWeightGrams > 0) {
+                    const weightKg = parseFloat(panenForm.beratTotalKg);
+                    const estCount = Math.round((weightKg * 1000) / currentWeightGrams);
+
+                    if (panenForm.jumlahEkor !== estCount.toString()) {
+                        setPanenForm(prev => ({ ...prev, jumlahEkor: estCount.toString() }));
+                    }
+                }
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [panenForm.beratTotalKg, panenForm.kolamId]);
+
+    const handleTebarSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await tebarBibit(tebarForm.kolamId, {
+                tanggal: tebarForm.tanggal,
+                jumlah: parseInt(tebarForm.jumlah),
+                beratPerEkor: parseFloat(tebarForm.beratPerEkor)
+            });
+            setIsTebarModalOpen(false);
+            setTebarForm({ ...tebarForm, jumlah: '', beratPerEkor: '5' });
+            showToast('Siklus berhasil dimulai', 'success');
+        } catch (error) {
+            showToast('Gagal menebar bibit', 'error');
+        }
+    };
+
+    const handlePanenSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        // Validation: Check against available stock
+        const k = kolam.find(p => p.id === panenForm.kolamId);
+        if (k) {
+            const inputCount = parseFloat(panenForm.jumlahEkor) || 0;
+            const inputWeight = parseFloat(panenForm.beratTotalKg) || 0;
+
+            if (inputCount > k.jumlahIkan) {
+                showToast(`Gagal: Jumlah panen (${inputCount} ekor) melebihi populasi kolam (${k.jumlahIkan.toLocaleString()} ekor).`, 'error');
+                return;
+            }
+
+            const est = calculateEstimation(k);
+            if (est && est.currentBiomass) {
+                const availableBiomass = parseFloat(est.currentBiomass);
+                // Allow small margin of error (e.g. 1%) or strict? User asked strict.
+                // But let's be realistic, maybe exact strictness is what they want for now.
+                if (inputWeight > availableBiomass) {
+                    showToast(`Gagal: Berat panen (${inputWeight} kg) melebihi estimasi biomassa (${availableBiomass} kg). Harap lakukan sampling ulang.`, 'error');
+                    return;
+                }
+            }
+        }
+
+        if (!panenForm.pembeliId) {
+            showToast('Harap pilih Pembeli untuk mencatat panen.', 'error');
+            return;
+        }
+
+        try {
+            await addRiwayatPanen({
+                kolamId: panenForm.kolamId,
+                tanggal: panenForm.tanggal,
+                beratTotalKg: Number(panenForm.beratTotalKg),
+                jumlahEkor: Number(panenForm.jumlahEkor),
+                hargaPerKg: Number(panenForm.hargaPerKg),
+                tipe: panenForm.tipe,
+                catatan: panenForm.catatan
+            });
+
+            // Sync with Sales if Buyer is selected
+            if (panenForm.pembeliId) {
+                await addPenjualan({
+                    kolamId: panenForm.kolamId,
+                    pembeliId: panenForm.pembeliId,
+                    tanggal: panenForm.tanggal,
+                    beratKg: Number(panenForm.beratTotalKg),
+                    hargaPerKg: Number(panenForm.hargaPerKg),
+                    jumlahIkan: Number(panenForm.jumlahEkor),
+                    keterangan: panenForm.catatan || 'Panen Otomatis'
+                });
+            }
+
+            setIsPanenModalOpen(false);
+            setPanenForm(prev => ({ ...prev, beratTotalKg: '', jumlahEkor: '', catatan: '', pembeliId: '' }));
+            showToast(panenForm.pembeliId ? 'Panen & Penjualan berhasil dicatat' : 'Panen berhasil dicatat', 'success');
+        } catch (error: any) {
+            showToast(error.message || 'Gagal mencatat panen', 'error');
+        }
+    };
+
+    const handleBuyerSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const newBuyer = await addPembeli({
+                nama: buyerForm.nama,
+                tipe: buyerForm.tipe,
+                kontak: buyerForm.kontak,
+                alamat: buyerForm.alamat
+            });
+
+            // Auto-select the new buyer
+            if (newBuyer) {
+                setPanenForm(prev => ({ ...prev, pembeliId: newBuyer.id }));
+            }
+
+            setIsBuyerModalOpen(false);
+            setBuyerForm({ nama: '', tipe: 'TENGKULAK', kontak: '', alamat: '' });
+            showToast('Pembeli berhasil ditambahkan', 'success');
+        } catch (error) {
+            showToast('Gagal menambah pembeli', 'error');
+        }
+    };
 
     return (
         <DashboardLayout>
-            {/* Header */}
-            <div className="mb-8 flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Prediksi & Pencatatan Panen</h1>
-                    <p className="text-slate-500 mt-1">Estimasi, simulasi, dan pencatatan hasil panen</p>
-                </div>
-                <button
-                    onClick={() => {
-                        setPanenForm(prev => ({ ...prev, kolamId: selectedKolam || kolam[0]?.id || '' }));
-                        setIsPanenModalOpen(true);
-                    }}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors"
-                >
-                    <span>🌾</span> Catat Panen Baru
-                </button>
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-slate-900">Produksi & Siklus</h1>
+                <p className="text-slate-500 mt-1">Kelola siklus budidaya dari tebar hingga panen</p>
             </div>
 
-            {/* Kolam Selection */}
-            <div className="card p-6 mb-8">
-                <h2 className="text-lg font-semibold text-slate-900 mb-4">Pilih Kolam</h2>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* --- GLOBAL CONFIG --- */}
+            <div className="card p-4 mb-8 bg-blue-50 border-blue-100">
+                <div className="flex flex-wrap gap-6 items-end">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
-                        <select
-                            value={selectedKolam}
-                            onChange={(e) => setSelectedKolam(e.target.value)}
-                            className="input"
-                        >
-                            <option value="">-- Pilih Kolam --</option>
-                            {kolam.map(k => (
-                                <option key={k.id} value={k.id}>{k.nama}</option>
-                            ))}
-                        </select>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Parameter Estimasi Global</label>
+                        <p className="text-xs text-slate-400 mb-2">Ubah nilai ini untuk memperbarui semua proyeksi</p>
                     </div>
-                    {/* ... (Keep existing inputs for estimation params) ... */}
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Ukuran Bibit (gram)</label>
+                    <div className="w-32">
+                        <label className="text-xs font-medium text-slate-500 block mb-1">Growth Rate (g/hari)</label>
                         <input
                             type="number"
-                            value={ukuranBibit}
-                            onChange={(e) => setUkuranBibit(e.target.value)}
-                            className="input"
-                            min="1"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Growth Rate (g/hari)</label>
-                        <input
-                            type="number"
-                            step="0.1"
                             value={growthRate}
-                            onChange={(e) => setGrowthRate(e.target.value)}
-                            className="input"
-                            min="0.1"
+                            onChange={e => setGrowthRate(e.target.value)}
+                            className="input w-full text-sm py-1 h-9"
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Harga Jual (Rp/kg)</label>
+                    <div className="w-40">
+                        <label className="text-xs font-medium text-slate-500 block mb-1">Est. Harga Jual (Rp/kg)</label>
                         <input
                             type="text"
                             value={formatCurrencyInput(hargaPerKg)}
-                            onChange={(e) => setHargaPerKg(parseCurrencyInput(e.target.value))}
-                            className="input"
-                            placeholder="Contoh: 25.000"
+                            onChange={e => setHargaPerKg(parseCurrencyInput(e.target.value))}
+                            className="input w-full text-sm py-1 h-9"
                         />
                     </div>
                 </div>
             </div>
 
-            {/* Riwayat Panen List */}
-            {selectedKolam && recentPanen.length > 0 && (
-                <div className="card p-6 mb-8">
-                    <h2 className="text-lg font-semibold text-slate-900 mb-4">Riwayat Panen: {selectedKolamData?.nama}</h2>
+            {/* --- ACTIVE PRODUCTION --- */}
+            <section className="mb-10">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-slate-800">Sedang Berjalan ({activePonds.length})</h2>
+                </div>
+
+                {activePonds.length === 0 ? (
+                    <div className="bg-slate-50 rounded-xl p-8 text-center border-2 border-dashed border-slate-200">
+                        <p className="text-slate-500">Tidak ada kolam yang sedang aktif.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {activePonds.map(k => {
+                            const isSelected = selectedKolamId === k.id;
+                            const days = k.tanggalTebar ? Math.floor((new Date().getTime() - new Date(k.tanggalTebar).getTime()) / (86400000)) : 0;
+                            const est = calculateEstimation(k); // Calculate per pond
+
+                            return (
+                                <div
+                                    key={k.id}
+                                    onClick={() => setSelectedKolamId(k.id)}
+                                    className={`card cursor-pointer transition-all border-2 relative overflow-hidden group ${isSelected ? 'border-primary-500 ring-2 ring-primary-100' : 'border-transparent hover:border-slate-200'}`}
+                                >
+                                    {/* Header Part */}
+                                    <div className="p-5 border-b border-slate-50 bg-white z-10 relative">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xl">
+                                                    🐟
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-slate-900">{k.nama}</h3>
+                                                    <p className="text-xs text-slate-500">{k.jumlahIkan.toLocaleString()} ekor</p>
+                                                </div>
+                                            </div>
+                                            <span className="badge badge-success">Aktif: {days} Hari</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Projection Part - Highlighted */}
+                                    <div className="p-4 bg-slate-50 space-y-3">
+                                        {est ? (
+                                            <>
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-slate-500">Est. Panen</span>
+                                                        {est.isBasedOnSampling && (
+                                                            <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full font-medium" title="Berdasarkan data sampling terakhir">
+                                                                Terkalibrasi
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <span className="font-semibold text-slate-800">{est.estimatedHarvestDate}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-sm">
+                                                    <span className="text-slate-500">Sisa Waktu</span>
+                                                    <span className={`font-bold ${est.daysRemaining <= 7 ? 'text-red-600' : 'text-amber-600'}`}>{est.daysRemaining} hari</span>
+                                                </div>
+
+                                                {/* ADDED: Biomass & Count Stats */}
+                                                <div className="grid grid-cols-2 gap-2 my-2 bg-white p-2 rounded border border-slate-100">
+                                                    <div>
+                                                        <p className="text-[10px] text-slate-400 uppercase">Est. Total</p>
+                                                        <p className="font-semibold text-slate-700 text-sm">{est.currentBiomass} kg</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] text-slate-400 uppercase">Populasi</p>
+                                                        <p className="font-semibold text-slate-700 text-sm">{k.jumlahIkan.toLocaleString()}</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-xs text-slate-500 uppercase font-bold tracking-wider">Potensi Omzet</span>
+                                                    <span className="font-bold text-emerald-600">Rp {est.estimatedRevenue.toLocaleString('id-ID')}</span>
+                                                </div>
+                                                {/* Mini Progress Bar */}
+                                                <div className="mt-2">
+                                                    <div className="flex justify-between text-[10px] text-slate-400 mb-1">
+                                                        <span className={est.isBasedOnSampling ? "text-indigo-600 font-bold" : ""}>
+                                                            {est.currentWeight}g
+                                                            {est.isBasedOnSampling && " (Sample)"}
+                                                        </span>
+                                                        <span>Target {est.targetWeight}g</span>
+                                                    </div>
+                                                    <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                                        <div className={`h-full ${est.isBasedOnSampling ? 'bg-indigo-500' : 'bg-cyan-500'}`} style={{ width: `${est.progress}%` }}></div>
+                                                    </div>
+                                                </div>
+
+
+                                            </>
+                                        ) : (
+                                            <div className="text-center py-2">
+                                                <span className="text-xs text-slate-400">Data belum cukup</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Actions */}
+                                    <div className="p-4 bg-white border-t border-slate-100 flex gap-2">
+                                        <button
+                                            className="btn btn-success flex-1 text-sm py-2"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setPanenForm(prev => ({ ...prev, kolamId: k.id }));
+                                                setIsPanenModalOpen(true);
+                                            }}
+                                        >
+                                            🌾 Panen
+                                        </button>
+                                        {/* View Details used to be implicit by clicking, now explicit button helps affordance */}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </section>
+
+            {/* --- DETAILS SECTION --- */}
+            <section className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <h2 className="text-xl font-bold text-slate-800 mb-4">Riwayat Panen Global</h2>
+
+                {/* Harvest History Table */}
+                <div className="card">
+                    <div className="p-4 border-b border-slate-100 bg-slate-50/50">
+                        <h3 className="font-semibold text-slate-800">Daftar Panen Terakhir</h3>
+                    </div>
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
-                            <thead className="text-xs text-slate-500 uppercase bg-slate-50">
+                        <table className="w-full text-sm">
+                            <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
                                 <tr>
-                                    <th className="px-4 py-3">Tanggal</th>
-                                    <th className="px-4 py-3">Tipe</th>
-                                    <th className="px-4 py-3">Berat Total</th>
-                                    <th className="px-4 py-3">Jumlah Ekor</th>
-                                    <th className="px-4 py-3">Harga/Kg</th>
-                                    <th className="px-4 py-3">Total Pendapatan</th>
-                                    <th className="px-4 py-3">Catatan</th>
+                                    <th className="px-6 py-3 text-left">Tanggal</th>
+                                    <th className="px-6 py-3 text-left">Kolam</th>
+                                    <th className="px-6 py-3 text-center">Tipe</th>
+                                    <th className="px-6 py-3 text-right">Berat (Kg)</th>
+                                    <th className="px-6 py-3 text-right">Total (Rp)</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                {recentPanen.map((p) => (
-                                    <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50">
-                                        <td className="px-4 py-3 font-medium">{p.tanggal}</td>
-                                        <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-bold ${p.tipe === 'TOTAL' ? 'bg-red-100 text-red-700' : 'bg-teal-100 text-teal-700'
-                                                }`}>{(p.tipe || 'PARSIAL').toUpperCase()}</span>
-                                        </td>
-                                        <td className="px-4 py-3">{p.beratTotalKg} kg</td>
-                                        <td className="px-4 py-3">{p.jumlahEkor} ekor</td>
-                                        <td className="px-4 py-3">Rp {p.hargaPerKg.toLocaleString('id-ID')}</td>
-                                        <td className="px-4 py-3 font-bold text-green-600">Rp {(p.beratTotalKg * p.hargaPerKg).toLocaleString('id-ID')}</td>
-                                        <td className="px-4 py-3 text-slate-500 max-w-xs truncate">{p.catatan}</td>
+                            <tbody className="divide-y divide-slate-100">
+                                {riwayatPanen.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-6 py-8 text-center text-slate-400">Belum ada data panen</td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    riwayatPanen.slice().sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()).map(p => (
+                                        <tr key={p.id}>
+                                            <td className="px-6 py-3">{p.tanggal}</td>
+                                            <td className="px-6 py-3 font-medium text-slate-800">{p.kolam?.nama || '-'}</td>
+                                            <td className="px-6 py-3 text-center">
+                                                <span className={`px-2 py-1 rounded text-xs font-bold ${p.tipe === 'TOTAL' ? 'bg-red-100 text-red-600' : 'bg-teal-100 text-teal-600'}`}>
+                                                    {p.tipe}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-3 text-right">{p.beratTotalKg}</td>
+                                            <td className="px-6 py-3 text-right font-medium text-emerald-600">
+                                                {(p.beratTotalKg * p.hargaPerKg).toLocaleString('id-ID')}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
                 </div>
-            )}
+            </section>
 
-            {selectedKolamData && estimation && (
-                <>
-                    {/* Estimation */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                        {/* Progress */}
-                        <div className="card p-6">
-                            <h2 className="text-lg font-semibold text-slate-900 mb-4">📈 Progress Pertumbuhan</h2>
-
-                            <div className="mb-6">
-                                <div className="flex justify-between text-sm mb-2">
-                                    <span className="text-slate-500">Berat saat ini</span>
-                                    <span className="font-semibold">{estimation.currentWeight}g / {estimation.targetWeight}g</span>
+            {/* --- EMPTY PONDS (SIAP TEBAR) --- */}
+            <section>
+                <h2 className="text-xl font-bold text-slate-800 mb-4">Siap Ditebar ({emptyPonds.length})</h2>
+                {emptyPonds.length === 0 ? (
+                    <p className="text-slate-500 italic">Semua kolam sedang aktif digunakan.</p>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {emptyPonds.map(k => (
+                            <div key={k.id} className="card p-5 border border-dashed border-slate-300 hover:border-blue-400 transition-colors bg-slate-50">
+                                <div className="flex items-center gap-3 mb-4 opacity-70">
+                                    <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center grayscale">
+                                        🐟
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-700">{k.nama}</h3>
+                                        <p className="text-xs text-slate-500">{k.panjang}x{k.lebar}m</p>
+                                    </div>
                                 </div>
-                                <div className="h-4 bg-slate-100 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-gradient-to-r from-teal-500 to-cyan-400 rounded-full transition-all"
-                                        style={{ width: `${estimation.progress}%` }}
-                                    />
-                                </div>
-                                <p className="text-xs text-slate-400 mt-1">{estimation.progress.toFixed(0)}% menuju berat panen</p>
+                                <button
+                                    className="btn btn-primary w-full"
+                                    onClick={() => {
+                                        setTebarForm({ ...tebarForm, kolamId: k.id });
+                                        setIsTebarModalOpen(true);
+                                    }}
+                                >
+                                    <PlusIcon /> Mulai Siklus
+                                </button>
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-slate-50 rounded-lg p-4">
-                                    <p className="text-sm text-slate-500">Tanggal Tebar</p>
-                                    <p className="font-semibold text-slate-900">{estimation.tanggalTebar}</p>
-                                </div>
-                                <div className="bg-slate-50 rounded-lg p-4">
-                                    <p className="text-sm text-slate-500">Hari Berlalu</p>
-                                    <p className="font-semibold text-slate-900">{estimation.daysPassed} hari</p>
-                                </div>
-                                <div className="bg-green-50 rounded-lg p-4">
-                                    <p className="text-sm text-green-600">Est. Tanggal Panen</p>
-                                    <p className="font-bold text-green-700">{estimation.estimatedHarvestDate}</p>
-                                </div>
-                                <div className="bg-amber-50 rounded-lg p-4">
-                                    <p className="text-sm text-amber-600">Sisa Waktu</p>
-                                    <p className="font-bold text-amber-700">{estimation.daysRemaining} hari</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Revenue Estimation */}
-                        <div className="card p-6">
-                            <h2 className="text-lg font-semibold text-slate-900 mb-4">💰 Estimasi Pendapatan</h2>
-
-                            <div className="space-y-4">
-                                <div className="flex justify-between py-3 border-b">
-                                    <span className="text-slate-500">Est. Ikan Hidup (85% SR)</span>
-                                    <span className="font-semibold">{estimation.estimatedFish.toLocaleString('id-ID')} ekor</span>
-                                </div>
-                                <div className="flex justify-between py-3 border-b">
-                                    <span className="text-slate-500">Est. Total Berat</span>
-                                    <span className="font-semibold">{estimation.totalWeight} kg</span>
-                                </div>
-                                <div className="flex justify-between py-3 border-b">
-                                    <span className="text-slate-500">Est. Omzet</span>
-                                    <span className="font-semibold text-green-600">
-                                        Rp {estimation.estimatedRevenue.toLocaleString('id-ID')}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between py-3 border-b">
-                                    <span className="text-slate-500">Biaya Pakan (tercatat)</span>
-                                    <span className="font-semibold text-red-600">
-                                        - Rp {estimation.feedCost.toLocaleString('id-ID')}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between py-3 bg-teal-50 -mx-6 px-6 rounded-lg">
-                                    <span className="font-semibold text-slate-900">Est. Profit</span>
-                                    <span className={`font-bold text-xl ${estimation.estimatedProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                        Rp {estimation.estimatedProfit.toLocaleString('id-ID')}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
+                        ))}
                     </div>
-                </>
-            )}
+                )}
+            </section>
 
-            {!selectedKolam && (
-                <EmptyState
-                    title="Pilih Kolam"
-                    description="Pilih kolam di atas untuk melihat prediksi dan riwayat panen"
-                    icon="🐟"
-                />
-            )}
+            {/* --- MODALS --- */}
 
-            {/* Modal Catat Panen */}
-            <Modal isOpen={isPanenModalOpen} onClose={() => setIsPanenModalOpen(false)} title="Catat Panen Baru">
-                <form onSubmit={handlePanenSubmit} className="space-y-4">
+            {/* Modal Tebar */}
+            <Modal isOpen={isTebarModalOpen} onClose={() => setIsTebarModalOpen(false)} title="Mulai Siklus (Tebar Bibit)">
+                <form onSubmit={handleTebarSubmit} className="space-y-4">
+                    <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-700 mb-4">
+                        Data ini akan memulai siklus baru dan mencatat sampling awal.
+                    </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Kolam</label>
-                        <select
-                            className="input w-full"
-                            value={panenForm.kolamId}
-                            onChange={(e) => setPanenForm({ ...panenForm, kolamId: e.target.value })}
-                            required
-                        >
-                            <option value="">-- Pilih Kolam --</option>
-                            {kolam.map(k => <option key={k.id} value={k.id}>{k.nama}</option>)}
-                        </select>
+                        <label className="block text-sm font-medium mb-1">Tanggal Tebar</label>
+                        <input type="date" className="input w-full" required
+                            value={tebarForm.tanggal} onChange={e => setTebarForm({ ...tebarForm, tanggal: e.target.value })} />
                     </div>
-
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal</label>
-                            <input
-                                type="date"
-                                className="input w-full"
-                                value={panenForm.tanggal}
-                                onChange={(e) => setPanenForm({ ...panenForm, tanggal: e.target.value })}
-                                required
-                            />
+                            <label className="block text-sm font-medium mb-1">Jumlah (Ekor)</label>
+                            <input type="number" className="input w-full" required placeholder="5000"
+                                value={tebarForm.jumlah} onChange={e => setTebarForm({ ...tebarForm, jumlah: e.target.value })} />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Tipe Panen</label>
-                            <select
-                                className="input w-full"
-                                value={panenForm.tipe}
-                                onChange={(e) => setPanenForm({ ...panenForm, tipe: e.target.value as any })}
-                            >
-                                <option value="PARSIAL">Parsial (Bertahap)</option>
-                                <option value="TOTAL">Total (Panen Raya)</option>
-                            </select>
+                            <label className="block text-sm font-medium mb-1">Ukuran (Gram/Ekor)</label>
+                            <input type="number" step="0.1" className="input w-full" required placeholder="5"
+                                value={tebarForm.beratPerEkor} onChange={e => setTebarForm({ ...tebarForm, beratPerEkor: e.target.value })} />
+                            {tebarForm.beratPerEkor && parseFloat(tebarForm.beratPerEkor) > 0 && (
+                                <p className="text-xs text-emerald-600 mt-1 font-medium">
+                                    ≈ Isi {(1000 / parseFloat(tebarForm.beratPerEkor)).toFixed(0)} ekor/kg
+                                </p>
+                            )}
                         </div>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Berat Total (kg)</label>
-                            <input
-                                type="number"
-                                className="input w-full"
-                                placeholder="0"
-                                value={panenForm.beratTotalKg}
-                                onChange={(e) => setPanenForm({ ...panenForm, beratTotalKg: e.target.value })}
-                                required
-                                min="0"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Jumlah Ikan (Ekor)</label>
-                            <input
-                                type="number"
-                                className="input w-full"
-                                placeholder="0"
-                                value={panenForm.jumlahEkor}
-                                onChange={(e) => setPanenForm({ ...panenForm, jumlahEkor: e.target.value })}
-                                required
-                                min="0"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Harga Jual (Rp/kg)</label>
-                        <input
-                            type="text"
-                            className="input w-full"
-                            value={formatCurrencyInput(panenForm.hargaPerKg)}
-                            onChange={(e) => setPanenForm({ ...panenForm, hargaPerKg: parseCurrencyInput(e.target.value) })}
-                            required
-                            placeholder="Contoh: 25.000"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Catatan</label>
-                        <textarea
-                            className="input w-full"
-                            rows={2}
-                            value={panenForm.catatan}
-                            onChange={(e) => setPanenForm({ ...panenForm, catatan: e.target.value })}
-                            placeholder="Contoh: Sortir ukuran konsumsi..."
-                        />
-                    </div>
-
-                    <div className="pt-4 flex gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setIsPanenModalOpen(false)}
-                            className="btn-secondary flex-1"
-                        >
-                            Batal
-                        </button>
-                        <button
-                            type="submit"
-                            className="btn-primary flex-1 bg-emerald-600 hover:bg-emerald-700"
-                        >
-                            Simpan Panen
-                        </button>
+                    <div className="flex gap-3 pt-4">
+                        <button type="button" onClick={() => setIsTebarModalOpen(false)} className="btn btn-secondary flex-1">Batal</button>
+                        <button type="submit" className="btn btn-primary flex-1">Mulai Tebar</button>
                     </div>
                 </form>
             </Modal>
-        </DashboardLayout>
+
+            {/* Modal Panen */}
+            <Modal isOpen={isPanenModalOpen} onClose={() => setIsPanenModalOpen(false)} title="Catat Panen">
+                <form onSubmit={handlePanenSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Tanggal</label>
+                        <input type="date" className="input w-full" required
+                            value={panenForm.tanggal} onChange={e => setPanenForm({ ...panenForm, tanggal: e.target.value })} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Pembeli</label>
+                        <div className="flex gap-2">
+                            <select
+                                className="input w-full"
+                                value={panenForm.pembeliId}
+                                onChange={e => setPanenForm({ ...panenForm, pembeliId: e.target.value })}
+                                required
+                            >
+                                <option value="">-- Pilih Pembeli --</option>
+                                {pembeli.map(p => (
+                                    <option key={p.id} value={p.id}>{p.nama} ({p.tipe})</option>
+                                ))}
+                            </select>
+                            <button
+                                type="button"
+                                onClick={() => setIsBuyerModalOpen(true)}
+                                className="btn btn-secondary px-3"
+                                title="Tambah Pembeli Baru"
+                            >
+                                <PlusIcon />
+                            </button>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-1">Data akan otomatis masuk ke menu Penjualan.</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Berat Total (Kg)</label>
+                            <input type="number" className="input w-full" required placeholder="0"
+                                value={panenForm.beratTotalKg} onChange={e => setPanenForm({ ...panenForm, beratTotalKg: e.target.value })} />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Jlh Ekor (Opsional)</label>
+                            <input type="number" className="input w-full" placeholder="0"
+                                value={panenForm.jumlahEkor} onChange={e => setPanenForm({ ...panenForm, jumlahEkor: e.target.value })} />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Harga Jual (Rp/kg)</label>
+                        <input type="text" className="input w-full" required
+                            value={formatCurrencyInput(panenForm.hargaPerKg)}
+                            onChange={e => setPanenForm({ ...panenForm, hargaPerKg: parseCurrencyInput(e.target.value) })} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Tipe</label>
+                        <select
+                            className="input w-full"
+                            value={panenForm.tipe}
+                            onChange={e => {
+                                const newTipe = e.target.value as 'PARSIAL' | 'TOTAL';
+                                setPanenForm(prev => {
+                                    let updates = { ...prev, tipe: newTipe };
+
+                                    // Auto-fill if 'TOTAL'
+                                    if (newTipe === 'TOTAL' && prev.kolamId) {
+                                        const k = kolam.find(p => p.id === prev.kolamId);
+                                        if (k) {
+                                            const est = calculateEstimation(k);
+                                            updates.jumlahEkor = k.jumlahIkan.toString();
+                                            if (est && est.currentBiomass) {
+                                                updates.beratTotalKg = est.currentBiomass;
+                                            }
+                                        }
+                                    }
+                                    return updates;
+                                });
+                            }}
+                        >
+                            <option value="PARSIAL">Parsial</option>
+                            <option value="TOTAL">Total (Panen Raya)</option>
+                        </select>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                        <button type="button" onClick={() => setIsPanenModalOpen(false)} className="btn btn-secondary flex-1">Batal</button>
+                        <button type="submit" className="btn bg-emerald-600 text-white flex-1 hover:bg-emerald-700 border-transparent">Simpan Panen</button>
+                    </div>
+                </form>
+            </Modal>
+            {/* Modal Quick Add Buyer */}
+            <Modal isOpen={isBuyerModalOpen} onClose={() => setIsBuyerModalOpen(false)} title="Tambah Pembeli Baru">
+                <form onSubmit={handleBuyerSubmit} className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Nama Pembeli</label>
+                        <input
+                            type="text"
+                            className="input w-full"
+                            required
+                            value={buyerForm.nama}
+                            onChange={e => setBuyerForm({ ...buyerForm, nama: e.target.value })}
+                            placeholder="Contoh: Pak Budi"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Tipe</label>
+                        <select
+                            className="input w-full"
+                            value={buyerForm.tipe}
+                            onChange={e => setBuyerForm({ ...buyerForm, tipe: e.target.value as TipePembeli })}
+                        >
+                            <option value="TENGKULAK">Tengkulak</option>
+                            <option value="PASAR">Pasar</option>
+                            <option value="RESTORAN">Restoran</option>
+                            <option value="LAINNYA">Lainnya</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Kontak (Opsional)</label>
+                        <input
+                            type="text"
+                            className="input w-full"
+                            value={buyerForm.kontak}
+                            onChange={e => setBuyerForm({ ...buyerForm, kontak: e.target.value })}
+                        />
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                        <button type="button" onClick={() => setIsBuyerModalOpen(false)} className="btn btn-secondary flex-1">Batal</button>
+                        <button type="submit" className="btn btn-primary flex-1">Simpan</button>
+                    </div>
+                </form>
+            </Modal>
+        </DashboardLayout >
     );
 }

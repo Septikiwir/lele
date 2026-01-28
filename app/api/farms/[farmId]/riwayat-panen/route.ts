@@ -63,8 +63,8 @@ export async function POST(
 
         const { kolamId, tanggal, beratTotalKg, jumlahEkor, hargaPerKg, tipe, catatan } = await request.json()
 
-        if (!kolamId || !tanggal || !beratTotalKg || !jumlahEkor || !hargaPerKg || !tipe) {
-            return NextResponse.json({ error: 'Field wajib: kolamId, tanggal, beratTotalKg, jumlahEkor, hargaPerKg, tipe' }, { status: 400 })
+        if (!kolamId || !tanggal || !beratTotalKg || !hargaPerKg || !tipe) {
+            return NextResponse.json({ error: 'Field wajib: kolamId, tanggal, beratTotalKg, hargaPerKg, tipe' }, { status: 400 })
         }
 
         const kolam = await prisma.kolam.findUnique({ where: { id: kolamId, farmId } })
@@ -72,28 +72,56 @@ export async function POST(
             return NextResponse.json({ error: 'Kolam not found' }, { status: 404 })
         }
 
-        // Create harvest record and update kolam fish count
-        const [riwayatPanen] = await prisma.$transaction([
+        const jumlahEkorValue = jumlahEkor ? parseInt(jumlahEkor) : 0;
+        const harvestType = tipe.toUpperCase();
+
+        // Prepare updates
+        const transactionOps: any[] = [
             prisma.riwayatPanen.create({
                 data: {
                     kolamId,
                     tanggal: new Date(tanggal),
                     beratTotalKg: parseFloat(beratTotalKg),
-                    jumlahEkor: parseInt(jumlahEkor),
+                    jumlahEkor: jumlahEkorValue,
                     hargaPerKg: parseFloat(hargaPerKg),
-                    tipe: tipe.toUpperCase(),
+                    tipe: harvestType,
                     catatan
                 },
                 include: { kolam: { select: { id: true, nama: true } } }
-            }),
-            // Reduce fish count in kolam
-            prisma.kolam.update({
-                where: { id: kolamId },
-                data: {
-                    jumlahIkan: { decrement: parseInt(jumlahEkor) }
-                }
             })
-        ])
+        ];
+
+        // Update kolam fish count based on harvest type
+        if (harvestType === 'TOTAL') {
+            // Panen Raya: Reset count to 0 and clear stocking date to mark as empty/inactive
+            // Or just reset count to 0 and let user "start new cycle" manually?
+            // "Siap Ditebar" implies empty, so count 0 is enough.
+            // keeping tanggalTebar might be useful for history, but for "Active" logic usually it checks count > 0.
+            transactionOps.push(
+                prisma.kolam.update({
+                    where: { id: kolamId },
+                    data: {
+                        jumlahIkan: 0,
+                        status: 'AMAN' // Reset status
+                    }
+                })
+            );
+        } else {
+            // Parsial: Reduce count if provided
+            if (jumlahEkorValue > 0) {
+                transactionOps.push(
+                    prisma.kolam.update({
+                        where: { id: kolamId },
+                        data: {
+                            jumlahIkan: { decrement: jumlahEkorValue }
+                        }
+                    })
+                );
+            }
+        }
+
+        const results = await prisma.$transaction(transactionOps);
+        const riwayatPanen = results[0];
 
         return NextResponse.json(riwayatPanen, { status: 201 })
     } catch (error) {

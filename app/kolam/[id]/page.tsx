@@ -69,7 +69,8 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
 
     // Sampling State
     const [isSamplingOpen, setIsSamplingOpen] = useState(false);
-    const [samplingPerKg, setSamplingPerKg] = useState('');
+    const [samplingInputUnit, setSamplingInputUnit] = useState<'berat' | 'size'>('berat');
+    const [samplingValue, setSamplingValue] = useState('');
     const [samplingCatatan, setSamplingCatatan] = useState('');
 
     const handleUpdateFish = async (e: React.FormEvent) => {
@@ -106,17 +107,32 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
         if (!kolam) return;
 
         try {
-            const size = parseInt(samplingPerKg);
-            if (!isNaN(size) && size > 0) {
-                await addRiwayatSampling({
-                    kolamId: kolam.id,
-                    tanggal: new Date().toISOString(),
-                    jumlahIkanPerKg: size,
-                    catatan: samplingCatatan
-                });
-                setIsSamplingOpen(false);
-                setSamplingPerKg('');
-                setSamplingCatatan('');
+            const val = parseFloat(samplingValue);
+            if (!isNaN(val) && val > 0) {
+                let sizePerKg = 0;
+
+                if (samplingInputUnit === 'berat') {
+                    // Input is grams/fish
+                    // 1000 / grams = fish/kg
+                    sizePerKg = Math.round(1000 / val);
+                } else {
+                    // Input is fish/kg (size)
+                    sizePerKg = Math.round(val);
+                }
+
+                if (sizePerKg > 0) {
+                    await addRiwayatSampling({
+                        kolamId: kolam.id,
+                        tanggal: new Date().toISOString(),
+                        jumlahIkanPerKg: sizePerKg,
+                        catatan: samplingCatatan
+                    });
+                    setIsSamplingOpen(false);
+                    setSamplingValue('');
+                    setSamplingCatatan('');
+                } else {
+                    alert("Nilai tidak valid (hasil konversi 0 ekor/kg)");
+                }
             }
         } catch (error) {
             console.error("Failed to add sampling:", error);
@@ -252,9 +268,10 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                     <button
                         onClick={() => {
                             if (averageWeight > 0) {
-                                setSamplingPerKg(Math.round(1 / averageWeight).toString());
+                                setSamplingInputUnit('berat'); // Default to grams view
+                                setSamplingValue((averageWeight * 1000).toFixed(0));
                             } else {
-                                setSamplingPerKg('');
+                                setSamplingValue('');
                             }
                             setIsSamplingOpen(true);
                         }}
@@ -264,8 +281,16 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                         <EditIcon />
                     </button>
                     <p className="stat-label text-indigo-600">Sampling Terakhir</p>
-                    <p className="stat-value text-indigo-900">
-                        {averageWeight > 0 ? `Isi ${Math.round(1 / averageWeight)}` : '-'}<span className="text-lg text-indigo-400"> /kg</span>
+                    <p className="stat-value text-indigo-900 flex flex-col">
+                        <span>
+                            {averageWeight > 0 ? `${(averageWeight * 1000).toFixed(0)}` : '-'}
+                            <span className="text-lg text-indigo-400"> gram/ekor</span>
+                        </span>
+                        {averageWeight > 0 && (
+                            <span className="text-sm text-indigo-500 font-normal -mt-1">
+                                (Isi {Math.round(1 / averageWeight)} /kg)
+                            </span>
+                        )}
                     </p>
                 </div>
                 <div className="stat-card bg-indigo-50 border-indigo-100">
@@ -580,41 +605,94 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                 </form>
             </Modal>
             {/* Sampling Modal */}
+            {/* Sampling Modal */}
             <Modal
                 isOpen={isSamplingOpen}
                 onClose={() => setIsSamplingOpen(false)}
                 title="Input Sampling Ikan"
             >
                 <form onSubmit={handleInputSampling} className="space-y-4">
+                    {/* Input Mode Toggle */}
+                    <div className="flex bg-slate-100 p-1 rounded-lg">
+                        <button
+                            type="button"
+                            className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${samplingInputUnit === 'berat' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            onClick={() => {
+                                setSamplingInputUnit('berat');
+                                // Convert value if exists
+                                if (samplingValue) {
+                                    const val = parseFloat(samplingValue);
+                                    if (!isNaN(val) && val > 0) {
+                                        // switching size (isi) -> berat (gram)
+                                        // 1000 / isi = gram
+                                        setSamplingValue((1000 / val).toFixed(0));
+                                    }
+                                }
+                            }}
+                        >
+                            Berat (Gram/Ekor)
+                        </button>
+                        <button
+                            type="button"
+                            className={`flex-1 py-1.5 text-sm font-medium rounded-md transition-colors ${samplingInputUnit === 'size' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            onClick={() => {
+                                setSamplingInputUnit('size');
+                                // Convert value if exists
+                                if (samplingValue) {
+                                    const val = parseFloat(samplingValue);
+                                    if (!isNaN(val) && val > 0) {
+                                        // switching berat (gram) -> size (isi)
+                                        // 1000 / gram = isi
+                                        setSamplingValue(Math.round(1000 / val).toString());
+                                    }
+                                }
+                            }}
+                        >
+                            Size (Isi/Kg)
+                        </button>
+                    </div>
+
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah Ikan per Kg (Isi)</label>
-                        <div className="relative">
-                            <input
-                                type="number"
-                                value={samplingPerKg}
-                                onChange={(e) => setSamplingPerKg(e.target.value)}
-                                className="input border-slate-300 pl-4 pr-12"
-                                placeholder="Contoh: 8"
-                                min="1"
-                                step="1"
-                                required
-                            />
-                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                <span className="text-gray-500 sm:text-sm">/kg</span>
-                            </div>
+                        <div className="flex justify-between mb-2">
+                            <label className="block text-sm font-medium text-slate-700">
+                                {samplingInputUnit === 'berat' ? 'Berat Rata-rata (Gram)' : 'Jumlah Ikan per Kg (Size)'}
+                            </label>
+                            {samplingValue && !isNaN(parseFloat(samplingValue)) && parseFloat(samplingValue) > 0 && (
+                                <span className="text-xs text-indigo-600 font-medium">
+                                    Konversi: {samplingInputUnit === 'berat'
+                                        ? `~Isi ${(1000 / parseFloat(samplingValue)).toFixed(1)} /kg`
+                                        : `~${(1000 / parseFloat(samplingValue)).toFixed(1)} gram/ekor`
+                                    }
+                                </span>
+                            )}
                         </div>
+                        <input
+                            type="number"
+                            value={samplingValue}
+                            onChange={(e) => setSamplingValue(e.target.value)}
+                            className="input border-slate-300 w-full text-lg"
+                            placeholder={samplingInputUnit === 'berat' ? "Contoh: 100" : "Contoh: 10"}
+                            min="1"
+                            step="any"
+                            required
+                            autoFocus
+                        />
                         <p className="text-xs text-slate-500 mt-2">
-                            Masukkan jumlah rata-rata ikan dalam 1 kg (misal "8" berarti ukuran ikan sekitar 125 gram/ekor).
+                            {samplingInputUnit === 'berat'
+                                ? "Masukkan berat rata-rata satu ekor ikan dalam satuan gram."
+                                : "Masukkan jumlah ekor ikan dalam 1 kilogram (istilah 'Size' atau 'Isi')."
+                            }
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Catatan (Optional)</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Catatan (Opsional)</label>
                         <textarea
                             value={samplingCatatan}
                             onChange={(e) => setSamplingCatatan(e.target.value)}
-                            className="input w-full h-24"
-                            placeholder="Catatan tambahan..."
+                            className="input border-slate-300 w-full"
+                            placeholder="Contoh: Ikan sehat, nafsu makan baik..."
+                            rows={2}
                         />
                     </div>
 

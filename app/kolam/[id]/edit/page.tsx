@@ -16,7 +16,7 @@ const ArrowLeftIcon = () => (
 export default function EditKolamPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = use(params);
     const router = useRouter();
-    const { getKolamById, updateKolam, calculateKepadatan } = useApp();
+    const { getKolamById, updateKolam } = useApp();
     const kolam = getKolamById(resolvedParams.id);
 
     const [formData, setFormData] = useState({
@@ -24,8 +24,6 @@ export default function EditKolamPage({ params }: { params: Promise<{ id: string
         panjang: '',
         lebar: '',
         kedalaman: '',
-        tanggalTebar: '',
-        jumlahIkan: '',
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -37,8 +35,6 @@ export default function EditKolamPage({ params }: { params: Promise<{ id: string
                 panjang: kolam.panjang.toString(),
                 lebar: kolam.lebar.toString(),
                 kedalaman: kolam.kedalaman.toString(),
-                tanggalTebar: kolam.tanggalTebar,
-                jumlahIkan: kolam.jumlahIkan.toString(),
             });
         }
     }, [kolam]);
@@ -54,8 +50,6 @@ export default function EditKolamPage({ params }: { params: Promise<{ id: string
         if (!formData.panjang || parseFloat(formData.panjang) <= 0) newErrors.panjang = 'Panjang harus lebih dari 0';
         if (!formData.lebar || parseFloat(formData.lebar) <= 0) newErrors.lebar = 'Lebar harus lebih dari 0';
         if (!formData.kedalaman || parseFloat(formData.kedalaman) <= 0) newErrors.kedalaman = 'Kedalaman harus lebih dari 0';
-        if (!formData.tanggalTebar) newErrors.tanggalTebar = 'Tanggal tebar wajib diisi';
-        if (!formData.jumlahIkan || parseInt(formData.jumlahIkan) <= 0) newErrors.jumlahIkan = 'Jumlah ikan harus lebih dari 0';
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -71,8 +65,6 @@ export default function EditKolamPage({ params }: { params: Promise<{ id: string
             panjang: parseFloat(formData.panjang),
             lebar: parseFloat(formData.lebar),
             kedalaman: parseFloat(formData.kedalaman),
-            tanggalTebar: formData.tanggalTebar,
-            jumlahIkan: parseInt(formData.jumlahIkan),
         });
 
         router.push('/kolam');
@@ -82,10 +74,8 @@ export default function EditKolamPage({ params }: { params: Promise<{ id: string
     const panjang = parseFloat(formData.panjang) || 0;
     const lebar = parseFloat(formData.lebar) || 0;
     const kedalaman = parseFloat(formData.kedalaman) || 0;
-    const jumlahIkan = parseInt(formData.jumlahIkan) || 0;
     const luasCalc = panjang * lebar;
     const volumeCalc = luasCalc * kedalaman;
-    const kepadatanCalc = volumeCalc > 0 ? jumlahIkan / volumeCalc : 0;
 
     return (
         <DashboardLayout>
@@ -159,35 +149,6 @@ export default function EditKolamPage({ params }: { params: Promise<{ id: string
                             </div>
                         </div>
 
-                        {/* Tanggal Tebar */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                Tanggal Tebar <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="date"
-                                value={formData.tanggalTebar}
-                                onChange={(e) => setFormData({ ...formData, tanggalTebar: e.target.value })}
-                                className={`input ${errors.tanggalTebar ? 'input-error' : ''}`}
-                            />
-                            {errors.tanggalTebar && <p className="text-red-500 text-sm mt-1">{errors.tanggalTebar}</p>}
-                        </div>
-
-                        {/* Jumlah Ikan */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                Jumlah Ikan <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="number"
-                                min="0"
-                                value={formData.jumlahIkan}
-                                onChange={(e) => setFormData({ ...formData, jumlahIkan: e.target.value })}
-                                className={`input ${errors.jumlahIkan ? 'input-error' : ''}`}
-                            />
-                            {errors.jumlahIkan && <p className="text-red-500 text-sm mt-1">{errors.jumlahIkan}</p>}
-                        </div>
-
                         {/* Actions */}
                         <div className="flex gap-4 pt-4 border-t">
                             <Link href="/kolam" className="btn btn-secondary flex-1">
@@ -233,26 +194,6 @@ export default function EditKolamPage({ params }: { params: Promise<{ id: string
                             <div className="flex justify-between py-2 border-b border-slate-100">
                                 <span className="text-slate-500">Volume</span>
                                 <span className="font-semibold text-slate-900">{volumeCalc.toFixed(1)} m³</span>
-                            </div>
-                            <div className="flex justify-between py-2 border-b border-slate-100">
-                                <span className="text-slate-500">Kepadatan</span>
-                                <span className={`font-semibold ${kepadatanCalc === 0 ? 'text-slate-400' :
-                                    kepadatanCalc <= 50 ? 'text-green-600' :
-                                        kepadatanCalc <= 100 ? 'text-amber-600' : 'text-red-600'
-                                    }`}>
-                                    {kepadatanCalc.toFixed(1)} ekor/m³
-                                </span>
-                            </div>
-                            <div className="flex justify-between py-2">
-                                <span className="text-slate-500">Status</span>
-                                <span className={`badge ${kepadatanCalc === 0 ? 'badge-info' :
-                                    kepadatanCalc <= 50 ? 'badge-success' :
-                                        kepadatanCalc <= 100 ? 'badge-warning' : 'badge-danger'
-                                    }`}>
-                                    {kepadatanCalc === 0 ? '-' :
-                                        kepadatanCalc <= 50 ? 'Aman' :
-                                            kepadatanCalc <= 100 ? 'Waspada' : 'Berisiko'}
-                                </span>
                             </div>
                         </div>
                     </div>

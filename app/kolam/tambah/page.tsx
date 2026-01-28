@@ -21,8 +21,6 @@ export default function TambahKolamPage() {
         panjang: '',
         lebar: '',
         kedalaman: '',
-        tanggalTebar: new Date().toISOString().split('T')[0],
-        jumlahIkan: '',
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -34,8 +32,7 @@ export default function TambahKolamPage() {
         if (!formData.panjang || parseFloat(formData.panjang) <= 0) newErrors.panjang = 'Panjang harus lebih dari 0';
         if (!formData.lebar || parseFloat(formData.lebar) <= 0) newErrors.lebar = 'Lebar harus lebih dari 0';
         if (!formData.kedalaman || parseFloat(formData.kedalaman) <= 0) newErrors.kedalaman = 'Kedalaman harus lebih dari 0';
-        if (!formData.tanggalTebar) newErrors.tanggalTebar = 'Tanggal tebar wajib diisi';
-        if (!formData.jumlahIkan || parseInt(formData.jumlahIkan) <= 0) newErrors.jumlahIkan = 'Jumlah ikan harus lebih dari 0';
+        if (!formData.kedalaman || parseFloat(formData.kedalaman) <= 0) newErrors.kedalaman = 'Kedalaman harus lebih dari 0';
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -51,21 +48,21 @@ export default function TambahKolamPage() {
             panjang: parseFloat(formData.panjang),
             lebar: parseFloat(formData.lebar),
             kedalaman: parseFloat(formData.kedalaman),
-            tanggalTebar: formData.tanggalTebar,
-            jumlahIkan: parseInt(formData.jumlahIkan),
+            tanggalTebar: null,
+            jumlahIkan: 0,
         });
 
         router.push('/kolam');
     };
 
     // Preview calculations
+    // Preview calculations
     const panjang = parseFloat(formData.panjang) || 0;
     const lebar = parseFloat(formData.lebar) || 0;
     const kedalaman = parseFloat(formData.kedalaman) || 0;
-    const jumlahIkan = parseInt(formData.jumlahIkan) || 0;
+
     const luas = panjang * lebar;
     const volume = luas * kedalaman;
-    const kepadatan = volume > 0 ? jumlahIkan / volume : 0;
 
     return (
         <DashboardLayout>
@@ -143,36 +140,6 @@ export default function TambahKolamPage() {
                             </div>
                         </div>
 
-                        {/* Tanggal Tebar */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                Tanggal Tebar <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="date"
-                                value={formData.tanggalTebar}
-                                onChange={(e) => setFormData({ ...formData, tanggalTebar: e.target.value })}
-                                className={`input ${errors.tanggalTebar ? 'input-error' : ''}`}
-                            />
-                            {errors.tanggalTebar && <p className="text-red-500 text-sm mt-1">{errors.tanggalTebar}</p>}
-                        </div>
-
-                        {/* Jumlah Ikan */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">
-                                Jumlah Ikan <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="number"
-                                min="0"
-                                value={formData.jumlahIkan}
-                                onChange={(e) => setFormData({ ...formData, jumlahIkan: e.target.value })}
-                                placeholder="Contoh: 5000"
-                                className={`input ${errors.jumlahIkan ? 'input-error' : ''}`}
-                            />
-                            {errors.jumlahIkan && <p className="text-red-500 text-sm mt-1">{errors.jumlahIkan}</p>}
-                        </div>
-
                         {/* Actions */}
                         <div className="flex gap-4 pt-4 border-t">
                             <Link href="/kolam" className="btn btn-secondary flex-1">
@@ -218,26 +185,6 @@ export default function TambahKolamPage() {
                             <div className="flex justify-between py-2 border-b border-slate-100">
                                 <span className="text-slate-500">Volume</span>
                                 <span className="font-semibold text-slate-900">{volume.toFixed(1)} m³</span>
-                            </div>
-                            <div className="flex justify-between py-2 border-b border-slate-100">
-                                <span className="text-slate-500">Kepadatan</span>
-                                <span className={`font-semibold ${kepadatan === 0 ? 'text-slate-400' :
-                                    kepadatan <= 50 ? 'text-green-600' :
-                                        kepadatan <= 100 ? 'text-amber-600' : 'text-red-600'
-                                    }`}>
-                                    {kepadatan.toFixed(1)} ekor/m³
-                                </span>
-                            </div>
-                            <div className="flex justify-between py-2">
-                                <span className="text-slate-500">Status</span>
-                                <span className={`badge ${kepadatan === 0 ? 'badge-info' :
-                                    kepadatan <= 50 ? 'badge-success' :
-                                        kepadatan <= 100 ? 'badge-warning' : 'badge-danger'
-                                    }`}>
-                                    {kepadatan === 0 ? '-' :
-                                        kepadatan <= 50 ? 'Aman' :
-                                            kepadatan <= 100 ? 'Waspada' : 'Berisiko'}
-                                </span>
                             </div>
                         </div>
                     </div>
