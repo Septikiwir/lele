@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
+import { verifyFarmAccess } from '@/lib/farm-auth';
 
 // GET: Fetch all history for a farm (optional, or just fetch by kolam on client side filtering)
 // But usually we fetch all data for the farm in AppContext.
@@ -9,9 +10,13 @@ export async function GET(
     { params }: { params: Promise<{ farmId: string }> }
 ) {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
     const resolvedParams = await params;
+
+    // Authorization Check
+    const access = await verifyFarmAccess(resolvedParams.farmId, session.user.id);
+    if (!access) return new NextResponse("Forbidden", { status: 403 });
 
     try {
         const history = await prisma.riwayatIkan.findMany({
@@ -36,9 +41,13 @@ export async function POST(
     { params }: { params: Promise<{ farmId: string }> }
 ) {
     const session = await auth();
-    if (!session) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session?.user?.id) return new NextResponse("Unauthorized", { status: 401 });
 
     const resolvedParams = await params;
+
+    // Authorization Check
+    const access = await verifyFarmAccess(resolvedParams.farmId, session.user.id);
+    if (!access || access.role === 'VIEWER') return new NextResponse("Forbidden", { status: 403 });
 
     try {
         const body = await request.json();

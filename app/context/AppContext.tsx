@@ -123,6 +123,26 @@ export interface RiwayatSampling {
     catatan?: string;
 }
 
+export interface CycleSummary {
+    kolamId: string;
+    startDate: string;
+    endDate: string;
+    totalDays: number;
+    initialFish: number;
+    finalFish: number;
+    totalFeedKg: number;
+    totalFeedCost: number;
+    totalHarvestKg: number;
+    totalHarvestRevenue: number;
+    totalExpenses: number; // Operational (non-feed)
+    netProfit: number;
+    fcr: number;
+    sr: number; // Survival Rate
+    adjustmentNet: number; // Net change from manual adjustments (deaths/corrections)
+    isActive: boolean;
+    startId?: string; // Optional ID of the start event (Tebar)
+}
+
 // Context Type
 interface AppContextType {
     // Data
@@ -218,7 +238,11 @@ interface AppContextType {
     refreshData: () => Promise<void>;
 
     // Feed Recommendation Helper
-    getFeedRecommendation: (weightGrams: number, biomassKg: number) => { type: string; amountKg: string; ratePercent: string };
+    getFeedRecommendation: (weightGrams: number, biomassKg: number) => { type: string; amount: string; ratePercent: string };
+
+    // Cycle Analysis
+    getCycleSummary: (kolamId: string) => CycleSummary | null;
+    getCycleHistory: (kolamId: string) => CycleSummary[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -259,7 +283,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const isAuthenticated = status === 'authenticated';
 
     // State
-    const [activeFarmId, setActiveFarmId] = useState<string | null>('cmkwud2ft000cdbvl90uq3lge');
+    const [activeFarmId, setActiveFarmId] = useState<string | null>(null);
     const [kolam, setKolam] = useState<Kolam[]>([]);
     const [pakan, setPakan] = useState<DataPakan[]>([]);
     const [kondisiAir, setKondisiAir] = useState<KondisiAir[]>([]);
@@ -294,8 +318,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
     }, [isAuthenticated]);
 
-    // Fetch all data for active farm
-    const fetchAllData = useCallback(async () => {
+    // Fetch critical data (Kolam) first to unblock UI
+    const fetchCriticalData = useCallback(async () => {
         if (!activeFarmId) {
             setIsLoading(false);
             return;
@@ -303,8 +327,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         setIsLoading(true);
         try {
+            const kolamRes = await fetch(`/api/farms/${activeFarmId}/kolam`);
+            if (kolamRes.ok) {
+                const data = await kolamRes.json();
+                setKolam(data.map(mapKolam));
+            }
+        } catch (error) {
+            console.error('Failed to fetch critical data:', error);
+        } finally {
+            // Critical data loaded, unblock UI immediately
+            setIsLoading(false);
+            // Trigger secondary fetch in background
+            fetchSecondaryData();
+        }
+    }, [activeFarmId]);
+
+    // Fetch secondary data in background
+    const fetchSecondaryData = useCallback(async () => {
+        if (!activeFarmId) return;
+
+        try {
             const [
-                kolamRes,
                 pakanRes,
                 stokPakanRes,
                 kondisiAirRes,
@@ -316,7 +359,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 riwayatIkanRes,
                 samplingRes
             ] = await Promise.all([
-                fetch(`/api/farms/${activeFarmId}/kolam`),
                 fetch(`/api/farms/${activeFarmId}/pakan`),
                 fetch(`/api/farms/${activeFarmId}/stok-pakan`),
                 fetch(`/api/farms/${activeFarmId}/kondisi-air`),
@@ -329,10 +371,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 fetch(`/api/farms/${activeFarmId}/sampling`)
             ]);
 
-            if (kolamRes.ok) {
-                const data = await kolamRes.json();
-                setKolam(data.map(mapKolam));
-            }
             if (pakanRes.ok) {
                 const data = await pakanRes.json();
                 setPakan(data.map((p: Record<string, unknown>) => ({
@@ -359,12 +397,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 setPengeluaran(data.map((p: any) => ({
                     ...p,
                     tanggal: (p.tanggal as string).split('T')[0],
-                    kategori: p.kategori // Prisma returns UPPERCASE by default matched to Enum
+                    kategori: p.kategori
                 })));
             }
             if (pembeliRes.ok) {
                 const data = await pembeliRes.json();
-                setPembeli(data); // Prisma returns UPPERCASE
+                setPembeli(data);
             }
             if (penjualanRes.ok) {
                 const data = await penjualanRes.json();
@@ -400,11 +438,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 })));
             }
         } catch (error) {
-            console.error('Failed to fetch data:', error);
-        } finally {
-            setIsLoading(false);
+            console.error('Failed to fetch secondary data:', error);
         }
     }, [activeFarmId]);
+
 
     // Load sidebar state from localStorage
     useEffect(() => {
@@ -424,11 +461,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     // Fetch data when farm changes
     useEffect(() => {
-        fetchAllData();
-    }, [fetchAllData]);
+        fetchCriticalData();
+    }, [fetchCriticalData]);
 
     const refreshData = async () => {
-        await fetchAllData();
+        await fetchCriticalData();
     };
 
     // === CRUD Operations ===
@@ -463,6 +500,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
             dbUpdates.positionH = updates.position.h;
             dbUpdates.color = updates.position.color;
             delete dbUpdates.position;
+        }
+
+        if (updates.status) {
+            dbUpdates.status = updates.status.toUpperCase();
         }
 
         try {
@@ -721,6 +762,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 }));
             } else {
                 const errorText = await res.text();
+                console.error("Server API Error (addRiwayatIkan):", errorText);
                 throw new Error(errorText || "Failed to add riwayat ikan");
             }
         } catch (error) {
@@ -839,12 +881,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
             minRate = 0.015; maxRate = 0.02; labelRate = '1.5-2%';
         }
 
-        const minAmount = (biomassKg * minRate).toFixed(1);
-        const maxAmount = (biomassKg * maxRate).toFixed(1);
+        const minAmountVal = biomassKg * minRate;
+        const maxAmountVal = biomassKg * maxRate;
+
+        let amountDisplay = '';
+
+        const formatVal = (val: number, isGram: boolean = false, isTon: boolean = false) => {
+            if (isGram) return Math.round(val).toLocaleString('id-ID');
+            // For kg and Ton, show up to 1 decimal place
+            return val.toLocaleString('id-ID', { maximumFractionDigits: 1 });
+        };
+
+        if (maxAmountVal < 1) {
+            const minGram = minAmountVal * 1000;
+            const maxGram = maxAmountVal * 1000;
+            amountDisplay = `${formatVal(minGram, true)} - ${formatVal(maxGram, true)} gram`;
+        } else if (maxAmountVal >= 10000) {
+            const minTon = minAmountVal / 1000;
+            const maxTon = maxAmountVal / 1000;
+            amountDisplay = `${formatVal(minTon, false, true)} - ${formatVal(maxTon, false, true)} Ton`;
+        } else {
+            amountDisplay = `${formatVal(minAmountVal)} - ${formatVal(maxAmountVal)} kg`;
+        }
 
         return {
             type,
-            amountKg: `${minAmount} - ${maxAmount}`,
+            amount: amountDisplay,
             ratePercent: labelRate
         };
     };
@@ -964,16 +1026,140 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return estimatedWeightGain > 0 ? totalPakan / estimatedWeightGain : 0;
     };
 
+
+    // Helper to calculate metrics for a specific date range
+    const calculateCycleMetrics = (kolamId: string, startDate: string, endDate: string): CycleSummary => {
+        const k = getKolamById(kolamId);
+        const rangeFilterInclusive = (d: { tanggal: string }) => d.tanggal >= startDate && d.tanggal <= endDate;
+
+        // Feed
+        const cycleFeed = pakan.filter(p => p.kolamId === kolamId && rangeFilterInclusive(p));
+        const totalFeedKg = cycleFeed.reduce((sum, p) => sum + p.jumlahKg, 0);
+        const totalFeedCost = cycleFeed.reduce((sum, p) => sum + (p.jumlahKg * getFeedPrice(p.jenisPakan)), 0);
+
+        // Harvest
+        const cycleHarvest = riwayatPanen.filter(p => p.kolamId === kolamId && rangeFilterInclusive(p));
+        const totalHarvestKg = cycleHarvest.reduce((sum, p) => sum + p.beratTotalKg, 0);
+        const totalHarvestRevenue = cycleHarvest.reduce((sum, p) => sum + (p.beratTotalKg * p.hargaPerKg), 0);
+        const finalFish = cycleHarvest.reduce((sum, p) => sum + p.jumlahEkor, 0);
+
+        // Expenses
+        const cycleExpenses = pengeluaran.filter(p => p.kolamId === kolamId && p.kategori !== 'PAKAN' && rangeFilterInclusive(p));
+        const totalExpenses = cycleExpenses.reduce((sum, p) => sum + p.jumlah, 0);
+
+        const initialFish = getRiwayatIkanByKolam(kolamId).find(h => h.tanggal === startDate && (h.keterangan.toLowerCase().includes('tebar') || h.jumlahAkhir === h.jumlahPerubahan))?.jumlahPerubahan || 0;
+
+        // FCR
+        const fcr = totalHarvestKg > 0 ? totalFeedKg / totalHarvestKg : 0;
+
+        // SR
+        const totalLived = finalFish;
+        const sr = initialFish > 0 ? (totalLived / initialFish) * 100 : 0;
+
+        const netProfit = totalHarvestRevenue - (totalFeedCost + totalExpenses);
+
+        const start = new Date(startDate).getTime();
+        const end = new Date(endDate).getTime();
+        const totalDays = Math.max(1, Math.ceil((end - start) / (1000 * 3600 * 24)));
+
+        return {
+            kolamId,
+            startDate,
+            endDate,
+            totalDays,
+            initialFish,
+            finalFish: totalLived,
+            totalFeedKg,
+            totalFeedCost,
+            totalHarvestKg,
+            totalHarvestRevenue,
+            totalExpenses,
+            netProfit,
+            fcr,
+            sr,
+            adjustmentNet: 0,
+            isActive: false,
+            startId: ''
+        };
+    };
+
+    const getCycleSummary = (kolamId: string): CycleSummary | null => {
+        const k = getKolamById(kolamId);
+        if (!k) return null;
+
+        const historyDesc = getRiwayatIkanByKolam(kolamId);
+        const startEvent = historyDesc.find(h =>
+            h.keterangan.toLowerCase().includes('tebar') ||
+            (h.jumlahPerubahan > 0 && h.jumlahAkhir === h.jumlahPerubahan)
+        );
+
+        if (!startEvent) return null;
+
+        const startDate = startEvent.tanggal;
+        const startId = startEvent.id;
+
+        let endDate = new Date().toISOString().split('T')[0];
+        let isActive = k.jumlahIkan > 0;
+
+        if (!isActive && historyDesc.length > 0) {
+            endDate = historyDesc[0].tanggal;
+        }
+
+        const metrics = calculateCycleMetrics(kolamId, startDate, endDate);
+        return { ...metrics, startId, isActive };
+    };
+
+
+
     const toggleSidebar = () => setIsSidebarCollapsed(prev => !prev);
 
-    // Tebar Bibit Implementation
+    const getCycleHistory = (kolamId: string): CycleSummary[] => {
+        const history = getRiwayatIkanByKolam(kolamId).sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime());
+        const cycles: CycleSummary[] = [];
+        let currentCycleStart: { date: string; initialFish: number } | null = null;
+
+        // Find all Tebar events to determine cycle boundaries
+        for (let i = 0; i < history.length; i++) {
+            const h = history[i];
+            const isTebar = h.keterangan.toLowerCase().includes('tebar') || (h.jumlahPerubahan > 0 && h.jumlahAkhir === h.jumlahPerubahan);
+
+            if (isTebar) {
+                // If we were tracking a cycle, close it
+                if (currentCycleStart) {
+                    // This new tebar marks the start of a NEW cycle, so the previous one ended just before.
+                    // Or more likely, the previous one ended when fish count hit 0. 
+                    // Let's rely on getCycleSummary logic but focused on a specific date range?
+                    // Actually, re-using getCycleSummary is hard because it dynamically finds the "Latest".
+                    // Let's implement specific logic here.
+
+                    // Closure of previous cycle
+                    cycles.push(calculateCycleMetrics(kolamId, currentCycleStart.date, h.tanggal));
+                }
+                currentCycleStart = { date: h.tanggal, initialFish: h.jumlahPerubahan };
+            }
+        }
+
+        // Add the current active cycle if exists
+        if (currentCycleStart) {
+            const activeMetrics = calculateCycleMetrics(kolamId, currentCycleStart.date, new Date().toISOString().split('T')[0]);
+            // Force isActive true for the current one
+            activeMetrics.isActive = true;
+            cycles.push(activeMetrics);
+        }
+
+        return cycles.reverse(); // Newest first
+    };
+
+
+
+
+
     const tebarBibit = async (kolamId: string, data: { tanggal: string; jumlah: number; beratPerEkor: number }) => {
         if (!activeFarmId) return;
 
         try {
             await updateKolam(kolamId, {
                 tanggalTebar: data.tanggal,
-                jumlahIkan: data.jumlah,
                 status: 'aman'
             });
 
@@ -1062,6 +1248,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             tebarBibit,
             refreshData,
             getFeedRecommendation,
+            getCycleSummary,
+            getCycleHistory,
         }}>
             {children}
         </AppContext.Provider>

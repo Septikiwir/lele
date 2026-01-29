@@ -29,7 +29,7 @@ export default function KolamPage() {
     const {
         kolam, deleteKolam, calculateKepadatan, getUnifiedStatus,
         getLatestSampling, getFeedRecommendation,
-        addPakan, addRiwayatPanen, addPenjualan, pembeli, getAllJenisPakan
+        addPakan, addRiwayatPanen, addPenjualan, pembeli, getAllJenisPakan, tebarBibit
     } = useApp();
     const { showToast } = useToast();
     const [deleteModal, setDeleteModal] = useState<string | null>(null);
@@ -70,7 +70,8 @@ export default function KolamPage() {
         if (!tebarForm.kolamId || !tebarForm.jumlah) return;
 
         try {
-            await useApp().tebarBibit(tebarForm.kolamId, {
+            // Execute tebarBibit
+            await tebarBibit(tebarForm.kolamId, {
                 tanggal: tebarForm.tanggal,
                 jumlah: parseInt(tebarForm.jumlah),
                 beratPerEkor: parseFloat(tebarForm.beratPerEkor) || 5, // Default 5g if empty/invalid
@@ -250,12 +251,12 @@ export default function KolamPage() {
                                 {/* Stats */}
                                 <div className="grid grid-cols-2 gap-4 mb-4">
                                     <div className="bg-slate-50 rounded-lg p-3">
-                                        <p className="text-xs text-slate-500 uppercase tracking-wide">Dimensi</p>
-                                        <p className="font-semibold text-slate-900">{k.panjang}m × {k.lebar}m × {k.kedalaman}m</p>
+                                        <p className="text-xs text-slate-500 uppercase tracking-wide">Dimensi (m)</p>
+                                        <p className="font-semibold text-slate-900">{k.panjang} × {k.lebar} × {k.kedalaman}</p>
                                     </div>
                                     <div className="bg-slate-50 rounded-lg p-3">
                                         <p className="text-xs text-slate-500 uppercase tracking-wide">Luas & Vol</p>
-                                        <p className="font-semibold text-slate-900">{luas.toFixed(1)} m² <span className="text-slate-400">|</span> {volume.toFixed(1)} m³</p>
+                                        <p className="font-semibold text-slate-900">{parseFloat(luas.toFixed(1))} m² <span className="text-slate-400">|</span> {parseFloat(volume.toFixed(1))} m³</p>
                                     </div>
                                     <div className={`${isEmpty ? 'col-span-2' : ''} bg-slate-50 rounded-lg p-3 flex justify-between items-center`}>
                                         <div>
@@ -270,14 +271,11 @@ export default function KolamPage() {
                                     {/* Feed Rec Box */}
                                     {feedRec && (
                                         <div className="bg-amber-50 rounded-lg p-3 border border-amber-100 flex flex-col justify-center">
-                                            <p className="text-[10px] uppercase font-bold text-amber-700 tracking-wider mb-1">Pakan ({feedRec.type.split(' ')[0]})</p>
+                                            <p className="text-[10px] uppercase font-bold text-amber-700 tracking-wider mb-1">Pakan ({feedRec.type.split(' ')[0]}) ({feedRec.ratePercent})</p>
                                             <div className="flex flex-col">
                                                 <div className="flex items-baseline justify-between">
-                                                    <p className="font-bold text-amber-900 text-lg leading-none">{feedRec.amountKg} <span className="text-xs font-normal">kg</span></p>
+                                                    <p className="font-bold text-amber-900 text-lg leading-none">{feedRec.amount} <span className="text-xs font-normal">/ hari</span></p>
                                                 </div>
-                                                <p className="text-[10px] text-amber-600 mt-1">
-                                                    / hari <span className="font-semibold">({feedRec.ratePercent} bobot)</span>
-                                                </p>
                                             </div>
                                         </div>
                                     )}
@@ -485,7 +483,25 @@ export default function KolamPage() {
                                 type="number"
                                 className="input"
                                 value={panenForm.jumlahEkor}
-                                onChange={(e) => setPanenForm({ ...panenForm, jumlahEkor: e.target.value })}
+                                onChange={(e) => {
+                                    const count = parseInt(e.target.value);
+                                    let estimatedWeight = panenForm.beratTotalKg;
+
+                                    // Auto-calculate logic (Reverse)
+                                    if (count > 0 && panenForm.kolamId) {
+                                        const latestSampling = getLatestSampling(panenForm.kolamId);
+                                        if (latestSampling && latestSampling.jumlahIkanPerKg > 0) {
+                                            // Weight = Count / FishPerKg
+                                            estimatedWeight = (count / latestSampling.jumlahIkanPerKg).toFixed(1);
+                                        }
+                                    }
+
+                                    setPanenForm({
+                                        ...panenForm,
+                                        jumlahEkor: e.target.value,
+                                        beratTotalKg: estimatedWeight
+                                    });
+                                }}
                                 required
                             />
                         </div>
@@ -496,7 +512,26 @@ export default function KolamPage() {
                                 step="0.1"
                                 className="input"
                                 value={panenForm.beratTotalKg}
-                                onChange={(e) => setPanenForm({ ...panenForm, beratTotalKg: e.target.value })}
+                                onChange={(e) => {
+                                    const totalWeight = parseFloat(e.target.value);
+                                    let estimatedCount = panenForm.jumlahEkor;
+
+                                    // Auto-calculate logic
+                                    if (totalWeight > 0 && panenForm.kolamId) {
+                                        const latestSampling = getLatestSampling(panenForm.kolamId);
+                                        // Use sampling if available, else default to assumption (e.g. 100g/fish or 10 fish/kg)
+                                        // If sampling exists: jumlahIkanPerKg is available
+                                        if (latestSampling && latestSampling.jumlahIkanPerKg > 0) {
+                                            estimatedCount = Math.round(totalWeight * latestSampling.jumlahIkanPerKg).toString();
+                                        }
+                                    }
+
+                                    setPanenForm({
+                                        ...panenForm,
+                                        beratTotalKg: e.target.value,
+                                        jumlahEkor: estimatedCount
+                                    });
+                                }}
                                 required
                             />
                         </div>

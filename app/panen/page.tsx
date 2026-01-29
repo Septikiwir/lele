@@ -10,7 +10,7 @@ import { PlusIcon } from '../components/ui/Icons';
 import EmptyState from '../components/ui/EmptyState';
 
 export default function ProduksiPage() {
-    const { kolam, pakan, riwayatPanen, pembeli, addRiwayatPanen, addPenjualan, addPembeli, getPanenByKolam, tebarBibit, getLatestSampling } = useApp();
+    const { kolam, pakan, riwayatPanen, pembeli, addRiwayatPanen, addPenjualan, addPembeli, getPanenByKolam, tebarBibit, getLatestSampling, getFeedRecommendation } = useApp();
     const { showToast } = useToast(); // Destructure showToast
     const [selectedKolamId, setSelectedKolamId] = useState('');
 
@@ -132,7 +132,7 @@ export default function ProduksiPage() {
             daysPassed,
             daysRemaining,
             currentWeight: currentWeight.toFixed(0),
-            currentBiomass: totalBiomass.toFixed(1),
+            currentBiomass: parseFloat(totalBiomass.toFixed(1)).toString(),
             targetWeight,
             progress: Math.min((currentWeight / targetWeight) * 100, 100),
             estimatedHarvestDate: estimatedHarvestDate.toISOString().split('T')[0],
@@ -145,36 +145,7 @@ export default function ProduksiPage() {
         };
     };
 
-    // Helper for Feed Recommendation
-    const getFeedRecommendation = (weightGrams: number, biomassKg: number) => {
-        let type = '';
-        let rate = 0;
 
-        if (weightGrams < 5) {
-            type = 'PF-500/800 (Tepung/Butiran Halus)';
-            rate = 0.06; // 6%
-        } else if (weightGrams < 10) {
-            type = 'PF-1000';
-            rate = 0.045; // 4.5%
-        } else if (weightGrams < 50) {
-            type = '781-1 / LP-1 (2mm)';
-            rate = 0.035; // 3.5%
-        } else if (weightGrams < 100) {
-            type = '781-2 / LP-2 (3mm)';
-            rate = 0.03; // 3%
-        } else {
-            type = '781-3 / LP-3 (4mm)';
-            rate = 0.025; // 2.5%
-        }
-
-        const amountKg = biomassKg * rate;
-
-        return {
-            type,
-            amountKg: amountKg.toFixed(1),
-            ratePercent: (rate * 100).toFixed(1) + '%'
-        };
-    };
 
     // Auto-Calculate for Selected Pond (for Detail View)
     const selectedEstimation = selectedKolamData ? calculateEstimation(selectedKolamData) : null;

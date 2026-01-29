@@ -27,6 +27,12 @@ const CloseIcon = () => (
     </svg>
 );
 
+const HistoryIcon = () => (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+);
+
 interface GridCell {
     row: number;
     col: number;
@@ -54,7 +60,20 @@ const rekomendasi = {
 
 export default function KolamDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = use(params);
-    const { getKolamById, calculateKepadatan, getPakanByKolam, getKondisiAirByKolam, addRiwayatIkan, getRiwayatIkanByKolam, getUnifiedStatus, calculateBiomass, addRiwayatSampling, isLoading } = useApp();
+    const {
+        getKolamById,
+        calculateKepadatan,
+        getPakanByKolam,
+        getKondisiAirByKolam,
+        addRiwayatIkan,
+        getRiwayatIkanByKolam,
+        getUnifiedStatus,
+        calculateBiomass,
+        addRiwayatSampling,
+        isLoading,
+        getCycleSummary,
+        getCycleHistory
+    } = useApp();
     const kolam = getKolamById(resolvedParams.id);
 
     const [hoveredCell, setHoveredCell] = useState<GridCell | null>(null);
@@ -72,6 +91,10 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
     const [samplingInputUnit, setSamplingInputUnit] = useState<'berat' | 'size'>('berat');
     const [samplingValue, setSamplingValue] = useState('');
     const [samplingCatatan, setSamplingCatatan] = useState('');
+
+    // History View State
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+    const cycleHistory = kolam ? getCycleHistory(kolam.id) : [];
 
     const handleUpdateFish = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -211,6 +234,207 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
         setShowTooltip({ x: rect.left + rect.width / 2, y: rect.top });
     };
 
+    // Cycle Review Logic
+    // Fix: Show "Cycle Review" only if fish <= 0 AND we have a valid past cycle.
+    // If we just stared a new cycle (fish > 0), show active stats.
+
+    // Determine Current Cycle Start Date to filter data
+    // If active, get current cycle info. If inactive, show last cycle info? 
+    // Actually, user wants "When cycle 1 finished, don't show old data in new cycle".
+
+    // We can use getCycleSummary to get the *active* or *latest* cycle boundaries.
+    const activeCycle = kolam ? getCycleSummary(kolam.id) : null;
+    const currentCycleStartDate = activeCycle ? activeCycle.startDate : '1970-01-01';
+
+    // Filter Data for View
+    const filteredPakan = pakan.filter(p => p.tanggal >= currentCycleStartDate);
+    const filteredKondisiAir = kondisiAir.filter(k => k.tanggal >= currentCycleStartDate);
+
+    // Strict Filter for Riwayat Ikan
+    // 1. Must be >= Start Date
+    // 2. If it is a "Tebar" event (new cycle start), it MUST match our detected cycle start ID.
+    //    This prevents showing "Tebar Bibit 11" (Cycle A) when we are in Cycle B (Tebar Bibit 20), even if same day.
+    const filteredRiwayatIkan = riwayatIkan.filter(r => {
+        if (r.tanggal < currentCycleStartDate) return false;
+
+        // Check if this event looks like a "Cycle Start"
+        const isStartEvent = r.keterangan.toLowerCase().includes('tebar') || (r.jumlahPerubahan > 0 && r.jumlahAkhir === r.jumlahPerubahan);
+
+        if (isStartEvent && activeCycle?.startId) {
+            // Only allow if it matches the active cycle's start ID
+            return r.id === activeCycle.startId;
+        }
+
+        return true;
+    });
+
+    const cycleSummary = kolam.jumlahIkan === 0 ? getCycleSummary(kolam.id) : null;
+
+    if (cycleSummary) {
+        return (
+            <DashboardLayout>
+                <div className="mb-8">
+                    <Link href="/kolam" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-4">
+                        <ArrowLeftIcon />
+                        Kembali ke Daftar Kolam
+                    </Link>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl font-bold text-slate-900">{kolam.nama} <span className="text-slate-400 font-light">(Selesai)</span></h1>
+                            <p className="text-slate-500 mt-1">
+                                Siklus: {new Date(cycleSummary.startDate).toLocaleDateString('id-ID')} - {new Date(cycleSummary.endDate).toLocaleDateString('id-ID')} ({cycleSummary.totalDays} hari)
+                            </p>
+                        </div>
+                        <span className="badge badge-neutral">Siklus Selesai</span>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                    {/* Profit Card */}
+                    <div className={`p-6 rounded-xl border ${cycleSummary.netProfit >= 0 ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'} lg:col-span-2 relative overflow-hidden`}>
+                        <div className="relative z-10">
+                            <p className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-1">Net Profit</p>
+                            <h3 className={`text-3xl font-bold ${cycleSummary.netProfit >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                                Rp {cycleSummary.netProfit.toLocaleString('id-ID')}
+                            </h3>
+                            <div className="mt-4 flex gap-4 text-sm">
+                                <div>
+                                    <span className="text-slate-500 block">Total Omset</span>
+                                    <span className="font-semibold text-slate-700">Rp {cycleSummary.totalHarvestRevenue.toLocaleString('id-ID')}</span>
+                                </div>
+                                <div>
+                                    <span className="text-slate-500 block">Total Cost</span>
+                                    <span className="font-semibold text-slate-700">Rp {(cycleSummary.totalFeedCost + cycleSummary.totalExpenses).toLocaleString('id-ID')}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* FCR Card */}
+                    <div className="bg-white p-6 rounded-xl border border-slate-200">
+                        <div className="flex justify-between items-start mb-2">
+                            <p className="text-sm font-medium text-slate-500">FCR</p>
+                            <span className={`text-xs px-2 py-1 rounded-full ${cycleSummary.fcr <= 1.2 ? 'bg-green-100 text-green-700' : cycleSummary.fcr <= 1.5 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                                {cycleSummary.fcr <= 1.2 ? 'Excellent' : cycleSummary.fcr <= 1.5 ? 'Good' : 'High'}
+                            </span>
+                        </div>
+                        <h3 className="text-3xl font-bold text-slate-900">{cycleSummary.fcr.toFixed(2)}</h3>
+                        <p className="text-xs text-slate-400 mt-2">Target: &lt; 1.2</p>
+                    </div>
+
+                    {/* SR Card */}
+                    <div className="bg-white p-6 rounded-xl border border-slate-200">
+                        <div className="flex justify-between items-start mb-2">
+                            <p className="text-sm font-medium text-slate-500">Survival Rate (SR)</p>
+                            <span className={`text-xs px-2 py-1 rounded-full ${cycleSummary.sr >= 90 ? 'bg-green-100 text-green-700' : cycleSummary.sr >= 80 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                                {cycleSummary.sr >= 90 ? 'Excellent' : cycleSummary.sr >= 80 ? 'Good' : 'Low'}
+                            </span>
+                        </div>
+                        <h3 className="text-3xl font-bold text-slate-900">{cycleSummary.sr.toFixed(1)}%</h3>
+                        <p className="text-xs text-slate-400 mt-2">{cycleSummary.initialFish.toLocaleString()} → {cycleSummary.finalFish.toLocaleString()} ekor</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Harvest Details */}
+                    <div className="card p-6">
+                        <h3 className="font-semibold text-slate-900 mb-4 text-lg">Detail Panen</h3>
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                                <span className="text-slate-500">Total Berat</span>
+                                <span className="font-medium text-slate-900">{parseFloat(cycleSummary.totalHarvestKg.toFixed(1))} kg</span>
+                            </div>
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                                <span className="text-slate-500">Total Ekor</span>
+                                <span className="font-medium text-slate-900">{cycleSummary.finalFish.toLocaleString()} ekor</span>
+                            </div>
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                                <span className="text-slate-500">Rata-rata Size</span>
+                                <span className="font-medium text-slate-900">
+                                    {cycleSummary.totalHarvestKg > 0 ? (1000 / (cycleSummary.finalFish / cycleSummary.totalHarvestKg)).toFixed(0) : 0} gram
+                                    <span className="text-slate-400 text-xs ml-1">
+                                        (Isi {cycleSummary.totalHarvestKg > 0 ? Math.round(cycleSummary.finalFish / cycleSummary.totalHarvestKg) : 0}/kg)
+                                    </span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Cost Details */}
+                    <div className="card p-6">
+                        <h3 className="font-semibold text-slate-900 mb-4 text-lg">Detail Biaya</h3>
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                                <span className="text-slate-500">Pakan ({parseFloat(cycleSummary.totalFeedKg.toFixed(1))} kg)</span>
+                                <span className="font-medium text-slate-900">Rp {cycleSummary.totalFeedCost.toLocaleString('id-ID')}</span>
+                            </div>
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                                <span className="text-slate-500">Operasional Lain</span>
+                                <span className="font-medium text-slate-900">Rp {cycleSummary.totalExpenses.toLocaleString('id-ID')}</span>
+                            </div>
+                            <div className="flex justify-between items-center pt-2">
+                                <span className="font-bold text-slate-700">Total</span>
+                                <span className="font-bold text-slate-900">Rp {(cycleSummary.totalFeedCost + cycleSummary.totalExpenses).toLocaleString('id-ID')}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Fish Population Flow */}
+                    <div className="card p-6 lg:col-span-2">
+                        <h3 className="font-semibold text-slate-900 mb-4 text-lg">Alur Populasi</h3>
+                        <div className="flex flex-wrap gap-4 justify-center items-center text-center">
+                            <div className="bg-slate-50 p-4 rounded-lg min-w-[120px]">
+                                <p className="text-xs text-slate-500 uppercase">Tebar Awal</p>
+                                <p className="text-xl font-bold text-slate-800">{cycleSummary.initialFish.toLocaleString()}</p>
+                            </div>
+                            <div className="text-slate-400">→</div>
+                            <div className={`p-4 rounded-lg min-w-[120px] ${cycleSummary.adjustmentNet < 0 ? 'bg-red-50' : 'bg-slate-50'}`}>
+                                <p className="text-xs text-slate-500 uppercase">Koreksi/Mati</p>
+                                <p className={`text-xl font-bold ${cycleSummary.adjustmentNet < 0 ? 'text-red-600' : 'text-slate-800'}`}>
+                                    {cycleSummary.adjustmentNet > 0 ? '+' : ''}{cycleSummary.adjustmentNet.toLocaleString()}
+                                </p>
+                            </div>
+                            <div className="text-slate-400">→</div>
+                            <div className="bg-green-50 p-4 rounded-lg min-w-[120px]">
+                                <p className="text-xs text-green-600 uppercase">Panen Total</p>
+                                <p className="text-xl font-bold text-green-700">{cycleSummary.finalFish.toLocaleString()}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer Action */}
+                <div className="mt-8 flex justify-center">
+                    <button
+                        onClick={() => {
+                            setEditFishCount('0');
+                            setIsEditFishOpen(true);
+                            setEditReason('Tebar Bibit Baru');
+                            // Prompt for new cycle start
+                        }}
+                        className="btn btn-primary px-8"
+                    >
+                        Mulai Siklus Baru
+                    </button>
+                </div>
+
+                {/* Reuse existing modals for starting new cycle/corrections */}
+                <Modal
+                    isOpen={isEditFishOpen}
+                    onClose={() => setIsEditFishOpen(false)}
+                    title="Mulai Siklus Baru?"
+                >
+                    <div className="p-4">
+                        <p className="mb-4">Untuk memulai siklus baru, silakan gunakan fitur <strong>Tebar Bibit</strong> di halaman Dashboard atau Kolam Utama.</p>
+                        <Link href="/kolam" className="btn btn-primary w-full block text-center">
+                            Ke Menu Tebar Bibit
+                        </Link>
+                    </div>
+                </Modal>
+            </DashboardLayout>
+        );
+    }
+
     return (
         <DashboardLayout>
             {/* Header */}
@@ -222,11 +446,20 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-slate-900">{kolam.nama}</h1>
-                        <p className="text-slate-500 mt-1">Tebar: {kolam.tanggalTebar} • {kolam.panjang}m × {kolam.lebar}m × {kolam.kedalaman}m</p>
+                        <p className="text-slate-500 mt-1">Tebar: {kolam.tanggalTebar ? new Date(kolam.tanggalTebar).toLocaleDateString('id-ID') : '-'} • {kolam.panjang}m × {kolam.lebar}m × {kolam.kedalaman}m</p>
                     </div>
-                    <span className={`badge ${displayStatus === 'aman' ? 'badge-success' : displayStatus === 'waspada' ? 'badge-warning' : 'badge-danger'}`}>
-                        {statusLabels[displayStatus]}
-                    </span>
+                    <div className="flex gap-2 items-center">
+                        <button
+                            onClick={() => setIsHistoryOpen(true)}
+                            className="btn btn-outline flex items-center gap-2"
+                        >
+                            <HistoryIcon />
+                            Riwayat Siklus
+                        </button>
+                        <span className={`badge ${displayStatus === 'aman' ? 'badge-success' : displayStatus === 'waspada' ? 'badge-warning' : 'badge-danger'}`}>
+                            {statusLabels[displayStatus]}
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -238,7 +471,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                 </div>
                 <div className="stat-card">
                     <p className="stat-label">Volume</p>
-                    <p className="stat-value">{volume.toFixed(1)}<span className="text-lg text-slate-400"> m³</span></p>
+                    <p className="stat-value">{parseFloat(volume.toFixed(1))}<span className="text-lg text-slate-400"> m³</span></p>
                 </div>
                 <div className="stat-card relative group">
                     <button
@@ -257,7 +490,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="stat-card">
                     <p className="stat-label">Kepadatan (Ekor)</p>
                     <p className={`stat-value ${kolam.status === 'aman' ? 'text-green-600' : kolam.status === 'waspada' ? 'text-amber-600' : 'text-red-600'}`}>
-                        {kepadatan.toFixed(1)}<span className="text-lg text-slate-400"> /m³</span>
+                        {parseFloat(kepadatan.toFixed(1))}<span className="text-lg text-slate-400"> /m³</span>
                     </p>
                 </div>
             </div>
@@ -302,7 +535,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="stat-card bg-indigo-50 border-indigo-100">
                     <p className="stat-label text-indigo-600">Kepadatan (Berat)</p>
                     <p className={`stat-value ${unifiedStatus.source === 'berat' ? (displayStatus === 'aman' ? 'text-green-600' : displayStatus === 'waspada' ? 'text-amber-600' : 'text-red-600') : 'text-indigo-900'}`}>
-                        {biomassDensity > 0 ? biomassDensity.toFixed(2) : '-'}<span className="text-lg text-indigo-400"> kg/m³</span>
+                        {biomassDensity > 0 ? parseFloat(biomassDensity.toFixed(2)) : '-'}<span className="text-lg text-indigo-400"> kg/m³</span>
                     </p>
                 </div>
             </div>
@@ -357,7 +590,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                                     </p>
                                     <div className="mt-4 bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2 inline-block">
                                         <span className="text-sm font-medium">
-                                            Kepadatan: {unifiedStatus.source === 'berat' ? `${unifiedStatus.kepadatanBerat.toFixed(2)} kg/m³` : `${unifiedStatus.kepadatanEkor.toFixed(1)} /m³`}
+                                            Kepadatan: {unifiedStatus.source === 'berat' ? `${parseFloat(unifiedStatus.kepadatanBerat.toFixed(2))} kg/m³` : `${parseFloat(unifiedStatus.kepadatanEkor.toFixed(1))} /m³`}
                                         </span>
                                     </div>
                                 </div>
@@ -425,7 +658,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-slate-500">Volume</span>
-                                    <span className="font-medium">{(gridScale * kolam.kedalaman).toFixed(1)} m³</span>
+                                    <span className="font-medium">{parseFloat((gridScale * kolam.kedalaman).toFixed(1))} m³</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-slate-500">Est. Ikan</span>
@@ -434,7 +667,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                                 <div className="flex justify-between">
                                     <span className="text-slate-500">Kepadatan</span>
                                     <span className={`font-medium ${hoveredCell.status === 'aman' ? 'text-green-600' : hoveredCell.status === 'waspada' ? 'text-amber-600' : 'text-red-600'}`}>
-                                        {hoveredCell.kepadatan.toFixed(1)}{unifiedStatus.source === 'berat' ? ' kg/m³' : '/m³'}
+                                        {parseFloat(hoveredCell.kepadatan.toFixed(1))}{unifiedStatus.source === 'berat' ? ' kg/m³' : '/m³'}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -462,7 +695,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                                         <div>
                                             <p className="font-medium text-slate-900">R{cell.row + 1} C{cell.col + 1}</p>
                                             <p className={`text-sm ${cell.status === 'aman' ? 'text-green-600' : cell.status === 'waspada' ? 'text-amber-600' : 'text-red-600'}`}>
-                                                {cell.kepadatan.toFixed(1)}{unifiedStatus.source === 'berat' ? ' kg/m³' : '/m³'}
+                                                {parseFloat(cell.kepadatan.toFixed(1))}{unifiedStatus.source === 'berat' ? ' kg/m³' : '/m³'}
                                             </p>
                                         </div>
                                         <button
@@ -479,14 +712,14 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
 
                     {/* Recent Pakan */}
                     <div className="card p-4">
-                        <h3 className="font-semibold text-slate-900 mb-3">Riwayat Pakan</h3>
-                        {pakan.length === 0 ? (
-                            <p className="text-sm text-slate-500">Belum ada data pakan</p>
+                        <h3 className="font-semibold text-slate-900 mb-3">Riwayat Pakan (Siklus Ini)</h3>
+                        {filteredPakan.length === 0 ? (
+                            <p className="text-sm text-slate-500">Belum ada data pakan di siklus ini</p>
                         ) : (
                             <div className="space-y-2">
-                                {pakan.slice(0, 3).map(p => (
+                                {filteredPakan.slice(0, 3).map(p => (
                                     <div key={p.id} className="flex justify-between text-sm">
-                                        <span className="text-slate-500">{p.tanggal}</span>
+                                        <span className="text-slate-500">{new Date(p.tanggal).toLocaleDateString('id-ID')}</span>
                                         <span className="font-medium">{p.jumlahKg} kg</span>
                                     </div>
                                 ))}
@@ -500,22 +733,22 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                     {/* Kondisi Air */}
                     <div className="card p-4">
                         <h3 className="font-semibold text-slate-900 mb-3">Kondisi Air Terakhir</h3>
-                        {kondisiAir.length === 0 ? (
-                            <p className="text-sm text-slate-500">Belum ada data kondisi air</p>
+                        {filteredKondisiAir.length === 0 ? (
+                            <p className="text-sm text-slate-500">Belum ada data kondisi air siklus ini</p>
                         ) : (
                             <div className="space-y-2 text-sm">
                                 <div className="flex justify-between">
                                     <span className="text-slate-500">Warna</span>
-                                    <span className="font-medium">{kondisiAir[0].warna}</span>
+                                    <span className="font-medium">{filteredKondisiAir[0].warna}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-slate-500">Bau</span>
-                                    <span className="font-medium">{kondisiAir[0].bau}</span>
+                                    <span className="font-medium">{filteredKondisiAir[0].bau}</span>
                                 </div>
-                                {kondisiAir[0].ph && (
+                                {filteredKondisiAir[0].ph && (
                                     <div className="flex justify-between">
                                         <span className="text-slate-500">pH</span>
-                                        <span className="font-medium">{kondisiAir[0].ph}</span>
+                                        <span className="font-medium">{filteredKondisiAir[0].ph}</span>
                                     </div>
                                 )}
                             </div>
@@ -527,12 +760,12 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
 
                     {/* Riwayat Jumlah Ikan */}
                     <div className="card p-4">
-                        <h3 className="font-semibold text-slate-900 mb-3">Riwayat Jumlah Ikan</h3>
-                        {riwayatIkan.length === 0 ? (
+                        <h3 className="font-semibold text-slate-900 mb-3">Riwayat Perubahan (Siklus Ini)</h3>
+                        {filteredRiwayatIkan.length === 0 ? (
                             <p className="text-sm text-slate-500">Belum ada riwayat perubahan</p>
                         ) : (
                             <div className="space-y-3">
-                                {riwayatIkan.slice(0, 5).map(r => (
+                                {filteredRiwayatIkan.slice(0, 5).map(r => (
                                     <div key={r.id} className="text-sm border-b border-slate-100 last:border-0 pb-2 last:pb-0">
                                         <div className="flex justify-between mb-1">
                                             <span className="text-slate-500">{new Date(r.tanggal).toLocaleDateString('id-ID')}</span>
@@ -660,8 +893,8 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                             {samplingValue && !isNaN(parseFloat(samplingValue)) && parseFloat(samplingValue) > 0 && (
                                 <span className="text-xs text-indigo-600 font-medium">
                                     Konversi: {samplingInputUnit === 'berat'
-                                        ? `~Isi ${(1000 / parseFloat(samplingValue)).toFixed(1)} /kg`
-                                        : `~${(1000 / parseFloat(samplingValue)).toFixed(1)} gram/ekor`
+                                        ? `~Isi ${parseFloat((1000 / parseFloat(samplingValue)).toFixed(1))} /kg`
+                                        : `~${parseFloat((1000 / parseFloat(samplingValue)).toFixed(1))} gram/ekor`
                                     }
                                 </span>
                             )}
@@ -712,6 +945,62 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                         </button>
                     </div>
                 </form>
+            </Modal>
+
+            {/* Cycle History Modal */}
+            <Modal
+                isOpen={isHistoryOpen}
+                onClose={() => setIsHistoryOpen(false)}
+                title="Riwayat Siklus Produksi"
+            >
+                <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+                    {cycleHistory.length === 0 ? (
+                        <p className="text-center text-slate-500 py-8">Belum ada riwayat siklus.</p>
+                    ) : (
+                        cycleHistory.map((cycle, idx) => (
+                            <div key={idx} className={`border rounded-lg p-4 ${cycle.isActive ? 'border-teal-500 bg-teal-50' : 'border-slate-200 bg-white'}`}>
+                                <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-bold text-slate-900">Siklus {new Date(cycle.startDate).toLocaleDateString('id-ID')}</h4>
+                                            {cycle.isActive && <span className="badge badge-primary text-xs">Aktif</span>}
+                                        </div>
+                                        <p className="text-sm text-slate-500">
+                                            {new Date(cycle.startDate).toLocaleDateString('id-ID')} - {cycle.isActive ? 'Sekarang' : new Date(cycle.endDate).toLocaleDateString('id-ID')} ({cycle.totalDays} hari)
+                                        </p>
+                                    </div>
+                                    <div className={`text-right ${cycle.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        <p className="text-xs text-slate-500">Profit</p>
+                                        <p className="font-bold">Rp {cycle.netProfit.toLocaleString('id-ID')}</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-2 text-sm bg-white/50 p-2 rounded">
+                                    <div>
+                                        <p className="text-slate-500 text-xs">FCR</p>
+                                        <p className="font-semibold">{cycle.fcr.toFixed(2)}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-500 text-xs">SR</p>
+                                        <p className="font-semibold">{cycle.sr.toFixed(1)}%</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-500 text-xs">Panen</p>
+                                        <p className="font-semibold text-slate-900">{cycle.totalHarvestKg.toLocaleString()} kg</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+                <div className="p-4 border-t bg-slate-50 text-center">
+                    <button
+                        onClick={() => setIsHistoryOpen(false)}
+                        className="btn btn-secondary w-full"
+                    >
+                        Tutup
+                    </button>
+                </div>
             </Modal>
         </DashboardLayout >
     );

@@ -1,14 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-
-// Helper to check farm access
-async function checkFarmAccess(farmId: string, userId: string) {
-    const member = await prisma.farmMember.findUnique({
-        where: { userId_farmId: { userId, farmId } }
-    })
-    return member
-}
+import { verifyFarmAccess } from '@/lib/farm-auth'
 
 // GET /api/farms/[farmId]/kolam/[kolamId] - Get single kolam
 export async function GET(
@@ -22,8 +15,8 @@ export async function GET(
         }
 
         const { farmId, kolamId } = await params
-        const member = await checkFarmAccess(farmId, session.user.id)
-        if (!member) {
+        const access = await verifyFarmAccess(farmId, session.user.id)
+        if (!access) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
 
@@ -54,13 +47,13 @@ export async function PUT(
         }
 
         const { farmId, kolamId } = await params
-        const member = await checkFarmAccess(farmId, session.user.id)
-        if (!member || member.role === 'VIEWER') {
+        const access = await verifyFarmAccess(farmId, session.user.id)
+        if (!access || access.role === 'VIEWER') {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
 
         const body = await request.json()
-        const { nama, panjang, lebar, kedalaman, tanggalTebar, jumlahIkan, positionX, positionY, positionW, positionH, color } = body
+        const { nama, panjang, lebar, kedalaman, tanggalTebar, jumlahIkan, positionX, positionY, positionW, positionH, color, status: bodyStatus } = body
 
         // Calculate status based on density
         let status: 'AMAN' | 'WASPADA' | 'BERISIKO' | undefined
@@ -70,6 +63,11 @@ export async function PUT(
             status = 'AMAN'
             if (kepadatan > 100) status = 'BERISIKO'
             else if (kepadatan > 50) status = 'WASPADA'
+        }
+
+        // Allow manual status override
+        if (bodyStatus) {
+            status = bodyStatus as 'AMAN' | 'WASPADA' | 'BERISIKO'
         }
 
         const kolam = await prisma.kolam.update({
@@ -109,8 +107,8 @@ export async function DELETE(
         }
 
         const { farmId, kolamId } = await params
-        const member = await checkFarmAccess(farmId, session.user.id)
-        if (!member || !['OWNER', 'ADMIN'].includes(member.role)) {
+        const access = await verifyFarmAccess(farmId, session.user.id)
+        if (!access || !['OWNER', 'ADMIN'].includes(access.role)) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
 

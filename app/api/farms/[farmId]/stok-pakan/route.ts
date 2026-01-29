@@ -1,13 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-
-async function checkFarmAccess(farmId: string, userId: string) {
-    const member = await prisma.farmMember.findUnique({
-        where: { userId_farmId: { userId, farmId } }
-    })
-    return member
-}
+import { verifyFarmAccess } from '@/lib/farm-auth'
 
 // GET /api/farms/[farmId]/stok-pakan - Get all feed stock
 export async function GET(
@@ -21,8 +15,8 @@ export async function GET(
         }
 
         const { farmId } = await params
-        const member = await checkFarmAccess(farmId, session.user.id)
-        if (!member) {
+        const access = await verifyFarmAccess(farmId, session.user.id)
+        if (!access) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
 
@@ -50,8 +44,8 @@ export async function POST(
         }
 
         const { farmId } = await params
-        const member = await checkFarmAccess(farmId, session.user.id)
-        if (!member || member.role === 'VIEWER') {
+        const access = await verifyFarmAccess(farmId, session.user.id)
+        if (!access || access.role === 'VIEWER') {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
 
