@@ -11,6 +11,8 @@ import AssetValueCard from './components/dashboard/AssetValueCard';
 import ActivityStream from './components/dashboard/ActivityStream';
 import AlertCenter from './components/dashboard/AlertCenter';
 import FeedStockList from './components/dashboard/FeedStockList';
+import HarvestForecastWidget from './components/dashboard/HarvestForecastWidget';
+import ProfitabilityWidget from './components/dashboard/ProfitabilityWidget';
 
 export default function Home() {
   const { kolam, pakan } = useApp();
@@ -105,7 +107,13 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ROW 4: Feed Stock List (Newly Restored) */}
+        {/* ROW 4: Predictive Analytics Layer (New) */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-auto lg:h-[350px]">
+          <HarvestForecastWidget />
+          <ProfitabilityWidget />
+        </div>
+
+        {/* ROW 5: Feed Stock List */}
         <div className="w-full">
           <FeedStockList />
         </div>
