@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { verifyFarmAccess } from '@/lib/farm-auth'
 
+export const dynamic = 'force-dynamic'
+
 // GET /api/farms/[farmId]/pakan - Get all feeding records
 export async function GET(
     request: NextRequest,

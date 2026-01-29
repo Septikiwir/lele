@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { verifyFarmAccess } from '@/lib/farm-auth';
 
+export const dynamic = 'force-dynamic'
+
 // GET: Fetch all history for a farm (optional, or just fetch by kolam on client side filtering)
 // But usually we fetch all data for the farm in AppContext.
 export async function GET(

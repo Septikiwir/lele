@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 async function checkFarmAccess(farmId: string, userId: string) {
     const member = await prisma.farmMember.findUnique({
         where: { userId_farmId: { userId, farmId } }
