@@ -199,7 +199,7 @@ export default function KolamPage() {
                     action={{ label: "Tambah Kolam Baru", href: "/kolam/tambah" }}
                 />
             ) : (
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     {kolam.map(k => {
                         const isEmpty = k.jumlahIkan === 0;
                         const unifiedStatus = getUnifiedStatus(k.id);
