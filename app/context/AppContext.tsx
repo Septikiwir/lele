@@ -143,6 +143,16 @@ export interface CycleSummary {
     startId?: string; // Optional ID of the start event (Tebar)
 }
 
+export interface Activity {
+    id: string;
+    type: 'PAKAN' | 'PANEN' | 'KEMATIAN' | 'TEBAR' | 'SAMPLING' | 'LAINNYA';
+    date: string; // ISO Date string (YYYY-MM-DD or ISO)
+    title: string;
+    description: string;
+    kolamName: string;
+    kolamId: string;
+}
+
 // Context Type
 interface AppContextType {
     // Data
@@ -243,6 +253,14 @@ interface AppContextType {
     // Cycle Analysis
     getCycleSummary: (kolamId: string) => CycleSummary | null;
     getCycleHistory: (kolamId: string) => CycleSummary[];
+
+    // Dashboard Helpers
+    getFeedTrend: (days?: number) => { date: string; amount: number }[];
+    calculateTotalAssetValue: (pricePerKg: number) => number;
+    // Predictive Analytics
+    predictHarvestDate: (kolamId: string) => { daysRemaining: number; date: string; currentWeight: number; targetReached: boolean };
+    calculateProjectedProfit: (kolamId: string) => { revenue: number; cost: number; profit: number; roi: number };
+    detectAppetiteDrop: (kolamId: string) => { hasDrop: boolean; dropPercent: number; diff: number };
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -1150,6 +1168,102 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return cycles.reverse(); // Newest first
     };
 
+    // === Dashboard Helpers ===
+
+    const getFeedTrend = (days: number = 7) => {
+        const result: { date: string; amount: number }[] = [];
+        const today = new Date();
+
+        for (let i = days - 1; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+
+            // Sum feed for this date
+            const amount = pakan
+                .filter(p => p.tanggal === dateStr)
+                .reduce((sum, p) => sum + p.jumlahKg, 0);
+
+            result.push({ date: dateStr, amount });
+        }
+        return result;
+    };
+
+    const calculateTotalAssetValue = (pricePerKg: number): number => {
+        let totalVal = 0;
+        kolam.forEach(k => {
+            const { totalBiomass } = calculateBiomass(k.id);
+            totalVal += totalBiomass * pricePerKg;
+        });
+        return totalVal;
+    };
+
+    const getRecentActivities = (limit: number = 10): Activity[] => {
+        const activities: Activity[] = [];
+
+        // 1. Pakan
+        pakan.forEach(p => {
+            const k = getKolamById(p.kolamId);
+            activities.push({
+                id: p.id,
+                type: 'PAKAN',
+                date: p.tanggal,
+                title: 'Pemberian Pakan',
+                description: `${p.jumlahKg} kg ${p.jenisPakan}`,
+                kolamName: k?.nama || 'Unknown',
+                kolamId: p.kolamId
+            });
+        });
+
+        // 2. Panen
+        riwayatPanen.forEach(p => {
+            const k = getKolamById(p.kolamId);
+            activities.push({
+                id: p.id,
+                type: 'PANEN',
+                date: p.tanggal,
+                title: 'Panen Ikan',
+                description: `${p.beratTotalKg} kg (${p.tipe.toLowerCase()})`,
+                kolamName: k?.nama || 'Unknown',
+                kolamId: p.kolamId
+            });
+        });
+
+        // 3. Ikan/Kematian (Riwayat Ikan)
+        riwayatIkan.forEach(r => {
+            const k = getKolamById(r.kolamId);
+            let type: Activity['type'] = 'LAINNYA';
+            let title = 'Update Populasi';
+
+            const descLower = r.keterangan.toLowerCase();
+            if (descLower.includes('mati') || descLower.includes('kematian')) {
+                type = 'KEMATIAN';
+                title = 'Kematian Ikan';
+            } else if (descLower.includes('tebar')) {
+                type = 'TEBAR';
+                title = 'Tebar Bibit';
+            }
+
+            // Filter out system generated entries if needed, but assuming user wants to see them
+            // Only include significant events?
+
+            activities.push({
+                id: r.id,
+                type,
+                date: r.tanggal, // already YYYY-MM-DD from mapRiwayatIkan logic? check state
+                title,
+                description: `${r.jumlahPerubahan > 0 ? '+' : ''}${r.jumlahPerubahan} ekor • ${r.keterangan}`,
+                kolamName: k?.nama || 'Unknown',
+                kolamId: r.kolamId
+            });
+        });
+
+        // Sort descending by date
+        return activities
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, limit);
+    };
+
 
 
 
@@ -1185,6 +1299,105 @@ export function AppProvider({ children }: { children: ReactNode }) {
             console.error('Tebar bibit failed:', error);
             throw error;
         }
+    };
+
+    // === Predictive Analytics Implementation ===
+
+    // Constants
+    const GROWTH_RATE_PER_DAY = 0.002; // 2 grams per day (kg) -> 0.002 kg
+    const TARGET_WEIGHT_KG = 0.2; // 200 grams
+    const ESTIMATED_FEED_PRICE = 13000; // Rp/kg (fallback)
+
+    const predictHarvestDate = (kolamId: string) => {
+        const sampling = getLatestSampling(kolamId);
+        // Default to small bibit size (5g = 0.005kg) if no sampling
+        const currentWeight = sampling ? (1 / sampling.jumlahIkanPerKg) : 0.005;
+
+        if (currentWeight >= TARGET_WEIGHT_KG) {
+            return { daysRemaining: 0, date: new Date().toISOString().split('T')[0], currentWeight, targetReached: true };
+        }
+
+        const weightDiff = TARGET_WEIGHT_KG - currentWeight;
+        const daysRemaining = Math.ceil(weightDiff / GROWTH_RATE_PER_DAY);
+
+        const date = new Date();
+        date.setDate(date.getDate() + daysRemaining);
+
+        return {
+            daysRemaining,
+            date: date.toISOString().split('T')[0],
+            currentWeight,
+            targetReached: false
+        };
+    };
+
+    const calculateProjectedProfit = (kolamId: string) => {
+        const k = getKolamById(kolamId);
+        if (!k) return { revenue: 0, cost: 0, profit: 0, roi: 0 };
+
+        // 1. Realized Revenue (Actual Sales)
+        const realizedRevenue = getTotalPenjualanByKolam(kolamId);
+
+        // 2. Unrealized Revenue (Asset Value)
+        const sampling = getLatestSampling(kolamId);
+        const currentWeight = sampling ? (1 / sampling.jumlahIkanPerKg) : 0.005;
+        const totalBiomass = k.jumlahIkan * currentWeight;
+        // Use last sale price or default
+        const lastSale = penjualan.find(p => p.kolamId === kolamId);
+        const marketPrice = lastSale ? lastSale.hargaPerKg : 25000;
+        const unrealizedRevenue = totalBiomass * marketPrice;
+
+        const totalRevenue = realizedRevenue + unrealizedRevenue;
+
+        // 3. Costs (Feed + Other)
+        const otherExpenses = getTotalPengeluaranByKolam(kolamId);
+
+        // Feed Cost: Sum of actually consumed feed * estimated price (simplification)
+        const kolamPakan = getPakanByKolam(kolamId);
+        const totalFeedKg = kolamPakan.reduce((sum, p) => sum + p.jumlahKg, 0);
+        // Ideally we map feed type to stock price, but for now use constant avg
+        const feedCost = totalFeedKg * ESTIMATED_FEED_PRICE;
+
+        const totalCost = otherExpenses + feedCost;
+
+        const profit = totalRevenue - totalCost;
+        const roi = totalCost > 0 ? (profit / totalCost) * 100 : 0;
+
+        return { revenue: totalRevenue, cost: totalCost, profit, roi };
+    };
+
+    const detectAppetiteDrop = (kolamId: string) => {
+        const kolamPakan = getPakanByKolam(kolamId)
+            .sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()); // descending
+
+        if (kolamPakan.length < 6) return { hasDrop: false, dropPercent: 0, diff: 0 };
+
+        // Group by Date 
+        const dailyFeed: Record<string, number> = {};
+        kolamPakan.forEach(p => {
+            dailyFeed[p.tanggal] = (dailyFeed[p.tanggal] || 0) + p.jumlahKg;
+        });
+
+        const dates = Object.keys(dailyFeed).sort().reverse(); // Newest first
+        if (dates.length < 4) return { hasDrop: false, dropPercent: 0, diff: 0 };
+
+        // Compare last 3 days vs previous 3 days (simplification: just compare last 2 days avg vs prev 2 days)
+        // Taking last 3 days
+        const last3Days = dates.slice(0, 3);
+        const prev3Days = dates.slice(3, 6);
+
+        const avgLast = last3Days.reduce((sum, d) => sum + dailyFeed[d], 0) / last3Days.length;
+        const avgPrev = prev3Days.reduce((sum, d) => sum + dailyFeed[d], 0) / prev3Days.length;
+
+        if (avgPrev === 0) return { hasDrop: false, dropPercent: 0, diff: 0 };
+
+        const diff = avgLast - avgPrev;
+        const dropPercent = (diff / avgPrev) * 100;
+
+        // Alert if drop is more than 20% (negative)
+        const hasDrop = dropPercent < -20;
+
+        return { hasDrop, dropPercent, diff };
     };
 
     return (
@@ -1250,6 +1463,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
             getFeedRecommendation,
             getCycleSummary,
             getCycleHistory,
+            getFeedTrend,
+            calculateTotalAssetValue,
+            getRecentActivities,
+            predictHarvestDate,
+            calculateProjectedProfit,
+            detectAppetiteDrop,
         }}>
             {children}
         </AppContext.Provider>
