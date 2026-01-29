@@ -11,7 +11,7 @@ export default function AssetValueCard() {
     const assetValue = calculateTotalAssetValue(price);
 
     return (
-        <div className="stat-card relative overflow-hidden">
+        <div className="stat-card p-6 bg-white border border-slate-100 hover:shadow-md transition-all group relative overflow-hidden">
             <div className="flex items-center justify-between z-10 relative">
                 <div>
                     <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Estimasi Aset Ikan</p>

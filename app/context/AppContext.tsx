@@ -261,6 +261,7 @@ interface AppContextType {
     predictHarvestDate: (kolamId: string) => { daysRemaining: number; date: string; currentWeight: number; targetReached: boolean };
     calculateProjectedProfit: (kolamId: string) => { revenue: number; cost: number; profit: number; roi: number };
     detectAppetiteDrop: (kolamId: string) => { hasDrop: boolean; dropPercent: number; diff: number };
+    getRecentActivities: (limit?: number) => Activity[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);

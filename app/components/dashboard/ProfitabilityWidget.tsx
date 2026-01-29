@@ -13,7 +13,8 @@ export default function ProfitabilityWidget() {
             ...k,
             ...calculateProjectedProfit(k.id)
         }))
-        .sort((a, b) => b.roi - a.roi); // Sort by ROI descending
+        .sort((a, b) => b.roi - a.roi) // Sort by ROI descending
+        .slice(0, 4);
 
     return (
         <div className="stat-card p-6 bg-white border border-slate-100 hover:shadow-md transition-all h-full flex flex-col">

@@ -16,7 +16,7 @@ export default function HarvestForecastWidget() {
         .sort((a, b) => a.daysRemaining - b.daysRemaining);
 
     // Take top 5 nearest
-    const nearestHarvests = predictions.slice(0, 5);
+    const nearestHarvests = predictions.slice(0, 4);
 
     return (
         <div className="stat-card p-6 bg-white border border-slate-100 hover:shadow-md transition-all h-full flex flex-col">

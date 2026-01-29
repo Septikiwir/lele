@@ -3,7 +3,7 @@ import { useApp } from '../../context/AppContext';
 
 export default function ActivityStream() {
     const { getRecentActivities } = useApp();
-    const activities = getRecentActivities(5);
+    const activities = getRecentActivities(4);
 
     const getIcon = (type: string) => {
         switch (type) {

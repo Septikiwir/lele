@@ -13,7 +13,7 @@ export default function FeedStockList() {
         tersedia: getStokTersediaByJenis(jenis),
     }));
 
-    const stockItems = stokPerJenis.length > 0 ? stokPerJenis : [];
+    const stockItems = stokPerJenis.length > 0 ? stokPerJenis.slice(0, 4) : [];
 
     return (
         <div className="stat-card p-6 bg-white border border-slate-100 hover:shadow-md transition-all">

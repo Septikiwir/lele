@@ -11,13 +11,13 @@ export default function AlertCenter() {
     const lowStockItems = allJenisPakan.map(jenis => ({
         jenis,
         tersedia: getStokTersediaByJenis(jenis),
-    })).filter(s => s.tersedia <= 10);
+    })).filter(s => s.tersedia <= 10).slice(0, 4);
 
     // 2. Check Risky Ponds
     const riskyPonds = kolam.filter(k => {
         const { status } = getUnifiedStatus(k.id);
         return status === 'waspada' || status === 'berisiko';
-    });
+    }).slice(0, 4);
 
     const appetiteAlerts = kolam
         .map(k => ({ ...k, ...detectAppetiteDrop(k.id) }))
@@ -67,7 +67,7 @@ export default function AlertCenter() {
                                         <p className="text-xs text-slate-500">Turun <span className="font-bold text-red-600">{Math.abs(k.dropPercent).toFixed(0)}%</span></p>
                                     </div>
                                 </div>
-                                <ArrowRightIcon className="text-slate-300 group-hover:text-red-400 group-hover:translate-x-1 transition-all" />
+                                <ArrowRightIcon className="text-slate-300 w-4 h-4 group-hover:text-red-400 group-hover:translate-x-1 transition-all" />
                             </Link>
                         ))}
                     </div>
@@ -88,7 +88,7 @@ export default function AlertCenter() {
                                         <p className="text-xs text-slate-500">Sisa <span className="font-bold text-red-600">{item.tersedia.toFixed(1)} kg</span></p>
                                     </div>
                                 </div>
-                                <ArrowRightIcon className="text-slate-300 group-hover:text-red-400 group-hover:translate-x-1 transition-all" />
+                                <ArrowRightIcon className="text-slate-300 w-4 h-4 group-hover:text-red-400 group-hover:translate-x-1 transition-all" />
                             </Link>
                         ))}
                     </div>

@@ -26,10 +26,10 @@ export default function Home() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="flex flex-col gap-6">
 
         {/* ROW 1: Header & Actions */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
             <p className="text-slate-500 text-sm">Ringkasan operasional tambak Anda.</p>
@@ -108,7 +108,7 @@ export default function Home() {
         </div>
 
         {/* ROW 4: Predictive Analytics Layer (New) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-auto lg:h-[350px]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-auto">
           <HarvestForecastWidget />
           <ProfitabilityWidget />
         </div>
@@ -119,7 +119,7 @@ export default function Home() {
         </div>
 
         {/* ROW 5: Detailed Activity Stream */}
-        <div className="grid grid-cols-1">
+        <div className="w-full">
           <ActivityStream />
         </div>
       </div>
