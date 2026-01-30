@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Modal from '../ui/Modal';
 import { useApp, TipePembeli } from '../../context/AppContext';
@@ -12,8 +14,35 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
+    const { data: session, status } = useSession();
+    const router = useRouter();
     const { isSidebarCollapsed, toggleSidebar, kolam, pembeli, addRiwayatPanen, addPenjualan, addPembeli, getLatestSampling } = useApp();
     const { showToast } = useToast();
+
+    // Redirect to login if not authenticated
+    useEffect(() => {
+        if (status === 'loading') return; // Wait for session to load
+        if (!session) {
+            router.push('/login');
+        }
+    }, [session, status, router]);
+
+    // Show loading while checking authentication
+    if (status === 'loading') {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-slate-50">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-slate-500">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Don't render if not authenticated
+    if (!session) {
+        return null;
+    }
 
     // Panen Modal
     const [isPanenModalOpen, setIsPanenModalOpen] = useState(false);

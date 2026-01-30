@@ -94,7 +94,7 @@ const ChevronRightIcon = () => (
 const navigationGroups = [
   {
     title: 'Overview',
-    items: [{ name: 'Dashboard', href: '/', icon: DashboardIcon }]
+    items: [{ name: 'Dashboard', href: '/dashboard', icon: DashboardIcon }]
   },
   {
     title: 'Operasional',
