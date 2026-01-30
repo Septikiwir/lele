@@ -311,10 +311,10 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
 
                     {/* FCR Card */}
-                    <div className="bg-white p-6 rounded-xl border border-slate-200">
+                    <div className="card p-6">
                         <div className="flex justify-between items-start mb-2">
                             <p className="text-sm font-medium text-slate-500">FCR</p>
-                            <span className={`text-xs px-2 py-1 rounded-full ${cycleSummary.fcr <= 1.2 ? 'bg-green-100 text-green-700' : cycleSummary.fcr <= 1.5 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                            <span className={`badge badge-sm ${cycleSummary.fcr <= 1.2 ? 'badge-success' : cycleSummary.fcr <= 1.5 ? 'badge-warning' : 'badge-danger'}`}>
                                 {cycleSummary.fcr <= 1.2 ? 'Excellent' : cycleSummary.fcr <= 1.5 ? 'Good' : 'High'}
                             </span>
                         </div>
@@ -323,10 +323,10 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
 
                     {/* SR Card */}
-                    <div className="bg-white p-6 rounded-xl border border-slate-200">
+                    <div className="card p-6">
                         <div className="flex justify-between items-start mb-2">
                             <p className="text-sm font-medium text-slate-500">Survival Rate (SR)</p>
-                            <span className={`text-xs px-2 py-1 rounded-full ${cycleSummary.sr >= 90 ? 'bg-green-100 text-green-700' : cycleSummary.sr >= 80 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                            <span className={`badge badge-sm ${cycleSummary.sr >= 90 ? 'badge-success' : cycleSummary.sr >= 80 ? 'badge-warning' : 'badge-danger'}`}>
                                 {cycleSummary.sr >= 90 ? 'Excellent' : cycleSummary.sr >= 80 ? 'Good' : 'Low'}
                             </span>
                         </div>

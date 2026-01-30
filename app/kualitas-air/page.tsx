@@ -130,28 +130,26 @@ export default function KualitasAirPage() {
 
             {/* Rekomendasi Alert */}
             {showRekomendasi && (
-                <div className="card mb-8 border-l-4 border-teal-500 overflow-hidden">
-                    <div className="bg-teal-50 p-4 border-b border-teal-100 flex justify-between items-center">
-                        <h3 className="font-bold text-teal-800 flex items-center gap-2">
+                <div className="alert alert-info mb-8">
+                    <div className="flex-1">
+                        <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-3">
                             💡 Rekomendasi Tindakan
                         </h3>
-                        <button
-                            onClick={() => setShowRekomendasi(null)}
-                            className="text-teal-400 hover:text-teal-600 font-bold"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                    <div className="p-4">
-                        <ul className="space-y-3">
+                        <ul className="space-y-2">
                             {showRekomendasi.map((r, i) => (
-                                <li key={i} className="flex items-start gap-3 text-slate-700">
-                                    <span className="mt-1 block w-2 h-2 rounded-full bg-teal-400 flex-shrink-0"></span>
+                                <li key={i} className="flex items-start gap-3 text-slate-700 text-sm">
+                                    <span className="mt-1 block w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></span>
                                     <span>{r}</span>
                                 </li>
                             ))}
                         </ul>
                     </div>
+                    <button
+                        onClick={() => setShowRekomendasi(null)}
+                        className="text-slate-400 hover:text-slate-600 font-bold self-start"
+                    >
+                        ✕
+                    </button>
                 </div>
             )}
 
@@ -163,9 +161,9 @@ export default function KualitasAirPage() {
                         ? warnaOptions.find(w => w.value === latestKondisi.warna)?.status || 'good'
                         : 'unknown';
 
-                    const statusColor = warnaStatus === 'good' ? 'bg-green-100 text-green-700' :
-                        warnaStatus === 'warning' ? 'bg-amber-100 text-amber-700' :
-                            warnaStatus === 'bad' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-500';
+                    const statusBadge = warnaStatus === 'good' ? 'badge-success' :
+                        warnaStatus === 'warning' ? 'badge-warning' :
+                            warnaStatus === 'bad' ? 'badge-danger' : 'badge-neutral';
 
                     return (
                         <div key={k.id} className="card p-4">
@@ -173,9 +171,9 @@ export default function KualitasAirPage() {
                             {latestKondisi ? (
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <div className={`px-2 py-1 rounded-md text-xs font-bold ${statusColor}`}>
+                                        <span className={`badge badge-sm ${statusBadge}`}>
                                             {latestKondisi.warna}
-                                        </div>
+                                        </span>
                                         <span className="text-xs text-slate-400">{latestKondisi.tanggal}</span>
                                     </div>
                                     <div className="grid grid-cols-2 gap-2 text-sm">
@@ -200,63 +198,76 @@ export default function KualitasAirPage() {
             </div>
 
             {/* Histori */}
-            <div className="card overflow-hidden">
-                <div className="p-6 border-b">
-                    <h2 className="text-lg font-semibold text-slate-900">Histori Kondisi Air</h2>
+            <div className="table-wrapper">
+                <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span>💧</span>
+                        <span>Histori Kondisi Air</span>
+                    </h2>
                 </div>
                 {kondisiAir.length === 0 ? (
-                    <EmptyState
-                        title="Belum Ada Data Kondisi Air"
-                        description="Mulai catat kondisi air untuk mendapatkan rekomendasi."
-                        icon="💧"
-                    />
+                    <div className="p-6">
+                        <EmptyState
+                            title="Belum Ada Data Kondisi Air"
+                            description="Mulai catat kondisi air untuk mendapatkan rekomendasi."
+                            icon="💧"
+                        />
+                    </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="table">
-                            <thead>
-                                <tr>
-                                    <th>Tanggal</th>
-                                    <th>Kolam</th>
-                                    <th>Warna</th>
-                                    <th>Bau</th>
-                                    <th>Ketinggian</th>
-                                    <th>pH</th>
-                                    <th>Suhu</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                    <table className="table table-compact">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Kolam</th>
+                                <th>Warna</th>
+                                <th>Bau</th>
+                                <th className="text-right">Ketinggian</th>
+                                <th className="text-right">pH</th>
+                                <th className="text-right">Suhu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                                 {kondisiAir.map(ka => {
                                     const k = kolam.find(kol => kol.id === ka.kolamId);
                                     const warnaStatus = warnaOptions.find(w => w.value === ka.warna)?.status || 'good';
 
                                     return (
                                         <tr key={ka.id}>
-                                            <td>{ka.tanggal}</td>
-                                            <td className="font-medium">{k?.nama || 'Unknown'}</td>
+                                            <td className="text-small">{ka.tanggal}</td>
+                                            <td className="text-strong">{k?.nama || 'Unknown'}</td>
                                             <td>
                                                 <span className={`badge ${warnaStatus === 'good' ? 'badge-success' :
                                                     warnaStatus === 'warning' ? 'badge-warning' : 'badge-danger'
                                                     }`}>{ka.warna}</span>
                                             </td>
-                                            <td>{ka.bau}</td>
-                                            <td>{ka.ketinggian} m</td>
-                                            <td>{ka.ph || '-'}</td>
-                                            <td>{ka.suhu ? `${ka.suhu}°C` : '-'}</td>
+                                            <td className="text-small">{ka.bau}</td>
+                                            <td className="text-right text-small">{ka.ketinggian} m</td>
+                                            <td className="text-right text-small">{ka.ph || '-'}</td>
+                                            <td className="text-right text-small">{ka.suhu ? `${ka.suhu}°C` : '-'}</td>
                                         </tr>
                                     );
                                 })}
-                            </tbody>
-                        </table>
-                    </div>
+                        </tbody>
+                    </table>
                 )}
             </div>
 
             {/* Form Modal */}
-            <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Input Kondisi Air">
-                <form onSubmit={handleSubmit} className="space-y-4">
+            <Modal 
+                isOpen={showForm} 
+                onClose={() => setShowForm(false)} 
+                title="Input Kondisi Air"
+                footer={
+                    <>
+                        <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary">Batal</button>
+                        <button type="submit" form="kualitas-air-form" className="btn btn-primary">Simpan & Lihat Rekomendasi</button>
+                    </>
+                }
+            >
+                <form id="kualitas-air-form" onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
+                        <div className="form-group">
+                            <label className="form-label">Kolam</label>
                             <select
                                 value={formData.kolamId}
                                 onChange={(e) => setFormData({ ...formData, kolamId: e.target.value })}
@@ -269,8 +280,8 @@ export default function KualitasAirPage() {
                                 ))}
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal</label>
+                        <div className="form-group">
+                            <label className="form-label">Tanggal</label>
                             <input
                                 type="date"
                                 value={formData.tanggal}
@@ -282,8 +293,8 @@ export default function KualitasAirPage() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Warna Air</label>
+                        <div className="form-group">
+                            <label className="form-label">Warna Air</label>
                             <select
                                 value={formData.warna}
                                 onChange={(e) => setFormData({ ...formData, warna: e.target.value })}
@@ -294,8 +305,8 @@ export default function KualitasAirPage() {
                                 ))}
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Bau</label>
+                        <div className="form-group">
+                            <label className="form-label">Bau</label>
                             <select
                                 value={formData.bau}
                                 onChange={(e) => setFormData({ ...formData, bau: e.target.value })}
@@ -308,8 +319,8 @@ export default function KualitasAirPage() {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Ketinggian Air (m)</label>
+                    <div className="form-group">
+                        <label className="form-label">Ketinggian Air (m)</label>
                         <input
                             type="number"
                             step="0.1"
@@ -323,8 +334,8 @@ export default function KualitasAirPage() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">pH (opsional)</label>
+                        <div className="form-group">
+                            <label className="form-label">pH (opsional)</label>
                             <input
                                 type="number"
                                 step="0.1"
@@ -336,8 +347,8 @@ export default function KualitasAirPage() {
                                 className="input"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Suhu °C (opsional)</label>
+                        <div className="form-group">
+                            <label className="form-label">Suhu °C (opsional)</label>
                             <input
                                 type="number"
                                 step="0.1"
@@ -347,19 +358,6 @@ export default function KualitasAirPage() {
                                 className="input"
                             />
                         </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={() => setShowForm(false)}
-                            className="flex-1 btn btn-secondary"
-                        >
-                            Batal
-                        </button>
-                        <button type="submit" className="flex-1 btn btn-primary">
-                            Simpan & Lihat Rekomendasi
-                        </button>
                     </div>
                 </form>
             </Modal>

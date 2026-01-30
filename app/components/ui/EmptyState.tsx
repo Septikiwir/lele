@@ -14,12 +14,12 @@ interface EmptyStateProps {
 
 export default function EmptyState({ title, description, icon = '📂', action }: EmptyStateProps) {
     return (
-        <div className="text-center py-16 card">
-            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-slate-100 flex items-center justify-center text-4xl">
+        <div className="empty-state">
+            <div className="empty-state-icon">
                 {icon}
             </div>
-            <h3 className="text-xl font-semibold text-slate-900 mb-2">{title}</h3>
-            <p className="text-slate-500 mb-6 max-w-sm mx-auto">{description}</p>
+            <h3 className="empty-state-title">{title}</h3>
+            <p className="empty-state-description">{description}</p>
             {action && (
                 <>
                     {action.href ? (

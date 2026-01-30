@@ -19,12 +19,12 @@ const kategoriOptions: { value: KategoriPengeluaran; label: string; emoji: strin
 ];
 
 const kategoriColors: Record<KategoriPengeluaran, string> = {
-    BIBIT: 'bg-teal-100 text-teal-700',
-    PAKAN: 'bg-amber-100 text-amber-700',
-    OBAT: 'bg-purple-100 text-purple-700',
-    LISTRIK: 'bg-yellow-100 text-yellow-700',
-    TENAGA_KERJA: 'bg-green-100 text-green-700',
-    LAINNYA: 'bg-slate-100 text-slate-700',
+    BIBIT: 'badge-cyan',
+    PAKAN: 'badge-warning',
+    OBAT: 'badge-purple',
+    LISTRIK: 'badge-warning',
+    TENAGA_KERJA: 'badge-success',
+    LAINNYA: 'badge-neutral',
 };
 
 export default function PengeluaranPage() {
@@ -212,13 +212,16 @@ export default function PengeluaranPage() {
 
 
             {/* Riwayat Pengeluaran */}
-            <div className="card overflow-hidden">
-                <div className="p-6 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <h2 className="text-lg font-semibold text-slate-900 w-full">Riwayat Pengeluaran</h2>
+            <div className="table-wrapper">
+                <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span>📊</span>
+                        <span>Riwayat Pengeluaran</span>
+                    </h2>
                     <select
                         value={filterKolam}
                         onChange={(e) => setFilterKolam(e.target.value)}
-                        className="input py-2"
+                        className="input py-2 sm:max-w-xs w-full"
                     >
                         <option value="">Semua Kolam</option>
                         {kolam.map(k => (
@@ -227,64 +230,74 @@ export default function PengeluaranPage() {
                     </select>
                 </div>
                 {filteredPengeluaran.length === 0 ? (
-                    <EmptyState
-                        title="Belum Ada Pengeluaran"
-                        description="Belum ada data pengeluaran yang tercatat."
-                        icon="💰"
-                    />
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="table">
-                            <thead>
-                                <tr>
-                                    <th>Tanggal</th>
-                                    <th>Kolam</th>
-                                    <th>Kategori</th>
-                                    <th>Keterangan</th>
-                                    <th className="text-right">Jumlah</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredPengeluaran.map(p => {
-                                    const k = kolam.find(kol => kol.id === p.kolamId);
-                                    const cat = kategoriOptions.find(c => c.value === p.kategori);
-                                    return (
-                                        <tr key={p.id}>
-                                            <td>{p.tanggal}</td>
-                                            <td className="font-medium">{k?.nama || 'Umum (Farm Level)'}</td>
-                                            <td>
-                                                <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${kategoriColors[p.kategori]}`}>
-                                                    {cat?.emoji} {cat?.label}
-                                                </span>
-                                            </td>
-                                            <td className="text-slate-600">{p.keterangan}</td>
-                                            <td className="text-right font-semibold text-red-600">
-                                                Rp {p.jumlah.toLocaleString('id-ID')}
-                                            </td>
-                                            <td>
-                                                <button
-                                                    onClick={() => setDeleteModal(p.id)}
-                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                                                >
-                                                    <TrashIcon />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                    <div className="p-6">
+                        <EmptyState
+                            title="Belum Ada Pengeluaran"
+                            description="Belum ada data pengeluaran yang tercatat."
+                            icon="💰"
+                        />
                     </div>
+                ) : (
+                    <table className="table table-compact">
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Kolam</th>
+                                <th>Kategori</th>
+                                <th>Keterangan</th>
+                                <th className="text-right">Jumlah</th>
+                                <th className="text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredPengeluaran.map(p => {
+                                const k = kolam.find(kol => kol.id === p.kolamId);
+                                const cat = kategoriOptions.find(c => c.value === p.kategori);
+                                return (
+                                    <tr key={p.id}>
+                                        <td className="text-small">{p.tanggal}</td>
+                                        <td className="text-strong">{k?.nama || 'Umum (Farm Level)'}</td>
+                                        <td>
+                                            <span className={`badge ${kategoriColors[p.kategori]}`}>
+                                                {cat?.emoji} {cat?.label}
+                                            </span>
+                                        </td>
+                                        <td className="text-muted text-small">{p.keterangan}</td>
+                                        <td className="text-right text-strong text-red-600">
+                                            Rp {p.jumlah.toLocaleString('id-ID')}
+                                        </td>
+                                        <td className="action-cell">
+                                            <button
+                                                onClick={() => setDeleteModal(p.id)}
+                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                                            >
+                                                <TrashIcon />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
                 )}
             </div>
 
             {/* Form Modal */}
-            <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Tambah Pengeluaran">
-                <form onSubmit={handleSubmit} className="space-y-4">
+            <Modal 
+                isOpen={showForm} 
+                onClose={() => setShowForm(false)} 
+                title="Tambah Pengeluaran"
+                footer={
+                    <>
+                        <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary">Batal</button>
+                        <button type="submit" form="pengeluaran-form" className="btn btn-primary">Simpan</button>
+                    </>
+                }
+            >
+                <form id="pengeluaran-form" onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
+                        <div className="form-group">
+                            <label className="form-label">Kolam</label>
                             <select
                                 value={formData.kolamId}
                                 onChange={(e) => setFormData({ ...formData, kolamId: e.target.value })}
@@ -296,8 +309,8 @@ export default function PengeluaranPage() {
                                 ))}
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal</label>
+                        <div className="form-group">
+                            <label className="form-label">Tanggal</label>
                             <input
                                 type="date"
                                 value={formData.tanggal}
@@ -308,8 +321,8 @@ export default function PengeluaranPage() {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Kategori</label>
+                    <div className="form-group">
+                        <label className="form-label">Kategori</label>
                         <div className="grid grid-cols-3 gap-2">
                             {kategoriOptions.map(k => (
                                 <button
@@ -328,8 +341,8 @@ export default function PengeluaranPage() {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Keterangan</label>
+                    <div className="form-group">
+                        <label className="form-label">Keterangan</label>
                         <input
                             type="text"
                             value={formData.keterangan}
@@ -340,8 +353,8 @@ export default function PengeluaranPage() {
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah (Rp)</label>
+                    <div className="form-group">
+                        <label className="form-label">Jumlah (Rp)</label>
                         <input
                             type="text"
                             value={formatCurrencyInput(formData.jumlah)}
@@ -350,19 +363,6 @@ export default function PengeluaranPage() {
                             className="input"
                             required
                         />
-                    </div>
-
-                    <div className="flex gap-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={() => setShowForm(false)}
-                            className="flex-1 btn btn-secondary"
-                        >
-                            Batal
-                        </button>
-                        <button type="submit" className="flex-1 btn btn-primary">
-                            Simpan
-                        </button>
                     </div>
                 </form>
             </Modal>
@@ -383,6 +383,6 @@ export default function PengeluaranPage() {
                     </button>
                 </div>
             </Modal>
-        </DashboardLayout >
+        </DashboardLayout>
     );
 }

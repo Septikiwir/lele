@@ -217,7 +217,7 @@ export default function LaporanPage() {
                             <p className="stat-label">Total Kolam</p>
                             <p className="stat-value">{totals.kolam}</p>
                         </div>
-                        <div className="w-14 h-14 rounded-2xl bg-teal-100 flex items-center justify-center text-teal-600">
+                        <div className="icon-box icon-box-lg icon-box-primary">
                             <KolamIcon />
                         </div>
                     </div>
@@ -229,7 +229,7 @@ export default function LaporanPage() {
                             <p className="stat-label">Total Ikan</p>
                             <p className="stat-value">{totals.ikan.toLocaleString('id-ID')}</p>
                         </div>
-                        <div className="w-14 h-14 rounded-2xl bg-cyan-100 flex items-center justify-center text-cyan-600">
+                        <div className="icon-box icon-box-lg icon-box-info">
                             <FishIcon />
                         </div>
                     </div>
@@ -241,7 +241,7 @@ export default function LaporanPage() {
                             <p className="stat-label">Total Pakan</p>
                             <p className="stat-value">{totals.pakan}<span className="text-sm font-normal text-slate-400"> kg</span></p>
                         </div>
-                        <div className="w-14 h-14 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-600">
+                        <div className="icon-box icon-box-lg icon-box-warning">
                             <CalendarIcon />
                         </div>
                     </div>
@@ -255,7 +255,7 @@ export default function LaporanPage() {
                                 {((totals.actualRevenue > 0 ? totals.actualRevenue : totals.estimatedRevenue) / 1000000).toFixed(1)}<span className="text-sm font-normal text-slate-400"> jt</span>
                             </p>
                         </div>
-                        <div className="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center text-green-600">
+                        <div className="icon-box icon-box-lg icon-box-success">
                             <WalletIcon />
                         </div>
                     </div>
@@ -269,7 +269,7 @@ export default function LaporanPage() {
                                 {(totals.modal / 1000000).toFixed(1)}<span className="text-sm font-normal text-slate-400"> jt</span>
                             </p>
                         </div>
-                        <div className="w-14 h-14 rounded-2xl bg-red-100 flex items-center justify-center text-red-600">
+                        <div className="icon-box icon-box-lg icon-box-danger">
                             <WalletIcon />
                         </div>
                     </div>
@@ -283,7 +283,7 @@ export default function LaporanPage() {
                                 {(totals.profit / 1000000).toFixed(1)}<span className="text-sm font-normal text-slate-400"> jt</span>
                             </p>
                         </div>
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${totals.profit >= 0 ? 'bg-teal-100 text-teal-600' : 'bg-red-100 text-red-600'}`}>
+                        <div className={`icon-box icon-box-lg ${totals.profit >= 0 ? 'icon-box-primary' : 'icon-box-danger'}`}>
                             <TrendingUpIcon />
                         </div>
                     </div>
@@ -299,27 +299,27 @@ export default function LaporanPage() {
                     </Link>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                    <div className="bg-teal-50 rounded-xl p-4">
+                    <div className="card p-4 border-l-4 border-l-teal-500">
                         <p className="text-xs text-teal-600 font-medium">🐟 Bibit</p>
                         <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.BIBIT.toLocaleString('id-ID')}</p>
                     </div>
-                    <div className="bg-amber-50 rounded-xl p-4">
+                    <div className="card p-4 border-l-4 border-l-amber-500">
                         <p className="text-xs text-amber-600 font-medium">🍚 Pakan</p>
                         <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.PAKAN.toLocaleString('id-ID')}</p>
                     </div>
-                    <div className="bg-purple-50 rounded-xl p-4">
+                    <div className="card p-4 border-l-4 border-l-purple-500">
                         <p className="text-xs text-purple-600 font-medium">💊 Obat</p>
                         <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.OBAT.toLocaleString('id-ID')}</p>
                     </div>
-                    <div className="bg-yellow-50 rounded-xl p-4">
+                    <div className="card p-4 border-l-4 border-l-yellow-500">
                         <p className="text-xs text-yellow-600 font-medium">⚡ Listrik</p>
                         <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.LISTRIK.toLocaleString('id-ID')}</p>
                     </div>
-                    <div className="bg-green-50 rounded-xl p-4">
+                    <div className="card p-4 border-l-4 border-l-green-500">
                         <p className="text-xs text-green-600 font-medium">👷 Tenaga Kerja</p>
                         <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.TENAGA_KERJA.toLocaleString('id-ID')}</p>
                     </div>
-                    <div className="bg-slate-100 rounded-xl p-4">
+                    <div className="card p-4 border-l-4 border-l-slate-400">
                         <p className="text-xs text-slate-600 font-medium">📦 Lainnya</p>
                         <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.LAINNYA.toLocaleString('id-ID')}</p>
                     </div>
@@ -331,19 +331,23 @@ export default function LaporanPage() {
             </div>
 
             {/* Report Table */}
-            <div className="card overflow-hidden">
-                <div className="p-6 border-b">
-                    <h2 className="text-lg font-semibold text-slate-900">Laporan Per Kolam</h2>
+            <div className="table-wrapper">
+                <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                    <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span>📊</span>
+                        <span>Laporan Per Kolam</span>
+                    </h2>
                 </div>
                 {reportData.length === 0 ? (
-                    <EmptyState
-                        title="Belum Ada Data Kolam"
-                        description="Belum ada data kolam yang tersedia untuk laporan"
-                        icon="📊"
-                    />
+                    <div className="p-6">
+                        <EmptyState
+                            title="Belum Ada Data Kolam"
+                            description="Belum ada data kolam yang tersedia untuk laporan"
+                            icon="📊"
+                        />
+                    </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="table">
+                    <table className="table table-compact">
                             <thead>
                                 <tr>
                                     <th>Kolam</th>
@@ -361,10 +365,10 @@ export default function LaporanPage() {
                             <tbody>
                                 {reportData.map(r => (
                                     <tr key={r.id}>
-                                        <td className="font-semibold">{r.nama}</td>
-                                        <td className="text-slate-500">{r.dimensi}</td>
-                                        <td className="text-right">{r.jumlahIkan.toLocaleString('id-ID')}</td>
-                                        <td className="text-right">{r.kepadatan}/m³</td>
+                                        <td className="text-strong">{r.nama}</td>
+                                        <td className="text-muted text-small">{r.dimensi}</td>
+                                        <td className="text-right text-small">{r.jumlahIkan.toLocaleString('id-ID')}</td>
+                                        <td className="text-right text-small">{r.kepadatan}/m³</td>
                                         <td>
                                             <span className={`badge ${r.status === 'aman' ? 'badge-success' :
                                                 r.status === 'waspada' ? 'badge-warning' : 'badge-danger'
@@ -372,15 +376,15 @@ export default function LaporanPage() {
                                                 {statusLabels[r.status]}
                                             </span>
                                         </td>
-                                        <td className="text-right">{r.totalPakan}</td>
-                                        <td className="text-right">{r.fcr}</td>
-                                        <td className="text-right text-red-600 font-medium">
+                                        <td className="text-right text-small">{r.totalPakan}</td>
+                                        <td className="text-right text-small">{r.fcr}</td>
+                                        <td className="text-right text-small text-red-600 font-medium">
                                             Rp {r.totalModal.toLocaleString('id-ID')}
                                         </td>
-                                        <td className="text-right font-medium text-green-600">
+                                        <td className="text-right text-small font-medium text-green-600">
                                             Rp {r.estimatedRevenue.toLocaleString('id-ID')}
                                         </td>
-                                        <td className={`text-right font-bold ${r.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        <td className={`text-right text-strong text-small ${r.profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                             Rp {r.profit.toLocaleString('id-ID')}
                                         </td>
                                     </tr>
@@ -406,9 +410,8 @@ export default function LaporanPage() {
                                 </tr>
                             </tfoot>
                         </table>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
         </DashboardLayout>
     );
 }

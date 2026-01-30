@@ -35,10 +35,10 @@ export default function Home() {
             <p className="text-slate-500 text-sm">Ringkasan operasional tambak Anda.</p>
           </div>
           <div className="flex gap-3">
-            <Link href="/pakan" className="btn btn-white border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium shadow-sm">
+            <Link href="/pakan" className="btn btn-secondary text-sm">
               🍚 Input Pakan
             </Link>
-            <Link href="/kolam/tambah" className="btn btn-primary text-sm font-medium shadow-teal-500/20 shadow-lg hover:shadow-teal-500/30">
+            <Link href="/kolam/tambah" className="btn btn-primary text-sm">
               <PlusIcon /> Tambah Kolam
             </Link>
           </div>

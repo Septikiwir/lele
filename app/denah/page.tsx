@@ -179,8 +179,7 @@ export default function DenahPage() {
                 <div className="flex gap-3">
                     <button
                         onClick={() => setEditMode(!editMode)}
-                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${editMode ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                            }`}
+                        className={`btn ${editMode ? 'btn-primary' : 'btn-secondary'}`}
                     >
                         {editMode ? '✅ Selesai Edit' : '✏️ Edit Posisi'}
                     </button>

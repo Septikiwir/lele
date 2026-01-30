@@ -3,18 +3,45 @@ interface ModalProps {
     onClose: () => void;
     title?: string;
     children: React.ReactNode;
+    size?: 'sm' | 'md' | 'lg' | 'xl';
+    showCloseButton?: boolean;
+    footer?: React.ReactNode;
 }
 
-export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export default function Modal({ 
+    isOpen, 
+    onClose, 
+    title, 
+    children, 
+    size = 'md',
+    showCloseButton = true,
+    footer 
+}: ModalProps) {
     if (!isOpen) return null;
+
+    const sizeClass = size !== 'md' ? `modal-content-${size}` : '';
 
     return (
         <div className="modal-overlay" onClick={onClose}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className={`modal-content ${sizeClass}`} onClick={e => e.stopPropagation()}>
                 {title && (
-                    <h3 className="text-xl font-bold text-slate-900 mb-6">{title}</h3>
+                    <div className="modal-header">
+                        <h3 className="modal-title">{title}</h3>
+                        {showCloseButton && (
+                            <button className="modal-close" onClick={onClose}>
+                                ✕
+                            </button>
+                        )}
+                    </div>
                 )}
-                {children}
+                <div className="modal-body">
+                    {children}
+                </div>
+                {footer && (
+                    <div className="modal-footer">
+                        {footer}
+                    </div>
+                )}
             </div>
         </div>
     );

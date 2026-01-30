@@ -12,10 +12,10 @@ import { useToast } from '../context/ToastContext'; // Import Toast
 import { TipePembeli } from '../context/AppContext';
 
 const statusColors = {
-    aman: { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200' },
-    waspada: { bg: 'bg-amber-100', text: 'text-amber-700', border: 'border-amber-200' },
-    berisiko: { bg: 'bg-red-100', text: 'text-red-700', border: 'border-red-200' },
-    kosong: { bg: 'bg-slate-100', text: 'text-slate-500', border: 'border-slate-200' },
+    aman: 'badge-success',
+    waspada: 'badge-warning',
+    berisiko: 'badge-danger',
+    kosong: 'badge-neutral',
 };
 
 const statusLabels = {
@@ -207,7 +207,7 @@ export default function KolamPage() {
 
                         const volume = k.panjang * k.lebar * k.kedalaman;
                         const luas = k.panjang * k.lebar;
-                        const colors = statusColors[displayStatus as keyof typeof statusColors];
+                        const badgeClass = statusColors[displayStatus as keyof typeof statusColors];
 
                         // Feed Rec Logic (Pre-calculated)
                         let feedRec = null;
@@ -232,16 +232,16 @@ export default function KolamPage() {
                         }
 
                         return (
-                            <div key={k.id} className={`card p-6 border-l-4 ${colors.border}`}>
+                            <div key={k.id} className="card p-6">
                                 {/* Header */}
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-12 h-12 rounded-xl ${colors.bg} flex items-center justify-center text-2xl`}>
+                                        <div className="icon-box icon-box-primary">
                                             🐟
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-lg text-slate-900">{k.nama}</h3>
-                                            <span className={`badge ${colors.bg} ${colors.text}`}>
+                                            <span className={`badge ${badgeClass}`}>
                                                 {statusLabels[displayStatus as keyof typeof statusLabels]}
                                             </span>
                                         </div>
@@ -286,7 +286,7 @@ export default function KolamPage() {
                                     {isEmpty ? (
                                         <button
                                             onClick={() => handleOpenTebar(k.id)}
-                                            className="w-full btn bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-200 border-none flex items-center justify-center gap-2 py-2.5 font-semibold"
+                                            className="btn btn-primary w-full"
                                         >
                                             🐟 Tebar Bibit Baru
                                         </button>
@@ -294,7 +294,7 @@ export default function KolamPage() {
                                         <div className="grid grid-cols-2 gap-3">
                                             <button
                                                 onClick={() => handleOpenFeed(k.id)}
-                                                className="btn bg-teal-600 text-white hover:bg-teal-700 shadow-md shadow-teal-200 border-none flex items-center justify-center gap-2 py-2.5 font-semibold"
+                                                className="btn btn-primary"
                                             >
                                                 🍽️ Beri Pakan
                                             </button>
@@ -303,7 +303,7 @@ export default function KolamPage() {
                                                     setPanenForm(prev => ({ ...prev, kolamId: k.id }));
                                                     setIsPanenModalOpen(true);
                                                 }}
-                                                className="btn bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-200 border-none flex items-center justify-center gap-2 py-2.5 font-semibold"
+                                                className="btn btn-success"
                                             >
                                                 🌾 Panen
                                             </button>
@@ -342,9 +342,9 @@ export default function KolamPage() {
 
             {/* Delete Modal */}
             {/* Delete Modal */}
-            <Modal isOpen={!!deleteModal} onClose={() => setDeleteModal(null)}>
+            <Modal isOpen={!!deleteModal} onClose={() => setDeleteModal(null)} size="sm">
                 <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center text-3xl">
+                    <div className="icon-box icon-box-lg icon-box-danger mx-auto mb-4">
                         ⚠️
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2">Hapus Kolam?</h3>
@@ -369,10 +369,20 @@ export default function KolamPage() {
             </Modal>
 
             {/* FEED MODAL */}
-            <Modal isOpen={isFeedModalOpen} onClose={() => setIsFeedModalOpen(false)} title="Catat Pemberian Pakan">
-                <form onSubmit={handleFeedSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
+            <Modal 
+                isOpen={isFeedModalOpen} 
+                onClose={() => setIsFeedModalOpen(false)} 
+                title="Catat Pemberian Pakan"
+                footer={
+                    <>
+                        <button type="button" onClick={() => setIsFeedModalOpen(false)} className="btn btn-secondary">Batal</button>
+                        <button type="submit" form="feed-form" className="btn btn-primary">Simpan</button>
+                    </>
+                }
+            >
+                <form id="feed-form" onSubmit={handleFeedSubmit} className="space-y-4">
+                    <div className="form-group">
+                        <label className="form-label">Kolam</label>
                         <select
                             className="input bg-slate-100"
                             value={feedForm.kolamId}
@@ -381,8 +391,8 @@ export default function KolamPage() {
                             {kolam.map(k => <option key={k.id} value={k.id}>{k.nama}</option>)}
                         </select>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal</label>
+                    <div className="form-group">
+                        <label className="form-label">Tanggal</label>
                         <input
                             type="date"
                             className="input"
@@ -391,8 +401,8 @@ export default function KolamPage() {
                             required
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Jenis Pakan</label>
+                    <div className="form-group">
+                        <label className="form-label">Jenis Pakan</label>
                         <select
                             className="input"
                             value={feedForm.jenisPakan}
@@ -404,8 +414,8 @@ export default function KolamPage() {
                             ))}
                         </select>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah (kg)</label>
+                    <div className="form-group">
+                        <label className="form-label">Jumlah (kg)</label>
                         <input
                             type="number"
                             step="0.1"
@@ -416,18 +426,25 @@ export default function KolamPage() {
                             required
                         />
                     </div>
-                    <div className="pt-4 flex gap-2">
-                        <button type="button" onClick={() => setIsFeedModalOpen(false)} className="btn btn-secondary flex-1">Batal</button>
-                        <button type="submit" className="btn btn-primary flex-1">Simpan</button>
-                    </div>
                 </form>
             </Modal>
 
             {/* HARVEST MODAL */}
-            <Modal isOpen={isPanenModalOpen} onClose={() => setIsPanenModalOpen(false)} title="Form Panen Cepat">
-                <form onSubmit={handlePanenSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
+            <Modal 
+                isOpen={isPanenModalOpen} 
+                onClose={() => setIsPanenModalOpen(false)} 
+                title="Form Panen Cepat"
+                size="lg"
+                footer={
+                    <>
+                        <button type="button" onClick={() => setIsPanenModalOpen(false)} className="btn btn-secondary">Batal</button>
+                        <button type="submit" form="panen-form" className="btn btn-primary">Simpan Panen</button>
+                    </>
+                }
+            >
+                <form id="panen-form" onSubmit={handlePanenSubmit} className="space-y-4">
+                    <div className="form-group">
+                        <label className="form-label">Kolam</label>
                         <select
                             className="input bg-slate-100"
                             value={panenForm.kolamId}
@@ -438,8 +455,8 @@ export default function KolamPage() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Tipe Panen</label>
+                        <div className="form-group">
+                            <label className="form-label">Tipe Panen</label>
                             <select
                                 className="input"
                                 value={panenForm.tipe}
@@ -449,8 +466,8 @@ export default function KolamPage() {
                                 <option value="TOTAL">Total (Panen Raya)</option>
                             </select>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal</label>
+                        <div className="form-group">
+                            <label className="form-label">Tanggal</label>
                             <input
                                 type="date"
                                 className="input"
@@ -461,8 +478,8 @@ export default function KolamPage() {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Pembeli</label>
+                    <div className="form-group">
+                        <label className="form-label">Pembeli</label>
                         <select
                             className="input"
                             value={panenForm.pembeliId}
@@ -477,8 +494,8 @@ export default function KolamPage() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah Ekor</label>
+                        <div className="form-group">
+                            <label className="form-label">Jumlah Ekor</label>
                             <input
                                 type="number"
                                 className="input"
@@ -487,11 +504,9 @@ export default function KolamPage() {
                                     const count = parseInt(e.target.value);
                                     let estimatedWeight = panenForm.beratTotalKg;
 
-                                    // Auto-calculate logic (Reverse)
                                     if (count > 0 && panenForm.kolamId) {
                                         const latestSampling = getLatestSampling(panenForm.kolamId);
                                         if (latestSampling && latestSampling.jumlahIkanPerKg > 0) {
-                                            // Weight = Count / FishPerKg
                                             estimatedWeight = (count / latestSampling.jumlahIkanPerKg).toFixed(1);
                                         }
                                     }
@@ -505,8 +520,8 @@ export default function KolamPage() {
                                 required
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Berat Total (kg)</label>
+                        <div className="form-group">
+                            <label className="form-label">Berat Total (kg)</label>
                             <input
                                 type="number"
                                 step="0.1"
@@ -516,11 +531,8 @@ export default function KolamPage() {
                                     const totalWeight = parseFloat(e.target.value);
                                     let estimatedCount = panenForm.jumlahEkor;
 
-                                    // Auto-calculate logic
                                     if (totalWeight > 0 && panenForm.kolamId) {
                                         const latestSampling = getLatestSampling(panenForm.kolamId);
-                                        // Use sampling if available, else default to assumption (e.g. 100g/fish or 10 fish/kg)
-                                        // If sampling exists: jumlahIkanPerKg is available
                                         if (latestSampling && latestSampling.jumlahIkanPerKg > 0) {
                                             estimatedCount = Math.round(totalWeight * latestSampling.jumlahIkanPerKg).toString();
                                         }
@@ -537,13 +549,14 @@ export default function KolamPage() {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Harga Per Kg</label>
+                    <div className="form-group">
+                        <label className="form-label">Harga Per Kg</label>
                         <div className="relative">
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">Rp</span>
                             <input
                                 type="number"
-                                className="input pl-10"
+                                className="input"
+                                style={{ paddingLeft: '42px' }}
                                 value={panenForm.hargaPerKg}
                                 onChange={(e) => setPanenForm({ ...panenForm, hargaPerKg: e.target.value })}
                                 required
@@ -551,8 +564,8 @@ export default function KolamPage() {
                         </div>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Catatan (Opsional)</label>
+                    <div className="form-group">
+                        <label className="form-label">Catatan (Opsional)</label>
                         <input
                             type="text"
                             className="input"
@@ -560,18 +573,23 @@ export default function KolamPage() {
                             onChange={(e) => setPanenForm({ ...panenForm, catatan: e.target.value })}
                         />
                     </div>
-
-                    <div className="pt-4 flex gap-2">
-                        <button type="button" onClick={() => setIsPanenModalOpen(false)} className="btn btn-secondary flex-1">Batal</button>
-                        <button type="submit" className="btn btn-primary flex-1">Simpan Panen</button>
-                    </div>
                 </form>
             </Modal>
             {/* TEBAR MODAL */}
-            <Modal isOpen={isTebarModalOpen} onClose={() => setIsTebarModalOpen(false)} title="Tebar Bibit Baru">
-                <form onSubmit={handleTebarSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Kolam</label>
+            <Modal 
+                isOpen={isTebarModalOpen} 
+                onClose={() => setIsTebarModalOpen(false)} 
+                title="Tebar Bibit Baru"
+                footer={
+                    <>
+                        <button type="button" onClick={() => setIsTebarModalOpen(false)} className="btn btn-secondary">Batal</button>
+                        <button type="submit" form="tebar-form" className="btn btn-primary">Simpan</button>
+                    </>
+                }
+            >
+                <form id="tebar-form" onSubmit={handleTebarSubmit} className="space-y-4">
+                    <div className="form-group">
+                        <label className="form-label">Kolam</label>
                         <select
                             className="input bg-slate-100"
                             value={tebarForm.kolamId}
@@ -580,8 +598,8 @@ export default function KolamPage() {
                             {kolam.map(k => <option key={k.id} value={k.id}>{k.nama}</option>)}
                         </select>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Tanggal Tebar</label>
+                    <div className="form-group">
+                        <label className="form-label">Tanggal Tebar</label>
                         <input
                             type="date"
                             className="input"
@@ -590,8 +608,8 @@ export default function KolamPage() {
                             required
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah Bibit (ekor)</label>
+                    <div className="form-group">
+                        <label className="form-label">Jumlah Bibit (ekor)</label>
                         <input
                             type="number"
                             className="input"
@@ -601,8 +619,8 @@ export default function KolamPage() {
                             required
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">Berat Rata-rata (gram/ekor)</label>
+                    <div className="form-group">
+                        <label className="form-label">Berat Rata-rata (gram/ekor)</label>
                         <input
                             type="number"
                             step="0.1"
@@ -611,11 +629,7 @@ export default function KolamPage() {
                             onChange={(e) => setTebarForm({ ...tebarForm, beratPerEkor: e.target.value })}
                             placeholder="Default: 5"
                         />
-                        <p className="text-xs text-slate-500 mt-1">Biarkan 5g jika tidak ditimbang</p>
-                    </div>
-                    <div className="pt-4 flex gap-2">
-                        <button type="button" onClick={() => setIsTebarModalOpen(false)} className="btn btn-secondary flex-1">Batal</button>
-                        <button type="submit" className="btn btn-primary flex-1">Simpan</button>
+                        <p className="form-hint">Biarkan 5g jika tidak ditimbang</p>
                     </div>
                 </form>
             </Modal>

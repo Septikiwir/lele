@@ -512,24 +512,34 @@ export default function ProduksiPage() {
             {/* --- MODALS --- */}
 
             {/* Modal Tebar */}
-            <Modal isOpen={isTebarModalOpen} onClose={() => setIsTebarModalOpen(false)} title="Mulai Siklus (Tebar Bibit)">
-                <form onSubmit={handleTebarSubmit} className="space-y-4">
+            <Modal 
+                isOpen={isTebarModalOpen} 
+                onClose={() => setIsTebarModalOpen(false)} 
+                title="Mulai Siklus (Tebar Bibit)"
+                footer={
+                    <>
+                        <button type="button" onClick={() => setIsTebarModalOpen(false)} className="btn btn-secondary">Batal</button>
+                        <button type="submit" form="form-tebar" className="btn btn-primary">Mulai Tebar</button>
+                    </>
+                }
+            >
+                <form id="form-tebar" onSubmit={handleTebarSubmit} className="space-y-4">
                     <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-700 mb-4">
                         Data ini akan memulai siklus baru dan mencatat sampling awal.
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Tanggal Tebar</label>
+                    <div className="form-group">
+                        <label className="form-label">Tanggal Tebar</label>
                         <input type="date" className="input w-full" required
                             value={tebarForm.tanggal} onChange={e => setTebarForm({ ...tebarForm, tanggal: e.target.value })} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Jumlah (Ekor)</label>
+                        <div className="form-group">
+                            <label className="form-label">Jumlah (Ekor)</label>
                             <input type="number" className="input w-full" required placeholder="5000"
                                 value={tebarForm.jumlah} onChange={e => setTebarForm({ ...tebarForm, jumlah: e.target.value })} />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Ukuran (Gram/Ekor)</label>
+                        <div className="form-group">
+                            <label className="form-label">Ukuran (Gram/Ekor)</label>
                             <input type="number" step="0.1" className="input w-full" required placeholder="5"
                                 value={tebarForm.beratPerEkor} onChange={e => setTebarForm({ ...tebarForm, beratPerEkor: e.target.value })} />
                             {tebarForm.beratPerEkor && parseFloat(tebarForm.beratPerEkor) > 0 && (
@@ -539,23 +549,29 @@ export default function ProduksiPage() {
                             )}
                         </div>
                     </div>
-                    <div className="flex gap-3 pt-4">
-                        <button type="button" onClick={() => setIsTebarModalOpen(false)} className="btn btn-secondary flex-1">Batal</button>
-                        <button type="submit" className="btn btn-primary flex-1">Mulai Tebar</button>
-                    </div>
                 </form>
             </Modal>
 
             {/* Modal Panen */}
-            <Modal isOpen={isPanenModalOpen} onClose={() => setIsPanenModalOpen(false)} title="Catat Panen">
-                <form onSubmit={handlePanenSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Tanggal</label>
+            <Modal 
+                isOpen={isPanenModalOpen} 
+                onClose={() => setIsPanenModalOpen(false)} 
+                title="Catat Panen"
+                footer={
+                    <>
+                        <button type="button" onClick={() => setIsPanenModalOpen(false)} className="btn btn-secondary">Batal</button>
+                        <button type="submit" form="form-panen" className="btn bg-emerald-600 text-white hover:bg-emerald-700 border-transparent">Simpan Panen</button>
+                    </>
+                }
+            >
+                <form id="form-panen" onSubmit={handlePanenSubmit} className="space-y-4">
+                    <div className="form-group">
+                        <label className="form-label">Tanggal</label>
                         <input type="date" className="input w-full" required
                             value={panenForm.tanggal} onChange={e => setPanenForm({ ...panenForm, tanggal: e.target.value })} />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Pembeli</label>
+                    <div className="form-group">
+                        <label className="form-label">Pembeli</label>
                         <div className="flex gap-2">
                             <select
                                 className="input w-full"
@@ -580,25 +596,25 @@ export default function ProduksiPage() {
                         <p className="text-xs text-slate-400 mt-1">Data akan otomatis masuk ke menu Penjualan.</p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Berat Total (Kg)</label>
+                        <div className="form-group">
+                            <label className="form-label">Berat Total (Kg)</label>
                             <input type="number" className="input w-full" required placeholder="0"
                                 value={panenForm.beratTotalKg} onChange={e => setPanenForm({ ...panenForm, beratTotalKg: e.target.value })} />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Jlh Ekor (Opsional)</label>
+                        <div className="form-group">
+                            <label className="form-label">Jlh Ekor (Opsional)</label>
                             <input type="number" className="input w-full" placeholder="0"
                                 value={panenForm.jumlahEkor} onChange={e => setPanenForm({ ...panenForm, jumlahEkor: e.target.value })} />
                         </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Harga Jual (Rp/kg)</label>
+                    <div className="form-group">
+                        <label className="form-label">Harga Jual (Rp/kg)</label>
                         <input type="text" className="input w-full" required
                             value={formatCurrencyInput(panenForm.hargaPerKg)}
                             onChange={e => setPanenForm({ ...panenForm, hargaPerKg: parseCurrencyInput(e.target.value) })} />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Tipe</label>
+                    <div className="form-group">
+                        <label className="form-label">Tipe</label>
                         <select
                             className="input w-full"
                             value={panenForm.tipe}
@@ -626,17 +642,23 @@ export default function ProduksiPage() {
                             <option value="TOTAL">Total (Panen Raya)</option>
                         </select>
                     </div>
-                    <div className="flex gap-3 pt-4">
-                        <button type="button" onClick={() => setIsPanenModalOpen(false)} className="btn btn-secondary flex-1">Batal</button>
-                        <button type="submit" className="btn bg-emerald-600 text-white flex-1 hover:bg-emerald-700 border-transparent">Simpan Panen</button>
-                    </div>
                 </form>
             </Modal>
             {/* Modal Quick Add Buyer */}
-            <Modal isOpen={isBuyerModalOpen} onClose={() => setIsBuyerModalOpen(false)} title="Tambah Pembeli Baru">
-                <form onSubmit={handleBuyerSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Nama Pembeli</label>
+            <Modal 
+                isOpen={isBuyerModalOpen} 
+                onClose={() => setIsBuyerModalOpen(false)} 
+                title="Tambah Pembeli Baru"
+                footer={
+                    <>
+                        <button type="button" onClick={() => setIsBuyerModalOpen(false)} className="btn btn-secondary">Batal</button>
+                        <button type="submit" form="form-buyer" className="btn btn-primary">Simpan</button>
+                    </>
+                }
+            >
+                <form id="form-buyer" onSubmit={handleBuyerSubmit} className="space-y-4">
+                    <div className="form-group">
+                        <label className="form-label">Nama Pembeli</label>
                         <input
                             type="text"
                             className="input w-full"
@@ -646,8 +668,8 @@ export default function ProduksiPage() {
                             placeholder="Contoh: Pak Budi"
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Tipe</label>
+                    <div className="form-group">
+                        <label className="form-label">Tipe</label>
                         <select
                             className="input w-full"
                             value={buyerForm.tipe}
@@ -659,8 +681,8 @@ export default function ProduksiPage() {
                             <option value="LAINNYA">Lainnya</option>
                         </select>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Kontak (Opsional)</label>
+                    <div className="form-group">
+                        <label className="form-label">Kontak (Opsional)</label>
                         <input
                             type="text"
                             className="input w-full"
@@ -668,12 +690,8 @@ export default function ProduksiPage() {
                             onChange={e => setBuyerForm({ ...buyerForm, kontak: e.target.value })}
                         />
                     </div>
-                    <div className="flex gap-3 pt-4">
-                        <button type="button" onClick={() => setIsBuyerModalOpen(false)} className="btn btn-secondary flex-1">Batal</button>
-                        <button type="submit" className="btn btn-primary flex-1">Simpan</button>
-                    </div>
                 </form>
             </Modal>
-        </DashboardLayout >
+        </DashboardLayout>
     );
 }
