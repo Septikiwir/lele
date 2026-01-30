@@ -119,112 +119,111 @@ export default function PengeluaranPage() {
 
     return (
         <DashboardLayout>
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Pengeluaran / Modal</h1>
-                    <p className="text-slate-500 mt-1">Catat semua biaya operasional peternakan</p>
+            <div className="flex flex-col gap-6 sm:gap-8">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-slate-900">Pengeluaran / Modal</h1>
+                        <p className="text-slate-500 mt-1">Catat semua biaya operasional peternakan</p>
+                    </div>
+                    <button onClick={() => setShowForm(true)} className="btn btn-primary">
+                        <PlusIcon />
+                        Tambah Pengeluaran
+                    </button>
                 </div>
-                <button onClick={() => setShowForm(true)} className="btn btn-primary">
-                    <PlusIcon />
-                    Tambah Pengeluaran
-                </button>
-            </div>
 
-            {/* Total Summary */}
-            <div className="card-highlight card-gradient-red">
-                <p className="label">Total Pengeluaran (Modal)</p>
-                <p className="value">Rp {grandTotal.toLocaleString('id-ID')}</p>
-            </div>
-
-            {/* Kategori Summary Cards */}
-            <div className="card p-6 mb-6 sm:mb-8">
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-                    {kategoriTotals.map((k, idx) => {
-                        const colorClasses = [
-                            { card: 'bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50', label: 'text-blue-600', value: 'text-blue-900' },
-                            { card: 'bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50', label: 'text-amber-600', value: 'text-amber-900' },
-                            { card: 'bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/50', label: 'text-purple-600', value: 'text-purple-900' },
-                            { card: 'bg-gradient-to-br from-yellow-50 to-yellow-100/50 border border-yellow-200/50', label: 'text-yellow-600', value: 'text-yellow-900' },
-                            { card: 'bg-gradient-to-br from-cyan-50 to-cyan-100/50 border border-cyan-200/50', label: 'text-cyan-600', value: 'text-cyan-900' },
-                            { card: 'bg-gradient-to-br from-slate-50 to-slate-100/50 border border-slate-200/50', label: 'text-slate-600', value: 'text-slate-900' },
-                        ];
-                        const color = colorClasses[idx % colorClasses.length];
-                        return (
-                            <div key={k.value} className={`${color.card} rounded-xl p-4`}>
-                                <p className={`text-[11px] font-bold ${color.label} uppercase tracking-wider mb-2`}>{k.emoji} {k.label}</p>
-                                <p className={`text-base font-semibold ${color.value}`}>Rp {k.total.toLocaleString('id-ID')}</p>
-                            </div>
-                        );
-                    })}
+                {/* Total Summary */}
+                <div className="card-highlight card-gradient-red">
+                    <p className="label">Total Pengeluaran (Modal)</p>
+                    <p className="value">Rp {grandTotal.toLocaleString('id-ID')}</p>
                 </div>
-            </div>
 
-            {/* Per Kolam Summary */}
-            <div className="card p-6 mb-6 sm:mb-8">
-                <h2 className="text-lg font-semibold text-slate-900 mb-4">Modal Per Kolam</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    {kolam.map(k => {
-                        const total = getTotalPengeluaranByKolam(k.id);
-                        return (
-                            <div key={k.id} className="bg-slate-50 rounded-xl p-4">
-                                <h3 className="font-semibold text-slate-900 mb-3">{k.nama}</h3>
-                                <div className="space-y-2 text-sm">
-                                    {kategoriOptions.map(cat => {
-                                        const catTotal = getTotalPengeluaranByKategori(k.id, cat.value);
-                                        if (catTotal === 0) return null;
-                                        return (
-                                            <div key={cat.value} className="flex justify-between">
-                                                <span className="text-slate-500">{cat.emoji} {cat.label}</span>
-                                                <span className="font-medium">Rp {catTotal.toLocaleString('id-ID')}</span>
-                                            </div>
-                                        );
-                                    })}
-                                    <div className="flex justify-between pt-2 border-t font-semibold">
-                                        <span>Total</span>
-                                        <span className="text-red-600">Rp {total.toLocaleString('id-ID')}</span>
+                {/* Kategori Summary Cards */}
+                <div className="card p-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                        {kategoriTotals.map((k, idx) => {
+                            const colorClasses = [
+                                { card: 'bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50', label: 'text-blue-600', value: 'text-blue-900' },
+                                { card: 'bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50', label: 'text-amber-600', value: 'text-amber-900' },
+                                { card: 'bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/50', label: 'text-purple-600', value: 'text-purple-900' },
+                                { card: 'bg-gradient-to-br from-yellow-50 to-yellow-100/50 border border-yellow-200/50', label: 'text-yellow-600', value: 'text-yellow-900' },
+                                { card: 'bg-gradient-to-br from-cyan-50 to-cyan-100/50 border border-cyan-200/50', label: 'text-cyan-600', value: 'text-cyan-900' },
+                                { card: 'bg-gradient-to-br from-slate-50 to-slate-100/50 border border-slate-200/50', label: 'text-slate-600', value: 'text-slate-900' },
+                            ];
+                            const color = colorClasses[idx % colorClasses.length];
+                            return (
+                                <div key={k.value} className={`${color.card} rounded-xl p-4`}>
+                                    <p className={`text-[11px] font-bold ${color.label} uppercase tracking-wider mb-2`}>{k.emoji} {k.label}</p>
+                                    <p className={`text-base font-semibold ${color.value}`}>Rp {k.total.toLocaleString('id-ID')}</p>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Per Kolam Summary */}
+                <div className="card p-6">
+                    <h2 className="text-lg font-semibold text-slate-900 mb-4">Modal Per Kolam</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                        {kolam.map(k => {
+                            const total = getTotalPengeluaranByKolam(k.id);
+                            return (
+                                <div key={k.id} className="bg-slate-50 rounded-xl p-4">
+                                    <h3 className="font-semibold text-slate-900 mb-3">{k.nama}</h3>
+                                    <div className="space-y-2 text-sm">
+                                        {kategoriOptions.map(cat => {
+                                            const catTotal = getTotalPengeluaranByKategori(k.id, cat.value);
+                                            if (catTotal === 0) return null;
+                                            return (
+                                                <div key={cat.value} className="flex justify-between">
+                                                    <span className="text-slate-500">{cat.emoji} {cat.label}</span>
+                                                    <span className="font-medium">Rp {catTotal.toLocaleString('id-ID')}</span>
+                                                </div>
+                                            );
+                                        })}
+                                        <div className="flex justify-between pt-2 border-t font-semibold">
+                                            <span>Total</span>
+                                            <span className="text-red-600">Rp {total.toLocaleString('id-ID')}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
                 </div>
-            </div>
 
-            <div className="card p-6 mb-6 sm:mb-8">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Biaya Umum (Non-Kolam)</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    {/* General Farm Expenses Card */}
-                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                        <h3 className="font-semibold text-slate-900 mb-3">🏢 Umum / Farm Level</h3>
-                        <div className="space-y-2 text-sm">
-                            {kategoriOptions.map(cat => {
-                                const catTotal = pengeluaran
-                                    .filter(p => !p.kolamId && p.kategori === cat.value)
-                                    .reduce((sum, p) => sum + p.jumlah, 0);
-                                if (catTotal === 0) return null;
-                                return (
-                                    <div key={cat.value} className="flex justify-between">
-                                        <span className="text-slate-500">{cat.emoji} {cat.label}</span>
-                                        <span className="font-medium">Rp {catTotal.toLocaleString('id-ID')}</span>
-                                    </div>
-                                );
-                            })}
-                            <div className="flex justify-between pt-2 border-t font-semibold">
-                                <span>Total Umum</span>
-                                <span className="text-red-600">
-                                    Rp {pengeluaran.filter(p => !p.kolamId).reduce((sum, p) => sum + p.jumlah, 0).toLocaleString('id-ID')}
-                                </span>
+                <div className="card p-6">
+                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Biaya Umum (Non-Kolam)</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                        {/* General Farm Expenses Card */}
+                        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                            <h3 className="font-semibold text-slate-900 mb-3">🏢 Umum / Farm Level</h3>
+                            <div className="space-y-2 text-sm">
+                                {kategoriOptions.map(cat => {
+                                    const catTotal = pengeluaran
+                                        .filter(p => !p.kolamId && p.kategori === cat.value)
+                                        .reduce((sum, p) => sum + p.jumlah, 0);
+                                    if (catTotal === 0) return null;
+                                    return (
+                                        <div key={cat.value} className="flex justify-between">
+                                            <span className="text-slate-500">{cat.emoji} {cat.label}</span>
+                                            <span className="font-medium">Rp {catTotal.toLocaleString('id-ID')}</span>
+                                        </div>
+                                    );
+                                })}
+                                <div className="flex justify-between pt-2 border-t font-semibold">
+                                    <span>Total Umum</span>
+                                    <span className="text-red-600">
+                                        Rp {pengeluaran.filter(p => !p.kolamId).reduce((sum, p) => sum + p.jumlah, 0).toLocaleString('id-ID')}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-
-
-            {/* Riwayat Pengeluaran */}
-            <div className="table-wrapper">
+                {/* Riwayat Pengeluaran */}
+                <div className="table-wrapper">
                 <div className="px-6 py-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         <span>📊</span>
@@ -292,6 +291,7 @@ export default function PengeluaranPage() {
                         </tbody>
                     </table>
                 )}
+            </div>
             </div>
 
             {/* Form Modal */}

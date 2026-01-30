@@ -178,28 +178,29 @@ export default function KolamPage() {
 
     return (
         <DashboardLayout>
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Manajemen Kolam</h1>
-                    <p className="text-slate-500 mt-1">Kelola semua kolam peternakan Anda</p>
+            <div className="flex flex-col gap-6 sm:gap-8">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-slate-900">Manajemen Kolam</h1>
+                        <p className="text-slate-500 mt-1">Kelola semua kolam peternakan Anda</p>
+                    </div>
+                    <Link href="/kolam/tambah" className="btn btn-primary">
+                        <PlusIcon />
+                        Tambah Kolam
+                    </Link>
                 </div>
-                <Link href="/kolam/tambah" className="btn btn-primary">
-                    <PlusIcon />
-                    Tambah Kolam
-                </Link>
-            </div>
 
-            {/* Kolam Grid */}
-            {kolam.length === 0 ? (
-                <EmptyState
-                    title="Belum Ada Kolam"
-                    description="Mulai dengan menambahkan kolam pertama Anda"
-                    icon="🐟"
-                    action={{ label: "Tambah Kolam Baru", href: "/kolam/tambah" }}
-                />
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                {/* Kolam Grid */}
+                {kolam.length === 0 ? (
+                    <EmptyState
+                        title="Belum Ada Kolam"
+                        description="Mulai dengan menambahkan kolam pertama Anda"
+                        icon="🐟"
+                        action={{ label: "Tambah Kolam Baru", href: "/kolam/tambah" }}
+                    />
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                     {kolam.map(k => {
                         const isEmpty = k.jumlahIkan === 0;
                         const unifiedStatus = getUnifiedStatus(k.id);
@@ -355,8 +356,8 @@ export default function KolamPage() {
                     })}
                 </div>
             )}
+            </div>
 
-            {/* Delete Modal */}
             {/* Delete Modal */}
             <Modal isOpen={!!deleteModal} onClose={() => setDeleteModal(null)} size="sm">
                 <div className="text-center">

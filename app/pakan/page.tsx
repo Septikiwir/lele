@@ -180,49 +180,50 @@ export default function PakanPage() {
 
     return (
         <DashboardLayout>
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Manajemen Pakan</h1>
-                    <p className="text-slate-500 mt-1">Jadwal, stok, dan pencatatan pemberian pakan</p>
-                </div>
-            </div>
-
-            {/* Next Feeding Reminder Banner */}
-            {nextFeeding && activeTab === 'jadwal' && (
-                <div className="mb-6 sm:mb-8 p-6 bg-gradient-to-r from-teal-500 to-cyan-600 rounded-2xl text-white shadow-lg shadow-teal-200">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center animate-pulse">
-                            <ClockIcon />
-                        </div>
-                        <div>
-                            <p className="text-teal-100 font-medium text-sm uppercase tracking-wider">Jadwal Selanjutnya</p>
-                            <h2 className="text-2xl font-bold mt-1">
-                                Pukul {nextFeeding.waktu} • {nextKolam?.nama}
-                            </h2>
-                            <p className="text-white/90 mt-1">
-                                {nextFeeding.jumlahKg} kg {nextFeeding.jenisPakan} {nextFeeding.keterangan && `(${nextFeeding.keterangan})`}
-                            </p>
-                        </div>
+            <div className="flex flex-col gap-6 sm:gap-8">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-slate-900">Manajemen Pakan</h1>
+                        <p className="text-slate-500 mt-1">Jadwal, stok, dan pencatatan pemberian pakan</p>
                     </div>
                 </div>
-            )}
 
-            {/* Tabs */}
-            <div className="tab-container border-b border-slate-200 mb-6">
-                <button
-                    onClick={() => setActiveTab('stok')}
-                    className={`tab tab-underline ${activeTab === 'stok' ? 'tab-active' : ''}`}
-                >
-                    📦 Stok Pakan
-                </button>
-                <button
-                    onClick={() => setActiveTab('jadwal')}
-                    className={`tab tab-underline ${activeTab === 'jadwal' ? 'tab-active' : ''}`}
-                >
-                    📅 Jadwal Pakan
-                </button>
-                <button
+                {/* Next Feeding Reminder Banner */}
+                {nextFeeding && activeTab === 'jadwal' && (
+                    <div className="p-6 bg-gradient-to-r from-teal-500 to-cyan-600 rounded-2xl text-white shadow-lg shadow-teal-200">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center animate-pulse">
+                                <ClockIcon />
+                            </div>
+                            <div>
+                                <p className="text-teal-100 font-medium text-sm uppercase tracking-wider">Jadwal Selanjutnya</p>
+                                <h2 className="text-2xl font-bold mt-1">
+                                    Pukul {nextFeeding.waktu} • {nextKolam?.nama}
+                                </h2>
+                                <p className="text-white/90 mt-1">
+                                    {nextFeeding.jumlahKg} kg {nextFeeding.jenisPakan} {nextFeeding.keterangan && `(${nextFeeding.keterangan})`}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Tabs */}
+                <div className="tab-container border-b border-slate-200">
+                    <button
+                        onClick={() => setActiveTab('stok')}
+                        className={`tab tab-underline ${activeTab === 'stok' ? 'tab-active' : ''}`}
+                    >
+                        📦 Stok Pakan
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('jadwal')}
+                        className={`tab tab-underline ${activeTab === 'jadwal' ? 'tab-active' : ''}`}
+                    >
+                        📅 Jadwal Pakan
+                    </button>
+                    <button
                     onClick={() => setActiveTab('riwayat')}
                     className={`tab tab-underline ${activeTab === 'riwayat' ? 'tab-active' : ''}`}
                 >
@@ -467,6 +468,7 @@ export default function PakanPage() {
                     </div>
                 </>
             )}
+            </div>
 
             {/* Modal - Tambah Pemberian Pakan */}
             <Modal 

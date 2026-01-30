@@ -126,58 +126,59 @@ export default function KualitasAirPage() {
 
     return (
         <DashboardLayout>
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Monitoring Kualitas Air</h1>
-                    <p className="text-slate-500 mt-1">Catat kondisi air dan dapatkan rekomendasi tindakan</p>
-                </div>
-                <button onClick={() => setShowForm(true)} className="btn btn-primary">
-                    <PlusIcon />
-                    Input Kondisi Air
-                </button>
-            </div>
-
-            {/* Rekomendasi Alert */}
-            {showRekomendasi && (
-                <div className="alert alert-info mb-6 sm:mb-8">
-                    <div className="flex-1">
-                        <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-3">
-                            💡 Rekomendasi Tindakan
-                        </h3>
-                        <ul className="space-y-2">
-                            {showRekomendasi.map((r, i) => (
-                                <li key={i} className="flex items-start gap-3 text-slate-700 text-sm">
-                                    <span className="mt-1 block w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></span>
-                                    <span>{r}</span>
-                                </li>
-                            ))}
-                        </ul>
+            <div className="flex flex-col gap-6 sm:gap-8">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-slate-900">Monitoring Kualitas Air</h1>
+                        <p className="text-slate-500 mt-1">Catat kondisi air dan dapatkan rekomendasi tindakan</p>
                     </div>
-                    <button
-                        onClick={() => setShowRekomendasi(null)}
-                        className="text-slate-400 hover:text-slate-600 font-bold self-start"
-                    >
-                        ✕
+                    <button onClick={() => setShowForm(true)} className="btn btn-primary">
+                        <PlusIcon />
+                        Input Kondisi Air
                     </button>
                 </div>
-            )}
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
-                {kolam.map(k => {
-                    const latestKondisi = kondisiAir.find(ka => ka.kolamId === k.id);
-                    const warnaStatus = latestKondisi
-                        ? warnaOptions.find(w => w.value === latestKondisi.warna)?.status || 'good'
-                        : 'unknown';
+                {/* Rekomendasi Alert */}
+                {showRekomendasi && (
+                    <div className="alert alert-info">
+                        <div className="flex-1">
+                            <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-3">
+                                💡 Rekomendasi Tindakan
+                            </h3>
+                            <ul className="space-y-2">
+                                {showRekomendasi.map((r, i) => (
+                                    <li key={i} className="flex items-start gap-3 text-slate-700 text-sm">
+                                        <span className="mt-1 block w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></span>
+                                        <span>{r}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        <button
+                            onClick={() => setShowRekomendasi(null)}
+                            className="text-slate-400 hover:text-slate-600 font-bold self-start"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                )}
 
-                    const statusBadge = warnaStatus === 'good' ? 'badge-success' :
-                        warnaStatus === 'warning' ? 'badge-warning' :
-                            warnaStatus === 'bad' ? 'badge-danger' : 'badge-neutral';
+                {/* Summary Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                    {kolam.map(k => {
+                        const latestKondisi = kondisiAir.find(ka => ka.kolamId === k.id);
+                        const warnaStatus = latestKondisi
+                            ? warnaOptions.find(w => w.value === latestKondisi.warna)?.status || 'good'
+                            : 'unknown';
 
-                    return (
-                        <div key={k.id} className="card p-4">
-                            <h3 className="font-semibold text-slate-900 mb-2 border-b border-slate-100 pb-2">{k.nama}</h3>
+                        const statusBadge = warnaStatus === 'good' ? 'badge-success' :
+                            warnaStatus === 'warning' ? 'badge-warning' :
+                                warnaStatus === 'bad' ? 'badge-danger' : 'badge-neutral';
+
+                        return (
+                            <div key={k.id} className="card p-4">
+                                <h3 className="font-semibold text-slate-900 mb-2 border-b border-slate-100 pb-2">{k.nama}</h3>
                             {latestKondisi ? (
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
@@ -281,6 +282,7 @@ export default function KualitasAirPage() {
                     </div>
                     </>
                 )}
+            </div>
             </div>
 
             {/* Form Modal */}

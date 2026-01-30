@@ -119,84 +119,85 @@ export default function PenjualanPage() {
 
     return (
         <DashboardLayout>
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Penjualan / Pendapatan</h1>
-                    <p className="text-slate-500 mt-1">Catat semua penjualan ikan dan data pembeli</p>
+            <div className="flex flex-col gap-6 sm:gap-8">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-slate-900">Penjualan / Pendapatan</h1>
+                        <p className="text-slate-500 mt-1">Catat semua penjualan ikan dan data pembeli</p>
+                    </div>
+                    <div className="flex gap-2">
+                        <button onClick={() => setShowPembeliForm(true)} className="btn btn-secondary">
+                            <PlusIcon />
+                            Pembeli
+                        </button>
+                        <button onClick={() => setShowPenjualanForm(true)} className="btn btn-primary">
+                            <PlusIcon />
+                            Penjualan
+                        </button>
+                    </div>
                 </div>
-                <div className="flex gap-2">
-                    <button onClick={() => setShowPembeliForm(true)} className="btn btn-secondary">
-                        <PlusIcon />
-                        Pembeli
-                    </button>
-                    <button onClick={() => setShowPenjualanForm(true)} className="btn btn-primary">
-                        <PlusIcon />
-                        Penjualan
-                    </button>
+
+                {/* Total Summary */}
+                <div className="card-highlight card-gradient-green">
+                    <p className="label">Total Pendapatan</p>
+                    <p className="value">Rp {totalPendapatan.toLocaleString('id-ID')}</p>
+                    <p className="sub">{totalBerat} kg terjual</p>
                 </div>
-            </div>
 
-            {/* Total Summary */}
-            <div className="card-highlight card-gradient-green">
-                <p className="label">Total Pendapatan</p>
-                <p className="value">Rp {totalPendapatan.toLocaleString('id-ID')}</p>
-                <p className="sub">{totalBerat} kg terjual</p>
-            </div>
+                {/* Profit Per Kolam */}
+                <div className="card p-6">
+                    <h2 className="text-lg font-semibold text-slate-900 mb-4">Profit Per Kolam</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                        {kolam.map(k => {
+                            const pendapatan = getTotalPenjualanByKolam(k.id);
+                            const pengeluaranTotal = getTotalPengeluaranByKolam(k.id);
+                            const profit = getProfitByKolam(k.id);
+                            const isProfit = profit >= 0;
 
-            {/* Profit Per Kolam */}
-            <div className="card p-6 mb-6 sm:mb-8">
-                <h2 className="text-lg font-semibold text-slate-900 mb-4">Profit Per Kolam</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    {kolam.map(k => {
-                        const pendapatan = getTotalPenjualanByKolam(k.id);
-                        const pengeluaranTotal = getTotalPengeluaranByKolam(k.id);
-                        const profit = getProfitByKolam(k.id);
-                        const isProfit = profit >= 0;
-
-                        return (
-                            <div key={k.id} className="bg-slate-50 rounded-xl p-4">
-                                <h3 className="font-semibold text-slate-900 mb-3">{k.nama}</h3>
-                                <div className="space-y-2 text-sm">
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-500">💰 Pendapatan</span>
-                                        <span className="font-medium text-green-600">Rp {pendapatan.toLocaleString('id-ID')}</span>
-                                    </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-slate-500">💸 Pengeluaran</span>
-                                        <span className="font-medium text-red-600">Rp {pengeluaranTotal.toLocaleString('id-ID')}</span>
-                                    </div>
-                                    <div className="flex justify-between pt-2 border-t font-semibold">
-                                        <span>{isProfit ? '📈 Profit' : '📉 Rugi'}</span>
-                                        <span className={isProfit ? 'text-green-600' : 'text-red-600'}>
-                                            Rp {Math.abs(profit).toLocaleString('id-ID')}
-                                        </span>
+                            return (
+                                <div key={k.id} className="bg-slate-50 rounded-xl p-4">
+                                    <h3 className="font-semibold text-slate-900 mb-3">{k.nama}</h3>
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="text-slate-500">💰 Pendapatan</span>
+                                            <span className="font-medium text-green-600">Rp {pendapatan.toLocaleString('id-ID')}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-slate-500">💸 Pengeluaran</span>
+                                            <span className="font-medium text-red-600">Rp {pengeluaranTotal.toLocaleString('id-ID')}</span>
+                                        </div>
+                                        <div className="flex justify-between pt-2 border-t font-semibold">
+                                            <span>{isProfit ? '📈 Profit' : '📉 Rugi'}</span>
+                                            <span className={isProfit ? 'text-green-600' : 'text-red-600'}>
+                                                Rp {Math.abs(profit).toLocaleString('id-ID')}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* Data Pembeli */}
-            <div className="table-wrapper mb-6 sm:mb-8">
-                <div className="px-6 py-4 border-b border-slate-200 bg-white">
-                    <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <span>📋</span>
-                        <span>Data Pembeli</span>
-                    </h2>
-                </div>
-                {pembeli.length === 0 ? (
-                    <div className="p-6">
-                        <EmptyState
-                            title="Belum Ada Pembeli"
-                            description="Belum ada data pembeli yang tercatat"
-                            icon="👤"
-                        />
+                            );
+                        })}
                     </div>
-                ) : (
-                    <table className="table">
+                </div>
+
+                {/* Data Pembeli */}
+                <div className="table-wrapper">
+                    <div className="px-6 py-4 border-b border-slate-200 bg-white">
+                        <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <span>📋</span>
+                            <span>Data Pembeli</span>
+                        </h2>
+                    </div>
+                    {pembeli.length === 0 ? (
+                        <div className="p-6">
+                            <EmptyState
+                                title="Belum Ada Pembeli"
+                                description="Belum ada data pembeli yang tercatat"
+                                icon="👤"
+                            />
+                        </div>
+                    ) : (
+                        <table className="table">
                             <thead>
                                 <tr>
                                     <th>Nama</th>
@@ -305,6 +306,7 @@ export default function PenjualanPage() {
                         </tbody>
                     </table>
                 )}
+            </div>
             </div>
 
             {/* Form Modal - Penjualan */}

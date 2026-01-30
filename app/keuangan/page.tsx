@@ -218,35 +218,36 @@ export default function KeuanganPage() {
 
     return (
         <DashboardLayout>
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Keuangan</h1>
-                    <p className="text-slate-500 mt-1">Kelola pendapatan dan pengeluaran peternakan</p>
+            <div className="flex flex-col gap-6 sm:gap-8">
+                {/* Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                    <div>
+                        <h1 className="text-3xl font-bold text-slate-900">Keuangan</h1>
+                        <p className="text-slate-500 mt-1">Kelola pendapatan dan pengeluaran peternakan</p>
+                    </div>
                 </div>
-            </div>
 
-            {/* Summary Cards */}
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
-                <div className="card-highlight card-gradient-green col-span-2 lg:col-span-1">
-                    <p className="label">Total Pendapatan</p>
-                    <p className="value">Rp {totalPendapatan.toLocaleString('id-ID')}</p>
-                    <p className="sub">{totalBerat} kg terjual</p>
+                {/* Summary Cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                    <div className="card-highlight card-gradient-green col-span-2 lg:col-span-1">
+                        <p className="label">Total Pendapatan</p>
+                        <p className="value">Rp {totalPendapatan.toLocaleString('id-ID')}</p>
+                        <p className="sub">{totalBerat} kg terjual</p>
+                    </div>
+                    <div className="card-highlight card-gradient-red">
+                        <p className="label">Total Pengeluaran</p>
+                        <p className="value">Rp {grandTotalPengeluaran.toLocaleString('id-ID')}</p>
+                    </div>
+                    <div className="card-highlight card-gradient-blue">
+                        <p className="label">Biaya Umum (Non-Kolam)</p>
+                        <p className="value">Rp {totalGeneralExpenses.toLocaleString('id-ID')}</p>
+                    </div>
                 </div>
-                <div className="card-highlight card-gradient-red">
-                    <p className="label">Total Pengeluaran</p>
-                    <p className="value">Rp {grandTotalPengeluaran.toLocaleString('id-ID')}</p>
-                </div>
-                <div className="card-highlight card-gradient-blue">
-                    <p className="label">Biaya Umum (Non-Kolam)</p>
-                    <p className="value">Rp {totalGeneralExpenses.toLocaleString('id-ID')}</p>
-                </div>
-            </div>
 
-            {/* Content: Pendapatan */}
-            <div>
+                {/* Content: Pendapatan */}
+                <div className="flex flex-col gap-6 sm:gap-8">
                     {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-2 mb-6">
+                    <div className="flex flex-wrap gap-2">
                         <button onClick={() => setShowPembeliForm(true)} className="btn btn-secondary flex-1 sm:flex-none">
                             <PlusIcon />
                             Pembeli
@@ -262,7 +263,7 @@ export default function KeuanganPage() {
                     </div>
 
                     {/* Kategori Summary Cards */}
-                    <div className="card p-6 mb-6 sm:mb-8">
+                    <div className="card p-6">
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
                             {kategoriTotals.map((k, idx) => {
                                 const colorClasses = [
@@ -285,7 +286,7 @@ export default function KeuanganPage() {
                     </div>
 
                     {/* Profit Per Kolam */}
-                    <div className="card p-6 mb-6 sm:mb-8">
+                    <div className="card p-6">
                         <h2 className="text-lg font-semibold text-slate-900 mb-4">Profit Per Kolam</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                             {kolam.map(k => {
@@ -320,7 +321,7 @@ export default function KeuanganPage() {
                     </div>
 
                     {/* Data Pembeli */}
-                    <div className="table-wrapper mb-6 sm:mb-8">
+                    <div className="table-wrapper">
                         <div className="px-6 py-4 border-b border-slate-200 bg-white">
                             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                                 <span>📋</span>
@@ -573,6 +574,7 @@ export default function KeuanganPage() {
                         )}
                     </div>
                 </div>
+            </div>
 
             {/* Modals */}
             {/* Form Modal - Penjualan */}
