@@ -79,7 +79,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 tanggal: panenForm.tanggal,
                 beratKg: parseFloat(panenForm.beratTotalKg),
                 hargaPerKg: parseFloat(panenForm.hargaPerKg),
-                catatan: panenForm.catatan
+                keterangan: panenForm.catatan
             });
 
             setIsPanenModalOpen(false);
