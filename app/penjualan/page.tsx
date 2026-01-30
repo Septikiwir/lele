@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useApp, TipePembeli } from '../context/AppContext';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 
-import { PlusIcon, TrashIcon } from '../components/ui/Icons';
+import { PlusIcon, TrashIcon, LoadingSpinner } from '../components/ui/Icons';
 import Modal from '../components/ui/Modal';
 import EmptyState from '../components/ui/EmptyState';
 
@@ -36,6 +36,7 @@ export default function PenjualanPage() {
     const [showPembeliForm, setShowPembeliForm] = useState(false);
     const [deleteModal, setDeleteModal] = useState<{ type: 'penjualan' | 'pembeli'; id: string } | null>(null);
     const [filterKolam, setFilterKolam] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [penjualanForm, setPenjualanForm] = useState({
         kolamId: '',
@@ -57,8 +58,11 @@ export default function PenjualanPage() {
     const handlePenjualanSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!penjualanForm.kolamId || !penjualanForm.pembeliId || !penjualanForm.beratKg || !penjualanForm.hargaPerKg) return;
+        if (isSubmitting) return;
 
-        addPenjualan({
+        setIsSubmitting(true);
+        try {
+            addPenjualan({
             kolamId: penjualanForm.kolamId,
             pembeliId: penjualanForm.pembeliId,
             tanggal: penjualanForm.tanggal,
@@ -78,13 +82,19 @@ export default function PenjualanPage() {
             keterangan: '',
         });
         setShowPenjualanForm(false);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handlePembeliSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!pembeliForm.nama) return;
+        if (isSubmitting) return;
 
-        addPembeli({
+        setIsSubmitting(true);
+        try {
+            addPembeli({
             nama: pembeliForm.nama,
             tipe: pembeliForm.tipe,
             kontak: pembeliForm.kontak || undefined,
@@ -98,6 +108,9 @@ export default function PenjualanPage() {
             alamat: '',
         });
         setShowPembeliForm(false);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleDelete = () => {
@@ -316,8 +329,10 @@ export default function PenjualanPage() {
                 title="Catat Penjualan Baru"
                 footer={
                     <>
-                        <button type="button" onClick={() => setShowPenjualanForm(false)} className="btn btn-secondary">Batal</button>
-                        <button type="submit" form="form-penjualan" className="btn btn-primary">Simpan</button>
+                        <button type="button" onClick={() => setShowPenjualanForm(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
+                        <button type="submit" form="form-penjualan" className="btn btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan'}
+                        </button>
                     </>
                 }
             >
@@ -429,8 +444,10 @@ export default function PenjualanPage() {
                 title="Tambah Pembeli Baru"
                 footer={
                     <>
-                        <button type="button" onClick={() => setShowPembeliForm(false)} className="btn btn-secondary">Batal</button>
-                        <button type="submit" form="form-pembeli" className="btn btn-primary">Simpan</button>
+                        <button type="button" onClick={() => setShowPembeliForm(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
+                        <button type="submit" form="form-pembeli" className="btn btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan'}
+                        </button>
                     </>
                 }
             >

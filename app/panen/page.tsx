@@ -562,7 +562,7 @@ export default function ProduksiPage() {
                     <>
                         <button type="button" onClick={() => setIsTebarModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="form-tebar" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? 'Memulai...' : 'Mulai Tebar'}
+                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Mulai Tebar'}
                         </button>
                     </>
                 }

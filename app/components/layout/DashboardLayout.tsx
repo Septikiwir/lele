@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import Modal from '../ui/Modal';
+import { LoadingSpinner } from '../ui/Icons';
 import { useApp, TipePembeli } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
@@ -40,6 +41,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         kontak: '',
         alamat: ''
     });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Redirect to login if not authenticated
     useEffect(() => {
@@ -88,7 +90,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
     const handlePanenSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSubmitting) return;
 
+        setIsSubmitting(true);
         try {
             // Add harvest record
             await addRiwayatPanen({
@@ -126,11 +130,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             showToast('Data panen berhasil disimpan', 'success');
         } catch (error) {
             showToast('Gagal menyimpan data panen', 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleAddBuyer = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSubmitting) return;
+
+        setIsSubmitting(true);
         try {
             const newBuyer = await addPembeli(buyerForm);
             if (newBuyer) {
@@ -141,6 +150,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             showToast('Pembeli berhasil ditambahkan', 'success');
         } catch (error) {
             showToast('Gagal menambahkan pembeli', 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -296,9 +307,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                            className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50"
+                            disabled={isSubmitting}
                         >
-                            Simpan
+                            {isSubmitting ? <LoadingSpinner className="w-5 h-5 mx-auto" /> : 'Simpan'}
                         </button>
                     </div>
                 </form>
@@ -369,9 +381,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+                            className="flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50"
+                            disabled={isSubmitting}
                         >
-                            Simpan
+                            {isSubmitting ? <LoadingSpinner className="w-5 h-5 mx-auto" /> : 'Simpan'}
                         </button>
                     </div>
                 </form>

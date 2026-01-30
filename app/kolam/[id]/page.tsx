@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useApp } from '../../context/AppContext';
 import { notFound } from 'next/navigation';
 import Modal from '../../components/ui/Modal';
-import { EditIcon } from '../../components/ui/Icons';
+import { EditIcon, LoadingSpinner } from '../../components/ui/Icons';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 
 const ArrowLeftIcon = () => (
@@ -95,11 +95,13 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
     // History View State
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const cycleHistory = kolam ? getCycleHistory(kolam.id) : [];
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleUpdateFish = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!kolam) return;
+        if (!kolam || isSubmitting) return;
 
+        setIsSubmitting(true);
         try {
             const newCount = parseInt(parseCurrencyInput(editFishCount));
             if (!isNaN(newCount) && newCount >= 0) {
@@ -122,13 +124,16 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
         } catch (error) {
             console.error("Failed to update fish count:", error);
             alert("Gagal mengupdate jumlah ikan. Silakan coba lagi atau restart server jika baru saja ada update.");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleInputSampling = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!kolam) return;
+        if (!kolam || isSubmitting) return;
 
+        setIsSubmitting(true);
         try {
             const val = parseFloat(samplingValue);
             if (!isNaN(val) && val > 0) {
@@ -160,6 +165,8 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
         } catch (error) {
             console.error("Failed to add sampling:", error);
             alert("Gagal menyimpan sampling.");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -831,8 +838,9 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                         <button
                             type="submit"
                             className="btn btn-primary flex-1"
+                            disabled={isSubmitting}
                         >
-                            Simpan Perubahan
+                            {isSubmitting ? <LoadingSpinner className="w-5 h-5 mx-auto" /> : 'Simpan Perubahan'}
                         </button>
                     </div>
                 </form>
@@ -940,8 +948,9 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                         <button
                             type="submit"
                             className="btn btn-primary flex-1 bg-indigo-600 hover:bg-indigo-700 border-indigo-600"
+                            disabled={isSubmitting}
                         >
-                            Simpan Sampling
+                            {isSubmitting ? <LoadingSpinner className="w-5 h-5 mx-auto" /> : 'Simpan Sampling'}
                         </button>
                     </div>
                 </form>

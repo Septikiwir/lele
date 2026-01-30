@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useApp, JadwalPakan } from '../context/AppContext';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 
-import { PlusIcon, TrashIcon, WarningIcon, ClockIcon } from '../components/ui/Icons';
+import { PlusIcon, TrashIcon, WarningIcon, ClockIcon, LoadingSpinner } from '../components/ui/Icons';
 import Modal from '../components/ui/Modal';
 import EmptyState from '../components/ui/EmptyState';
 
@@ -31,6 +31,7 @@ export default function PakanPage() {
     const [showStokForm, setShowStokForm] = useState(false);
     const [showJadwalForm, setShowJadwalForm] = useState(false);
     const [deleteModal, setDeleteModal] = useState<{ type: 'stok' | 'jadwal', id: string } | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     
     // Pagination states
     const [limitRiwayatPakan, setLimitRiwayatPakan] = useState(10);
@@ -68,66 +69,84 @@ export default function PakanPage() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.kolamId || !formData.jumlahKg) return;
+        if (isSubmitting) return;
 
-        addPakan({
-            kolamId: formData.kolamId,
-            tanggal: formData.tanggal,
-            jumlahKg: parseFloat(formData.jumlahKg),
-            jenisPakan: formData.jenisPakan,
-        });
+        setIsSubmitting(true);
+        try {
+            addPakan({
+                kolamId: formData.kolamId,
+                tanggal: formData.tanggal,
+                jumlahKg: parseFloat(formData.jumlahKg),
+                jenisPakan: formData.jenisPakan,
+            });
 
-        setFormData({
-            kolamId: '',
-            tanggal: new Date().toISOString().split('T')[0],
-            jumlahKg: '',
-            jenisPakan: 'Pelet Hi-Pro',
-        });
-        setShowForm(false);
+            setFormData({
+                kolamId: '',
+                tanggal: new Date().toISOString().split('T')[0],
+                jumlahKg: '',
+                jenisPakan: 'Pelet Hi-Pro',
+            });
+            setShowForm(false);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleStokSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!stokFormData.jenisPakan || !stokFormData.stokAwal || !stokFormData.hargaPerKg) return;
+        if (isSubmitting) return;
 
-        addStokPakan({
-            jenisPakan: stokFormData.jenisPakan,
-            stokAwal: parseFloat(stokFormData.stokAwal),
-            hargaPerKg: parseFloat(stokFormData.hargaPerKg),
-            tanggalTambah: stokFormData.tanggalTambah,
-            keterangan: stokFormData.keterangan || undefined,
-        });
+        setIsSubmitting(true);
+        try {
+            addStokPakan({
+                jenisPakan: stokFormData.jenisPakan,
+                stokAwal: parseFloat(stokFormData.stokAwal),
+                hargaPerKg: parseFloat(stokFormData.hargaPerKg),
+                tanggalTambah: stokFormData.tanggalTambah,
+                keterangan: stokFormData.keterangan || undefined,
+            });
 
-        setStokFormData({
-            jenisPakan: '',
-            stokAwal: '',
-            hargaPerKg: '',
-            tanggalTambah: new Date().toISOString().split('T')[0],
-            keterangan: '',
-        });
-        setShowStokForm(false);
+            setStokFormData({
+                jenisPakan: '',
+                stokAwal: '',
+                hargaPerKg: '',
+                tanggalTambah: new Date().toISOString().split('T')[0],
+                keterangan: '',
+            });
+            setShowStokForm(false);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleJadwalSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!jadwalForm.kolamId || !jadwalForm.waktu || !jadwalForm.jumlahKg) return;
+        if (isSubmitting) return;
 
-        addJadwalPakan({
-            kolamId: jadwalForm.kolamId,
-            waktu: jadwalForm.waktu,
-            jenisPakan: jadwalForm.jenisPakan,
-            jumlahKg: parseFloat(jadwalForm.jumlahKg),
-            keterangan: jadwalForm.keterangan || undefined,
-            aktif: true,
-        });
+        setIsSubmitting(true);
+        try {
+            addJadwalPakan({
+                kolamId: jadwalForm.kolamId,
+                waktu: jadwalForm.waktu,
+                jenisPakan: jadwalForm.jenisPakan,
+                jumlahKg: parseFloat(jadwalForm.jumlahKg),
+                keterangan: jadwalForm.keterangan || undefined,
+                aktif: true,
+            });
 
-        setJadwalForm({
-            kolamId: '',
-            waktu: '07:00',
-            jenisPakan: 'Pelet Hi-Pro',
-            jumlahKg: '',
-            keterangan: '',
-        });
-        setShowJadwalForm(false);
+            setJadwalForm({
+                kolamId: '',
+                waktu: '07:00',
+                jenisPakan: 'Pelet Hi-Pro',
+                jumlahKg: '',
+                keterangan: '',
+            });
+            setShowJadwalForm(false);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const toggleJadwalAktif = (id: string, currentStatus: boolean) => {
@@ -478,7 +497,9 @@ export default function PakanPage() {
                 footer={
                     <>
                         <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary">Batal</button>
-                        <button type="submit" form="pakan-form" className="btn btn-primary">Simpan</button>
+                        <button type="submit" form="pakan-form" className="btn btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan'}
+                        </button>
                     </>
                 }
             >
@@ -549,7 +570,9 @@ export default function PakanPage() {
                 footer={
                     <>
                         <button type="button" onClick={() => setShowStokForm(false)} className="btn btn-secondary">Batal</button>
-                        <button type="submit" form="stok-form" className="btn btn-primary">Simpan Stok</button>
+                        <button type="submit" form="stok-form" className="btn btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan Stok'}
+                        </button>
                     </>
                 }
             >
@@ -632,7 +655,9 @@ export default function PakanPage() {
                 footer={
                     <>
                         <button type="button" onClick={() => setShowJadwalForm(false)} className="btn btn-secondary">Batal</button>
-                        <button type="submit" form="jadwal-form" className="btn btn-primary">Simpan Jadwal</button>
+                        <button type="submit" form="jadwal-form" className="btn btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan Jadwal'}
+                        </button>
                     </>
                 }
             >

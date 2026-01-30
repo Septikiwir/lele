@@ -427,7 +427,7 @@ export default function KolamPage() {
                     <>
                         <button type="button" onClick={() => setIsFeedModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="feed-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan'}
                         </button>
                     </>
                 }
@@ -491,7 +491,7 @@ export default function KolamPage() {
                     <>
                         <button type="button" onClick={() => setIsPanenModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="panen-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? 'Menyimpan...' : 'Simpan Panen'}
+                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan Panen'}
                         </button>
                     </>
                 }
@@ -638,7 +638,7 @@ export default function KolamPage() {
                     <>
                         <button type="button" onClick={() => setIsTebarModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="tebar-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan'}
                         </button>
                     </>
                 }

@@ -32,6 +32,7 @@ export default function PengeluaranPage() {
     const [showForm, setShowForm] = useState(false);
     const [deleteModal, setDeleteModal] = useState<string | null>(null);
     const [filterKolam, setFilterKolam] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         kolamId: '',
         tanggal: new Date().toISOString().split('T')[0],
@@ -47,23 +48,29 @@ export default function PengeluaranPage() {
             console.error('Validation failed');
             return;
         }
+        if (isSubmitting) return;
 
-        addPengeluaran({
-            kolamId: formData.kolamId || null,
-            tanggal: formData.tanggal,
-            kategori: formData.kategori,
-            keterangan: formData.keterangan,
-            jumlah: parseFloat(formData.jumlah),
-        });
+        setIsSubmitting(true);
+        try {
+            addPengeluaran({
+                kolamId: formData.kolamId || null,
+                tanggal: formData.tanggal,
+                kategori: formData.kategori,
+                keterangan: formData.keterangan,
+                jumlah: parseFloat(formData.jumlah),
+            });
 
-        setFormData({
-            kolamId: '',
-            tanggal: new Date().toISOString().split('T')[0],
-            kategori: 'BIBIT',
-            keterangan: '',
-            jumlah: '',
-        });
-        setShowForm(false);
+            setFormData({
+                kolamId: '',
+                tanggal: new Date().toISOString().split('T')[0],
+                kategori: 'BIBIT',
+                keterangan: '',
+                jumlah: '',
+            });
+            setShowForm(false);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleDelete = (id: string) => {
@@ -301,8 +308,10 @@ export default function PengeluaranPage() {
                 title="Tambah Pengeluaran"
                 footer={
                     <>
-                        <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary">Batal</button>
-                        <button type="submit" form="pengeluaran-form" className="btn btn-primary">Simpan</button>
+                        <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
+                        <button type="submit" form="form-pengeluaran" className="btn btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan'}
+                        </button>
                     </>
                 }
             >

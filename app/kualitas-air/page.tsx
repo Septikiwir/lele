@@ -4,7 +4,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
-import { PlusIcon } from '../components/ui/Icons';
+import { PlusIcon, LoadingSpinner } from '../components/ui/Icons';
 import Modal from '../components/ui/Modal';
 import EmptyState from '../components/ui/EmptyState';
 
@@ -72,6 +72,7 @@ export default function KualitasAirPage() {
     const { kolam, kondisiAir, addKondisiAir } = useApp();
     const [showForm, setShowForm] = useState(false);
     const [showRekomendasi, setShowRekomendasi] = useState<string[] | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     
     // Pagination state
     const [limitKondisiAir, setLimitKondisiAir] = useState(10);
@@ -95,33 +96,39 @@ export default function KualitasAirPage() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.kolamId || !formData.ketinggian) return;
+        if (isSubmitting) return;
 
-        const newKondisi = {
-            kolamId: formData.kolamId,
-            tanggal: formData.tanggal,
-            warna: formData.warna,
-            bau: formData.bau,
-            ketinggian: parseFloat(formData.ketinggian),
-            ph: formData.ph ? parseFloat(formData.ph) : undefined,
-            suhu: formData.suhu ? parseFloat(formData.suhu) : undefined,
-        };
+        setIsSubmitting(true);
+        try {
+            const newKondisi = {
+                kolamId: formData.kolamId,
+                tanggal: formData.tanggal,
+                warna: formData.warna,
+                bau: formData.bau,
+                ketinggian: parseFloat(formData.ketinggian),
+                ph: formData.ph ? parseFloat(formData.ph) : undefined,
+                suhu: formData.suhu ? parseFloat(formData.suhu) : undefined,
+            };
 
-        addKondisiAir(newKondisi);
+            addKondisiAir(newKondisi);
 
-        // Show recommendations
-        const rekom = getRekomendasi(newKondisi.warna, newKondisi.bau, newKondisi.ph, newKondisi.suhu);
-        setShowRekomendasi(rekom);
+            // Show recommendations
+            const rekom = getRekomendasi(newKondisi.warna, newKondisi.bau, newKondisi.ph, newKondisi.suhu);
+            setShowRekomendasi(rekom);
 
-        setFormData({
-            kolamId: '',
-            tanggal: new Date().toISOString().split('T')[0],
-            warna: 'Hijau cerah',
-            bau: 'Normal',
-            ketinggian: '',
-            ph: '',
-            suhu: '',
-        });
-        setShowForm(false);
+            setFormData({
+                kolamId: '',
+                tanggal: new Date().toISOString().split('T')[0],
+                warna: 'Hijau cerah',
+                bau: 'Normal',
+                ketinggian: '',
+                ph: '',
+                suhu: '',
+            });
+            setShowForm(false);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -293,7 +300,9 @@ export default function KualitasAirPage() {
                 footer={
                     <>
                         <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary">Batal</button>
-                        <button type="submit" form="kualitas-air-form" className="btn btn-primary">Simpan & Lihat Rekomendasi</button>
+                        <button type="submit" form="kualitas-air-form" className="btn btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan & Lihat Rekomendasi'}
+                        </button>
                     </>
                 }
             >
