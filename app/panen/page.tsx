@@ -13,6 +13,7 @@ export default function ProduksiPage() {
     const { kolam, pakan, riwayatPanen, pembeli, addRiwayatPanen, addPenjualan, addPembeli, getPanenByKolam, tebarBibit, getLatestSampling, getFeedRecommendation } = useApp();
     const { showToast } = useToast(); // Destructure showToast
     const [selectedKolamId, setSelectedKolamId] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // --- STATES ---
     const [growthRate, setGrowthRate] = useState('2');
