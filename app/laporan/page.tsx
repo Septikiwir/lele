@@ -193,7 +193,7 @@ export default function LaporanPage() {
     return (
         <DashboardLayout>
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">Laporan</h1>
                     <p className="text-slate-500 mt-1">Ringkasan performa peternakan</p>
@@ -216,7 +216,7 @@ export default function LaporanPage() {
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 <div className="stat-card">
                     <div className="flex items-center justify-between">
                         <div>
@@ -297,14 +297,14 @@ export default function LaporanPage() {
             </div>
 
             {/* Modal Breakdown */}
-            <div className="card p-6 mb-8">
+            <div className="card p-6 mb-6 sm:mb-8">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold text-slate-900">💰 Rincian Modal / Pengeluaran</h2>
                     <Link href="/pengeluaran" className="text-sm text-teal-600 hover:text-teal-700">
                         Kelola Pengeluaran →
                     </Link>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
                     <div className="card p-4 border-l-4 border-l-teal-500">
                         <p className="text-xs text-teal-600 font-medium">🐟 Bibit</p>
                         <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.BIBIT.toLocaleString('id-ID')}</p>

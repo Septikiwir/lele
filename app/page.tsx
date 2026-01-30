@@ -26,10 +26,10 @@ export default function Home() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 sm:gap-6">
 
         {/* ROW 1: Header & Actions */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Dashboard</h1>
             <p className="text-slate-500 text-sm">Ringkasan operasional tambak Anda.</p>
@@ -45,7 +45,7 @@ export default function Home() {
         </div>
 
         {/* ROW 2: High Level KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* 1. Asset Value (Main Financial KPI) */}
           <AssetValueCard />
 
@@ -95,7 +95,7 @@ export default function Home() {
         </div>
 
         {/* ROW 3: The "Management" Layer (Alerts + Trends) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-auto lg:h-[400px]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 h-auto lg:h-[400px]">
           {/* Left: Alerts Center (Priority) - Takes 4 cols */}
           <div className="lg:col-span-4 h-full">
             <AlertCenter />
@@ -108,7 +108,7 @@ export default function Home() {
         </div>
 
         {/* ROW 4: Predictive Analytics Layer (New) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 h-auto">
           <HarvestForecastWidget />
           <ProfitabilityWidget />
         </div>

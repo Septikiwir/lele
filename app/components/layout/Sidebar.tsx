@@ -118,9 +118,10 @@ const navigationGroups = [
 interface SidebarProps {
   isCollapsed?: boolean;
   toggleCollapse?: () => void;
+  onPanenClick?: () => void;
 }
 
-export default function Sidebar({ isCollapsed = false, toggleCollapse }: SidebarProps) {
+export default function Sidebar({ isCollapsed = false, toggleCollapse, onPanenClick }: SidebarProps) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuth();
@@ -152,9 +153,12 @@ export default function Sidebar({ isCollapsed = false, toggleCollapse }: Sidebar
 
           {/* 3. CENTER FAB (Input Panen) */}
           <div className="relative -top-5">
-            <Link href="/panen" className="flex items-center justify-center w-14 h-14 rounded-full bg-teal-600 text-white shadow-lg shadow-teal-500/40 hover:scale-105 transition-transform">
+            <button 
+              onClick={onPanenClick}
+              className="flex items-center justify-center w-14 h-14 rounded-full bg-teal-600 text-white shadow-lg shadow-teal-500/40 hover:scale-105 transition-transform"
+            >
               <span className="text-2xl mb-1">+</span>
-            </Link>
+            </button>
           </div>
 
           {/* 4. Keuangan */}

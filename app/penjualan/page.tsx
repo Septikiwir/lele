@@ -120,7 +120,7 @@ export default function PenjualanPage() {
     return (
         <DashboardLayout>
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">Penjualan / Pendapatan</h1>
                     <p className="text-slate-500 mt-1">Catat semua penjualan ikan dan data pembeli</p>
@@ -145,9 +145,9 @@ export default function PenjualanPage() {
             </div>
 
             {/* Profit Per Kolam */}
-            <div className="card p-6 mb-8">
+            <div className="card p-6 mb-6 sm:mb-8">
                 <h2 className="text-lg font-semibold text-slate-900 mb-4">Profit Per Kolam</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                     {kolam.map(k => {
                         const pendapatan = getTotalPenjualanByKolam(k.id);
                         const pengeluaranTotal = getTotalPengeluaranByKolam(k.id);
@@ -180,7 +180,7 @@ export default function PenjualanPage() {
             </div>
 
             {/* Data Pembeli */}
-            <div className="table-wrapper mb-8">
+            <div className="table-wrapper mb-6 sm:mb-8">
                 <div className="px-6 py-4 border-b border-slate-200 bg-white">
                     <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         <span>📋</span>

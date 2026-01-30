@@ -181,7 +181,7 @@ export default function PakanPage() {
     return (
         <DashboardLayout>
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">Manajemen Pakan</h1>
                     <p className="text-slate-500 mt-1">Jadwal, stok, dan pencatatan pemberian pakan</p>
@@ -190,7 +190,7 @@ export default function PakanPage() {
 
             {/* Next Feeding Reminder Banner */}
             {nextFeeding && activeTab === 'jadwal' && (
-                <div className="mb-8 p-6 bg-gradient-to-r from-teal-500 to-cyan-600 rounded-2xl text-white shadow-lg shadow-teal-200">
+                <div className="mb-6 sm:mb-8 p-6 bg-gradient-to-r from-teal-500 to-cyan-600 rounded-2xl text-white shadow-lg shadow-teal-200">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center animate-pulse">
                             <ClockIcon />
@@ -240,7 +240,7 @@ export default function PakanPage() {
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                         {sortedJadwal.map(jadwal => {
                             const k = kolam.find(item => item.id === jadwal.kolamId);
                             return (

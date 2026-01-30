@@ -775,30 +775,79 @@ body {
   /* Highlight Card (e.g., Total Revenue/Expense) */
   .card-highlight {
     border-radius: 12px;
-    padding: 24px;
+    padding: 16px;
     color: white !important;
-    margin-bottom: 32px;
+    margin-bottom: 0;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  @media (min-width: 640px) {
+    .card-highlight {
+      padding: 20px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .card-highlight {
+      padding: 24px;
+    }
   }
 
   .card-highlight p.label {
     color: rgba(255, 255, 255, 0.9);
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     letter-spacing: 0.025em;
     margin-bottom: 4px;
   }
 
+  @media (min-width: 640px) {
+    .card-highlight p.label {
+      font-size: 13px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .card-highlight p.label {
+      font-size: 14px;
+    }
+  }
+
   .card-highlight p.value {
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 700;
     line-height: 1.2;
   }
 
+  @media (min-width: 640px) {
+    .card-highlight p.value {
+      font-size: 26px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .card-highlight p.value {
+      font-size: 28px;
+    }
+  }
+
   .card-highlight p.sub {
     color: rgba(255, 255, 255, 0.8);
-    font-size: 13px;
-    margin-top: 8px;
+    font-size: 11px;
+    margin-top: 6px;
+  }
+
+  @media (min-width: 640px) {
+    .card-highlight p.sub {
+      font-size: 12px;
+      margin-top: 8px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .card-highlight p.sub {
+      font-size: 13px;
+    }
   }
 
   /* Gradients */

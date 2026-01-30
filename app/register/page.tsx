@@ -57,7 +57,7 @@ export default function RegisterPage() {
         <div className="min-h-screen bg-gradient-to-br from-teal-50 to-cyan-100 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
                 {/* Logo */}
-                <div className="text-center mb-8">
+                <div className="text-center mb-6 sm:mb-8">
                     <div className="inline-flex items-center gap-3 mb-2">
                         <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
                             <span className="text-2xl">🐟</span>

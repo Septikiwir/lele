@@ -285,13 +285,13 @@ export default function ProduksiPage() {
 
     return (
         <DashboardLayout>
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
                 <h1 className="text-3xl font-bold text-slate-900">Produksi & Siklus</h1>
                 <p className="text-slate-500 mt-1">Kelola siklus budidaya dari tebar hingga panen</p>
             </div>
 
             {/* --- GLOBAL CONFIG --- */}
-            <div className="card p-4 mb-8 bg-blue-50 border-blue-100">
+            <div className="card p-4 mb-6 sm:mb-8 bg-blue-50 border-blue-100">
                 <div className="flex flex-wrap gap-6 items-end">
                     <div>
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">Parameter Estimasi Global</label>

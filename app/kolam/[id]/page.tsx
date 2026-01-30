@@ -273,7 +273,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
     if (cycleSummary) {
         return (
             <DashboardLayout>
-                <div className="mb-8">
+                <div className="mb-6 sm:mb-8">
                     <Link href="/kolam" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-4">
                         <ArrowLeftIcon />
                         Kembali ke Daftar Kolam
@@ -289,7 +289,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
                     {/* Profit Card */}
                     <div className={`p-6 rounded-xl border ${cycleSummary.netProfit >= 0 ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'} lg:col-span-2 relative overflow-hidden`}>
                         <div className="relative z-10">
@@ -438,12 +438,12 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
     return (
         <DashboardLayout>
             {/* Header */}
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
                 <Link href="/kolam" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-4">
                     <ArrowLeftIcon />
                     Kembali ke Daftar Kolam
                 </Link>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-slate-900">{kolam.nama}</h1>
                         <p className="text-slate-500 mt-1">Tebar: {kolam.tanggalTebar ? new Date(kolam.tanggalTebar).toLocaleDateString('id-ID') : '-'} • {kolam.panjang}m × {kolam.lebar}m × {kolam.kedalaman}m</p>
@@ -464,7 +464,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 <div className="stat-card">
                     <p className="stat-label">Luas</p>
                     <p className="stat-value">{luas}<span className="text-lg text-slate-400"> m²</span></p>
@@ -496,7 +496,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
             </div>
 
             {/* Biomass Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 <div className="stat-card relative group bg-indigo-50 border-indigo-100">
                     <button
                         onClick={() => {

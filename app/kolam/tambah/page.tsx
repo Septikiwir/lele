@@ -67,7 +67,7 @@ export default function TambahKolamPage() {
     return (
         <DashboardLayout>
             {/* Header */}
-            <div className="mb-8">
+            <div className="mb-6 sm:mb-8">
                 <Link href="/kolam" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-4">
                     <ArrowLeftIcon />
                     Kembali ke Daftar Kolam
@@ -76,7 +76,7 @@ export default function TambahKolamPage() {
                 <p className="text-slate-500 mt-1">Isi data kolam untuk mulai memantau</p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
                 {/* Form */}
                 <div className="lg:col-span-2">
                     <form onSubmit={handleSubmit} className="card p-6 space-y-6">
@@ -100,7 +100,7 @@ export default function TambahKolamPage() {
                             <label className="block text-sm font-medium text-slate-700 mb-2">
                                 Dimensi Kolam <span className="text-red-500">*</span>
                             </label>
-                            <div className="grid grid-cols-3 gap-4">
+                            <div className="grid grid-cols-3 gap-3 sm:gap-4">
                                 <div>
                                     <input
                                         type="number"

@@ -127,7 +127,7 @@ export default function KualitasAirPage() {
     return (
         <DashboardLayout>
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-3 sm:gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">Monitoring Kualitas Air</h1>
                     <p className="text-slate-500 mt-1">Catat kondisi air dan dapatkan rekomendasi tindakan</p>
@@ -140,7 +140,7 @@ export default function KualitasAirPage() {
 
             {/* Rekomendasi Alert */}
             {showRekomendasi && (
-                <div className="alert alert-info mb-8">
+                <div className="alert alert-info mb-6 sm:mb-8">
                     <div className="flex-1">
                         <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-3">
                             💡 Rekomendasi Tindakan
@@ -164,7 +164,7 @@ export default function KualitasAirPage() {
             )}
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 {kolam.map(k => {
                     const latestKondisi = kondisiAir.find(ka => ka.kolamId === k.id);
                     const warnaStatus = latestKondisi
