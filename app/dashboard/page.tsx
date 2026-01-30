@@ -15,7 +15,7 @@ import HarvestForecastWidget from '../components/dashboard/HarvestForecastWidget
 import ProfitabilityWidget from '../components/dashboard/ProfitabilityWidget';
 
 export default function DashboardPage() {
-  const { kolam, pakan } = useApp();
+  const { kolam, pakan, pengeluaran } = useApp();
 
   // Basic Stats
   const totalKolam = kolam.length;
@@ -23,6 +23,9 @@ export default function DashboardPage() {
   const pakanHariIni = pakan
     .filter(p => p.tanggal === new Date().toISOString().split('T')[0])
     .reduce((sum, p) => sum + p.jumlahKg, 0);
+  
+  // Calculate Total Modal (all pengeluaran)
+  const totalModal = pengeluaran.reduce((sum, p) => sum + p.jumlah, 0);
 
   return (
     <DashboardLayout>
@@ -45,11 +48,32 @@ export default function DashboardPage() {
         </div>
 
         {/* ROW 2: High Level KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* 1. Asset Value (Main Financial KPI) */}
           <AssetValueCard />
 
-          {/* 2. Biological KPI (Population) */}
+          {/* 2. Total Modal */}
+          <div className="stat-card p-6 relative overflow-hidden group hover:shadow-md transition-all border border-slate-100 bg-white">
+            <div className="flex items-start justify-between z-10 relative">
+              <div>
+                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Modal</p>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <p className="text-2xl font-bold text-slate-900">Rp{totalModal.toLocaleString('id-ID')}</p>
+                </div>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600 group-hover:bg-red-100 transition-colors">
+                💰
+              </div>
+            </div>
+            <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
+              <span>Semua pengeluaran</span>
+              <Link href="/pengeluaran" className="text-red-600 font-medium hover:underline flex items-center gap-1">
+                Detail <ArrowRightIcon />
+              </Link>
+            </div>
+          </div>
+
+          {/* 3. Biological KPI (Population) */}
           <div className="stat-card p-6 relative overflow-hidden group hover:shadow-md transition-all border border-slate-100 bg-white">
             <div className="flex items-start justify-between z-10 relative">
               <div>
@@ -71,7 +95,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* 3. Operational KPI (Feed Today) */}
+          {/* 4. Operational KPI (Feed Today) */}
           <div className="stat-card p-6 relative overflow-hidden group hover:shadow-md transition-all border border-slate-100 bg-white">
             <div className="flex items-start justify-between z-10 relative">
               <div>

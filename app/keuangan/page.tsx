@@ -249,18 +249,27 @@ export default function KeuanganPage() {
 
                 {/* Summary Cards */}
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    <div className="card-highlight card-gradient-green col-span-2 lg:col-span-1">
-                        <p className="label">Total Pendapatan</p>
-                        <p className="value">Rp {totalPendapatan.toLocaleString('id-ID')}</p>
-                        <p className="sub">{totalBerat} kg terjual</p>
+                    <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 col-span-2 lg:col-span-1">
+                        <div className="h-1 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
+                        <div className="p-6">
+                            <p className="text-slate-500 text-sm mb-2">Total Pendapatan</p>
+                            <p className="text-3xl font-bold text-emerald-600 mb-1">Rp {totalPendapatan.toLocaleString('id-ID')}</p>
+                            <p className="text-slate-400 text-sm">{totalBerat.toLocaleString('id-ID')} kg terjual</p>
+                        </div>
                     </div>
-                    <div className="card-highlight card-gradient-red">
-                        <p className="label">Total Pengeluaran</p>
-                        <p className="value">Rp {grandTotalPengeluaran.toLocaleString('id-ID')}</p>
+                    <div className="bg-white rounded-2xl overflow-hidden border border-slate-200">
+                        <div className="h-1 bg-gradient-to-r from-red-500 to-red-600"></div>
+                        <div className="p-6">
+                            <p className="text-slate-500 text-sm mb-2">Total Pengeluaran</p>
+                            <p className="text-3xl font-bold text-red-600">Rp {grandTotalPengeluaran.toLocaleString('id-ID')}</p>
+                        </div>
                     </div>
-                    <div className="card-highlight card-gradient-blue">
-                        <p className="label">Biaya Umum (Non-Kolam)</p>
-                        <p className="value">Rp {totalGeneralExpenses.toLocaleString('id-ID')}</p>
+                    <div className="bg-white rounded-2xl overflow-hidden border border-slate-200">
+                        <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-600"></div>
+                        <div className="p-6">
+                            <p className="text-slate-500 text-sm mb-2">Biaya Umum (Non-Kolam)</p>
+                            <p className="text-3xl font-bold text-blue-600">Rp {totalGeneralExpenses.toLocaleString('id-ID')}</p>
+                        </div>
                     </div>
                 </div>
 
@@ -336,11 +345,11 @@ export default function KeuanganPage() {
                                         </div>
 
                                         {/* Footer */}
-                                        <div className={`p-5 ${isProfit ? 'bg-slate-900' : 'bg-slate-900'}`}>
-                                            <p className="text-[11px] font-bold uppercase tracking-wider text-white/70 mb-2">
+                                        <div className={`p-5 ${isProfit ? 'bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-t border-emerald-200/50' : 'bg-gradient-to-br from-red-50 to-red-100/50 border-t border-red-200/50'}`}>
+                                            <p className={`text-[11px] font-bold uppercase tracking-wider mb-2 ${isProfit ? 'text-emerald-600' : 'text-red-600'}`}>
                                                 {isProfit ? 'Profit' : 'Rugi'}
                                             </p>
-                                            <p className="text-xl font-bold text-white">
+                                            <p className={`text-xl font-bold ${isProfit ? 'text-emerald-900' : 'text-red-900'}`}>
                                                 Rp {Math.abs(profit).toLocaleString('id-ID')}
                                             </p>
                                         </div>

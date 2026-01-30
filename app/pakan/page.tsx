@@ -396,19 +396,26 @@ export default function PakanPage() {
                             const tersedia = getStokTersediaByJenis(jenis);
                             const isLow = tersedia <= 10;
                             return (
-                                <div key={jenis} className={`card p-6 ${isLow ? 'border-l-4 border-l-amber-500' : ''}`}>
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-xl">
-                                            💊
+                                <div key={jenis} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                                    {/* Header dengan background kuning */}
+                                    <div className={`${isLow ? 'bg-gradient-to-br from-amber-100 to-yellow-100' : 'bg-gradient-to-br from-yellow-50 to-amber-50'} px-6 py-4 flex items-center justify-between`}>
+                                        <div className="flex items-center gap-3">
+                                            <div className="text-2xl">💊</div>
+                                            <h3 className="font-bold text-slate-800">{jenis}</h3>
                                         </div>
                                         {isLow && (
-                                            <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-lg flex items-center gap-1">
+                                            <span className="px-2 py-1 bg-amber-200/60 text-amber-700 text-xs font-bold rounded-lg flex items-center gap-1">
                                                 <WarningIcon /> Menipis
                                             </span>
                                         )}
                                     </div>
-                                    <h3 className="font-semibold text-slate-700 mb-1">{jenis}</h3>
-                                    <p className={`text-3xl font-bold ${isLow ? 'text-amber-600' : 'text-slate-900'}`}>{tersedia.toFixed(1)} <span className="text-sm font-normal text-slate-400">kg</span></p>
+                                    
+                                    {/* Content dengan background putih */}
+                                    <div className="px-6 py-6">
+                                        <p className="text-3xl font-bold text-slate-900">
+                                            {tersedia.toFixed(1)} <span className="text-lg font-normal text-slate-400">kg</span>
+                                        </p>
+                                    </div>
                                 </div>
                             );
                         })}

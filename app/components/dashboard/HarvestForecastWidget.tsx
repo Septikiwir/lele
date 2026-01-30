@@ -63,10 +63,10 @@ export default function HarvestForecastWidget() {
                                             </span>
                                         ) : (
                                             <div className="flex flex-col items-end">
-                                                <span className="text-sm font-bold text-slate-900">
+                                                <span className="text-sm text-slate-900" style={{ fontWeight: 'normal', fontFamily: 'inherit' }}>
                                                     {p.daysRemaining} Hari
                                                 </span>
-                                                <span className="text-[10px] text-slate-400">
+                                                <span className="text-[10px] text-slate-400" style={{ fontWeight: 'normal', fontFamily: 'inherit' }}>
                                                     {new Date(p.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                                                 </span>
                                             </div>
