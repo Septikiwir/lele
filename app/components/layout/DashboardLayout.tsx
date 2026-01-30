@@ -104,7 +104,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         e.preventDefault();
         try {
             const newBuyer = await addPembeli(buyerForm);
-            setPanenForm({ ...panenForm, pembeliId: newBuyer.id });
+            if (newBuyer) {
+                setPanenForm({ ...panenForm, pembeliId: newBuyer.id });
+            }
             setIsBuyerModalOpen(false);
             setBuyerForm({ nama: '', tipe: 'TENGKULAK', kontak: '', alamat: '' });
             showToast('Pembeli berhasil ditambahkan', 'success');
