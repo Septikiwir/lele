@@ -260,7 +260,7 @@ export default function KeuanganPage() {
                         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Keuangan</h1>
                         <p className="text-slate-500 text-sm">Analisis profitabilitas dan arus kas.</p>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap gap-3">
                         <button
                             onClick={() => setShowPembeliForm(true)}
                             className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 font-medium text-sm hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-2"
@@ -285,7 +285,7 @@ export default function KeuanganPage() {
                 {/* KPI Cards Row */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                     {/* 1. Net Profit */}
-                    <div className="stat-card p-6 bg-white border border-slate-100 rounded-2xl group relative overflow-hidden hover:shadow-md transition-all">
+                    <div className="stat-card p-4 md:p-6 bg-white border border-slate-100 rounded-2xl group relative overflow-hidden hover:shadow-md transition-all">
                         <div className="flex items-start justify-between z-10 relative">
                             <div>
                                 <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Net Profit</p>
@@ -305,7 +305,7 @@ export default function KeuanganPage() {
                     </div>
 
                     {/* 2. Total Pendapatan */}
-                    <div className="stat-card p-6 bg-white border border-slate-100 rounded-2xl group relative overflow-hidden hover:shadow-md transition-all">
+                    <div className="stat-card p-4 md:p-6 bg-white border border-slate-100 rounded-2xl group relative overflow-hidden hover:shadow-md transition-all">
                         <div className="flex items-start justify-between z-10 relative">
                             <div>
                                 <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Pendapatan</p>
@@ -323,7 +323,7 @@ export default function KeuanganPage() {
                     </div>
 
                     {/* 3. Total Pengeluaran */}
-                    <div className="stat-card p-6 bg-white border border-slate-100 rounded-2xl group relative overflow-hidden hover:shadow-md transition-all">
+                    <div className="stat-card p-4 md:p-6 bg-white border border-slate-100 rounded-2xl group relative overflow-hidden hover:shadow-md transition-all">
                         <div className="flex items-start justify-between z-10 relative">
                             <div>
                                 <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Pengeluaran</p>
@@ -349,7 +349,7 @@ export default function KeuanganPage() {
 
                         {/* Section: Profit Per Kolam */}
                         <div className="bg-white rounded-2xl border border-slate-100 hover:shadow-md transition-all overflow-hidden">
-                            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <div className="px-4 md:px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                 <h3 className="font-semibold text-slate-800 flex items-center gap-2">
                                     <span>📊</span> Profitabilitas Kolam
                                 </h3>
@@ -394,10 +394,10 @@ export default function KeuanganPage() {
 
                         {/* Section: Tabbed Transaction History */}
                         <div className="bg-white rounded-2xl border border-slate-100 hover:shadow-md transition-all overflow-hidden">
-                            <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
+                            <div className="px-4 md:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
                                 <h3 className="font-semibold text-slate-800">Riwayat Transaksi</h3>
 
-                                <div className="flex gap-2">
+                                <div className="flex flex-wrap gap-2">
                                     <div className="inline-flex bg-white border border-slate-200 rounded-lg p-1">
                                         <button
                                             onClick={() => setTransactionTab('penjualan')}
@@ -533,7 +533,7 @@ export default function KeuanganPage() {
                                     </table>
                                 </div>
                             )}
-                            <div className="px-6 py-4 border-t border-slate-100 flex justify-end items-center bg-slate-50/50">
+                            <div className="px-4 md:px-6 py-4 border-t border-slate-100 flex justify-end items-center bg-slate-50/50">
                                 <div className="flex items-center gap-2 text-sm text-slate-500">
                                     <span>Tampilkan</span>
                                     <select
@@ -556,7 +556,7 @@ export default function KeuanganPage() {
                     <div className="space-y-6">
 
                         {/* Section: Expense Breakdown */}
-                        <div className="bg-white rounded-2xl p-6 border border-slate-100 hover:shadow-md transition-all">
+                        <div className="bg-white rounded-2xl p-4 md:p-6 border border-slate-100 hover:shadow-md transition-all">
                             <div className="mb-4">
                                 <h3 className="font-semibold text-slate-800">Komposisi Pengeluaran</h3>
                             </div>
@@ -594,7 +594,7 @@ export default function KeuanganPage() {
 
                         {/* Section: Buyer List */}
                         <div className="bg-white rounded-2xl border border-slate-100 hover:shadow-md transition-all overflow-hidden">
-                            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                            <div className="px-4 md:px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                                 <h3 className="font-semibold text-slate-800">Daftar Pembeli</h3>
                                 <button onClick={() => setShowPembeliForm(true)} className="text-xs text-primary-600 font-medium hover:underline">
                                     + Baru
