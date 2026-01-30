@@ -71,6 +71,10 @@ export default function KolamPage() {
         e.preventDefault();
         if (!tebarForm.kolamId || !tebarForm.jumlah || !tebarForm.hargaPerEkor) return;
 
+        // Tutup modal langsung
+        setIsTebarModalOpen(false);
+        setTebarForm({ ...tebarForm, jumlah: '', beratPerEkor: '5', hargaPerEkor: '' });
+
         try {
             // Execute tebarBibit
             await tebarBibit(tebarForm.kolamId, {
@@ -80,8 +84,6 @@ export default function KolamPage() {
                 hargaPerEkor: parseFloat(tebarForm.hargaPerEkor)
             });
             showToast('Tebar bibit berhasil!', 'success');
-            setIsTebarModalOpen(false);
-            setTebarForm({ ...tebarForm, jumlah: '', beratPerEkor: '5', hargaPerEkor: '' });
         } catch (error) {
             console.error(error);
             showToast('Gagal tebar bibit', 'error');
@@ -112,6 +114,9 @@ export default function KolamPage() {
         e.preventDefault();
         if (!feedForm.kolamId || !feedForm.jumlahKg) return;
 
+        // Tutup modal langsung
+        setIsFeedModalOpen(false);
+
         addPakan({
             kolamId: feedForm.kolamId,
             tanggal: feedForm.tanggal,
@@ -120,7 +125,6 @@ export default function KolamPage() {
         });
 
         showToast('Pemberian pakan berhasil dicatat', 'success');
-        setIsFeedModalOpen(false);
     };
 
     const handlePanenSubmit = async (e: React.FormEvent) => {
@@ -131,33 +135,11 @@ export default function KolamPage() {
                 return;
             }
 
-            // 1. Add Harvest Record
-            await addRiwayatPanen({
-                kolamId: panenForm.kolamId,
-                tanggal: panenForm.tanggal,
-                beratTotalKg: parseFloat(panenForm.beratTotalKg),
-                jumlahEkor: parseInt(panenForm.jumlahEkor),
-                hargaPerKg: parseFloat(panenForm.hargaPerKg),
-                tipe: panenForm.tipe,
-                catatan: panenForm.catatan,
-            });
-
-            // 2. Add Sales Record
-            const totalPendapatan = parseFloat(panenForm.beratTotalKg) * parseFloat(panenForm.hargaPerKg);
-
-            addPenjualan({
-                kolamId: panenForm.kolamId,
-                pembeliId: panenForm.pembeliId,
-                tanggal: panenForm.tanggal,
-                beratKg: parseFloat(panenForm.beratTotalKg),
-                hargaPerKg: parseFloat(panenForm.hargaPerKg),
-                // Note: Penjualan interface doesn't have catatan field
-            });
-
-            showToast('Panen & Penjualan berhasil dicatat!', 'success');
+            // Tutup modal langsung
             setIsPanenModalOpen(false);
 
             // Reset form
+            const formData = { ...panenForm };
             setPanenForm({
                 kolamId: '',
                 pembeliId: '',
@@ -168,6 +150,31 @@ export default function KolamPage() {
                 tipe: 'PARSIAL',
                 catatan: ''
             });
+
+            // 1. Add Harvest Record
+            await addRiwayatPanen({
+                kolamId: formData.kolamId,
+                tanggal: formData.tanggal,
+                beratTotalKg: parseFloat(formData.beratTotalKg),
+                jumlahEkor: parseInt(formData.jumlahEkor),
+                hargaPerKg: parseFloat(formData.hargaPerKg),
+                tipe: formData.tipe,
+                catatan: formData.catatan,
+            });
+
+            // 2. Add Sales Record
+            const totalPendapatan = parseFloat(formData.beratTotalKg) * parseFloat(formData.hargaPerKg);
+
+            addPenjualan({
+                kolamId: formData.kolamId,
+                pembeliId: formData.pembeliId,
+                tanggal: formData.tanggal,
+                beratKg: parseFloat(formData.beratTotalKg),
+                hargaPerKg: parseFloat(formData.hargaPerKg),
+                // Note: Penjualan interface doesn't have catatan field
+            });
+
+            showToast('Panen & Penjualan berhasil dicatat!', 'success');
 
         } catch (error) {
             console.error(error);

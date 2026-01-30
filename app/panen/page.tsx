@@ -184,6 +184,11 @@ export default function ProduksiPage() {
 
     const handleTebarSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Tutup modal langsung
+        setIsTebarModalOpen(false);
+        setTebarForm({ ...tebarForm, jumlah: '', beratPerEkor: '5', hargaPerEkor: '' });
+
         try {
             await tebarBibit(tebarForm.kolamId, {
                 tanggal: tebarForm.tanggal,
@@ -191,8 +196,6 @@ export default function ProduksiPage() {
                 beratPerEkor: parseFloat(tebarForm.beratPerEkor),
                 hargaPerEkor: parseFloat(tebarForm.hargaPerEkor)
             });
-            setIsTebarModalOpen(false);
-            setTebarForm({ ...tebarForm, jumlah: '', beratPerEkor: '5', hargaPerEkor: '' });
             showToast('Siklus berhasil dimulai', 'success');
         } catch (error) {
             showToast('Gagal menebar bibit', 'error');
@@ -230,33 +233,36 @@ export default function ProduksiPage() {
             return;
         }
 
+        // Tutup modal langsung
+        setIsPanenModalOpen(false);
+        const formData = { ...panenForm };
+        setPanenForm(prev => ({ ...prev, beratTotalKg: '', jumlahEkor: '', catatan: '', pembeliId: '' }));
+
         try {
             await addRiwayatPanen({
-                kolamId: panenForm.kolamId,
-                tanggal: panenForm.tanggal,
-                beratTotalKg: Number(panenForm.beratTotalKg),
-                jumlahEkor: Number(panenForm.jumlahEkor),
-                hargaPerKg: Number(panenForm.hargaPerKg),
-                tipe: panenForm.tipe,
-                catatan: panenForm.catatan
+                kolamId: formData.kolamId,
+                tanggal: formData.tanggal,
+                beratTotalKg: Number(formData.beratTotalKg),
+                jumlahEkor: Number(formData.jumlahEkor),
+                hargaPerKg: Number(formData.hargaPerKg),
+                tipe: formData.tipe,
+                catatan: formData.catatan
             });
 
             // Sync with Sales if Buyer is selected
-            if (panenForm.pembeliId) {
+            if (formData.pembeliId) {
                 await addPenjualan({
-                    kolamId: panenForm.kolamId,
-                    pembeliId: panenForm.pembeliId,
-                    tanggal: panenForm.tanggal,
-                    beratKg: Number(panenForm.beratTotalKg),
-                    hargaPerKg: Number(panenForm.hargaPerKg),
-                    jumlahIkan: Number(panenForm.jumlahEkor),
-                    keterangan: panenForm.catatan || 'Panen Otomatis'
+                    kolamId: formData.kolamId,
+                    pembeliId: formData.pembeliId,
+                    tanggal: formData.tanggal,
+                    beratKg: Number(formData.beratTotalKg),
+                    hargaPerKg: Number(formData.hargaPerKg),
+                    jumlahIkan: Number(formData.jumlahEkor),
+                    keterangan: formData.catatan || 'Panen Otomatis'
                 });
             }
 
-            setIsPanenModalOpen(false);
-            setPanenForm(prev => ({ ...prev, beratTotalKg: '', jumlahEkor: '', catatan: '', pembeliId: '' }));
-            showToast(panenForm.pembeliId ? 'Panen & Penjualan berhasil dicatat' : 'Panen berhasil dicatat', 'success');
+            showToast(formData.pembeliId ? 'Panen & Penjualan berhasil dicatat' : 'Panen berhasil dicatat', 'success');
         } catch (error: any) {
             showToast(error.message || 'Gagal mencatat panen', 'error');
         }
