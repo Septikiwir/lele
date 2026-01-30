@@ -34,6 +34,7 @@ export default function KolamPage() {
     } = useApp();
     const { showToast } = useToast();
     const [deleteModal, setDeleteModal] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Feed Modal State
     const [isFeedModalOpen, setIsFeedModalOpen] = useState(false);
@@ -70,11 +71,9 @@ export default function KolamPage() {
     const handleTebarSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!tebarForm.kolamId || !tebarForm.jumlah || !tebarForm.hargaPerEkor) return;
+        if (isSubmitting) return;
 
-        // Tutup modal langsung
-        setIsTebarModalOpen(false);
-        setTebarForm({ ...tebarForm, jumlah: '', beratPerEkor: '5', hargaPerEkor: '' });
-
+        setIsSubmitting(true);
         try {
             // Execute tebarBibit
             await tebarBibit(tebarForm.kolamId, {
@@ -84,9 +83,13 @@ export default function KolamPage() {
                 hargaPerEkor: parseFloat(tebarForm.hargaPerEkor)
             });
             showToast('Tebar bibit berhasil!', 'success');
+            setIsTebarModalOpen(false);
+            setTebarForm({ ...tebarForm, jumlah: '', beratPerEkor: '5', hargaPerEkor: '' });
         } catch (error) {
             console.error(error);
             showToast('Gagal tebar bibit', 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -113,33 +116,62 @@ export default function KolamPage() {
     const handleFeedSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!feedForm.kolamId || !feedForm.jumlahKg) return;
+        if (isSubmitting) return;
 
-        // Tutup modal langsung
-        setIsFeedModalOpen(false);
+        setIsSubmitting(true);
+        try {
+            addPakan({
+                kolamId: feedForm.kolamId,
+                tanggal: feedForm.tanggal,
+                jumlahKg: parseFloat(feedForm.jumlahKg),
+                jenisPakan: feedForm.jenisPakan || 'Pelet Hi-Pro',
+            });
 
-        addPakan({
-            kolamId: feedForm.kolamId,
-            tanggal: feedForm.tanggal,
-            jumlahKg: parseFloat(feedForm.jumlahKg),
-            jenisPakan: feedForm.jenisPakan || 'Pelet Hi-Pro',
-        });
-
-        showToast('Pemberian pakan berhasil dicatat', 'success');
+            showToast('Pemberian pakan berhasil dicatat', 'success');
+            setIsFeedModalOpen(false);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handlePanenSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSubmitting) return;
+        
+        setIsSubmitting(true);
         try {
             if (!panenForm.pembeliId) {
                 showToast('Harap pilih pembeli!', 'error');
                 return;
             }
 
-            // Tutup modal langsung
+            // 1. Add Harvest Record
+            await addRiwayatPanen({
+                kolamId: panenForm.kolamId,
+                tanggal: panenForm.tanggal,
+                beratTotalKg: parseFloat(panenForm.beratTotalKg),
+                jumlahEkor: parseInt(panenForm.jumlahEkor),
+                hargaPerKg: parseFloat(panenForm.hargaPerKg),
+                tipe: panenForm.tipe,
+                catatan: panenForm.catatan,
+            });
+
+            // 2. Add Sales Record
+            const totalPendapatan = parseFloat(panenForm.beratTotalKg) * parseFloat(panenForm.hargaPerKg);
+
+            addPenjualan({
+                kolamId: panenForm.kolamId,
+                pembeliId: panenForm.pembeliId,
+                tanggal: panenForm.tanggal,
+                beratKg: parseFloat(panenForm.beratTotalKg),
+                hargaPerKg: parseFloat(panenForm.hargaPerKg),
+                // Note: Penjualan interface doesn't have catatan field
+            });
+
+            showToast('Panen & Penjualan berhasil dicatat!', 'success');
             setIsPanenModalOpen(false);
 
             // Reset form
-            const formData = { ...panenForm };
             setPanenForm({
                 kolamId: '',
                 pembeliId: '',
@@ -151,34 +183,11 @@ export default function KolamPage() {
                 catatan: ''
             });
 
-            // 1. Add Harvest Record
-            await addRiwayatPanen({
-                kolamId: formData.kolamId,
-                tanggal: formData.tanggal,
-                beratTotalKg: parseFloat(formData.beratTotalKg),
-                jumlahEkor: parseInt(formData.jumlahEkor),
-                hargaPerKg: parseFloat(formData.hargaPerKg),
-                tipe: formData.tipe,
-                catatan: formData.catatan,
-            });
-
-            // 2. Add Sales Record
-            const totalPendapatan = parseFloat(formData.beratTotalKg) * parseFloat(formData.hargaPerKg);
-
-            addPenjualan({
-                kolamId: formData.kolamId,
-                pembeliId: formData.pembeliId,
-                tanggal: formData.tanggal,
-                beratKg: parseFloat(formData.beratTotalKg),
-                hargaPerKg: parseFloat(formData.hargaPerKg),
-                // Note: Penjualan interface doesn't have catatan field
-            });
-
-            showToast('Panen & Penjualan berhasil dicatat!', 'success');
-
         } catch (error) {
             console.error(error);
             showToast('Gagal mencatat panen', 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -416,8 +425,10 @@ export default function KolamPage() {
                 title="Catat Pemberian Pakan"
                 footer={
                     <>
-                        <button type="button" onClick={() => setIsFeedModalOpen(false)} className="btn btn-secondary">Batal</button>
-                        <button type="submit" form="feed-form" className="btn btn-primary">Simpan</button>
+                        <button type="button" onClick={() => setIsFeedModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
+                        <button type="submit" form="feed-form" className="btn btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+                        </button>
                     </>
                 }
             >
@@ -478,8 +489,10 @@ export default function KolamPage() {
                 size="lg"
                 footer={
                     <>
-                        <button type="button" onClick={() => setIsPanenModalOpen(false)} className="btn btn-secondary">Batal</button>
-                        <button type="submit" form="panen-form" className="btn btn-primary">Simpan Panen</button>
+                        <button type="button" onClick={() => setIsPanenModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
+                        <button type="submit" form="panen-form" className="btn btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan Panen'}
+                        </button>
                     </>
                 }
             >
@@ -623,8 +636,10 @@ export default function KolamPage() {
                 title="Tebar Bibit Baru"
                 footer={
                     <>
-                        <button type="button" onClick={() => setIsTebarModalOpen(false)} className="btn btn-secondary">Batal</button>
-                        <button type="submit" form="tebar-form" className="btn btn-primary">Simpan</button>
+                        <button type="button" onClick={() => setIsTebarModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
+                        <button type="submit" form="tebar-form" className="btn btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+                        </button>
                     </>
                 }
             >

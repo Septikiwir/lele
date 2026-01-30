@@ -184,11 +184,9 @@ export default function ProduksiPage() {
 
     const handleTebarSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        // Tutup modal langsung
-        setIsTebarModalOpen(false);
-        setTebarForm({ ...tebarForm, jumlah: '', beratPerEkor: '5', hargaPerEkor: '' });
-
+        if (isSubmitting) return;
+        
+        setIsSubmitting(true);
         try {
             await tebarBibit(tebarForm.kolamId, {
                 tanggal: tebarForm.tanggal,
@@ -196,14 +194,19 @@ export default function ProduksiPage() {
                 beratPerEkor: parseFloat(tebarForm.beratPerEkor),
                 hargaPerEkor: parseFloat(tebarForm.hargaPerEkor)
             });
+            setIsTebarModalOpen(false);
+            setTebarForm({ ...tebarForm, jumlah: '', beratPerEkor: '5', hargaPerEkor: '' });
             showToast('Siklus berhasil dimulai', 'success');
         } catch (error) {
             showToast('Gagal menebar bibit', 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handlePanenSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (isSubmitting) return;
 
         // Validation: Check against available stock
         const k = kolam.find(p => p.id === panenForm.kolamId);
@@ -233,36 +236,34 @@ export default function ProduksiPage() {
             return;
         }
 
-        // Tutup modal langsung
-        setIsPanenModalOpen(false);
-        const formData = { ...panenForm };
-        setPanenForm(prev => ({ ...prev, beratTotalKg: '', jumlahEkor: '', catatan: '', pembeliId: '' }));
-
+        setIsSubmitting(true);
         try {
             await addRiwayatPanen({
-                kolamId: formData.kolamId,
-                tanggal: formData.tanggal,
-                beratTotalKg: Number(formData.beratTotalKg),
-                jumlahEkor: Number(formData.jumlahEkor),
-                hargaPerKg: Number(formData.hargaPerKg),
-                tipe: formData.tipe,
-                catatan: formData.catatan
+                kolamId: panenForm.kolamId,
+                tanggal: panenForm.tanggal,
+                beratTotalKg: Number(panenForm.beratTotalKg),
+                jumlahEkor: Number(panenForm.jumlahEkor),
+                hargaPerKg: Number(panenForm.hargaPerKg),
+                tipe: panenForm.tipe,
+                catatan: panenForm.catatan
             });
 
             // Sync with Sales if Buyer is selected
-            if (formData.pembeliId) {
+            if (panenForm.pembeliId) {
                 await addPenjualan({
-                    kolamId: formData.kolamId,
-                    pembeliId: formData.pembeliId,
-                    tanggal: formData.tanggal,
-                    beratKg: Number(formData.beratTotalKg),
-                    hargaPerKg: Number(formData.hargaPerKg),
-                    jumlahIkan: Number(formData.jumlahEkor),
-                    keterangan: formData.catatan || 'Panen Otomatis'
+                    kolamId: panenForm.kolamId,
+                    pembeliId: panenForm.pembeliId,
+                    tanggal: panenForm.tanggal,
+                    beratKg: Number(panenForm.beratTotalKg),
+                    hargaPerKg: Number(panenForm.hargaPerKg),
+                    jumlahIkan: Number(panenForm.jumlahEkor),
+                    keterangan: panenForm.catatan || 'Panen Otomatis'
                 });
             }
 
-            showToast(formData.pembeliId ? 'Panen & Penjualan berhasil dicatat' : 'Panen berhasil dicatat', 'success');
+            setIsPanenModalOpen(false);
+            setPanenForm(prev => ({ ...prev, beratTotalKg: '', jumlahEkor: '', catatan: '', pembeliId: '' }));
+            showToast(panenForm.pembeliId ? 'Panen & Penjualan berhasil dicatat' : 'Panen berhasil dicatat', 'success');
         } catch (error: any) {
             showToast(error.message || 'Gagal mencatat panen', 'error');
         }
@@ -558,8 +559,10 @@ export default function ProduksiPage() {
                 title="Mulai Siklus (Tebar Bibit)"
                 footer={
                     <>
-                        <button type="button" onClick={() => setIsTebarModalOpen(false)} className="btn btn-secondary">Batal</button>
-                        <button type="submit" form="form-tebar" className="btn btn-primary">Mulai Tebar</button>
+                        <button type="button" onClick={() => setIsTebarModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
+                        <button type="submit" form="form-tebar" className="btn btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? 'Memulai...' : 'Mulai Tebar'}
+                        </button>
                     </>
                 }
             >
@@ -707,8 +710,10 @@ export default function ProduksiPage() {
                 title="Tambah Pembeli Baru"
                 footer={
                     <>
-                        <button type="button" onClick={() => setIsBuyerModalOpen(false)} className="btn btn-secondary">Batal</button>
-                        <button type="submit" form="form-buyer" className="btn btn-primary">Simpan</button>
+                        <button type="button" onClick={() => setIsPanenModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
+                        <button type="submit" form="form-panen" className="btn btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan Panen'}
+                        </button>
                     </>
                 }
             >
