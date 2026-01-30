@@ -144,30 +144,6 @@ export default function PenjualanPage() {
                 <p className="sub">{totalBerat} kg terjual</p>
             </div>
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-                <div className="card p-4">
-                    <p className="text-xs text-slate-500">Total Transaksi</p>
-                    <p className="text-2xl font-bold text-slate-900">{penjualan.length}</p>
-                </div>
-                <div className="card p-4">
-                    <p className="text-xs text-slate-500">Rata-rata/Transaksi</p>
-                    <p className="text-2xl font-bold text-slate-900">
-                        Rp {penjualan.length > 0 ? Math.round(totalPendapatan / penjualan.length).toLocaleString('id-ID') : 0}
-                    </p>
-                </div>
-                <div className="card p-4">
-                    <p className="text-xs text-slate-500">Total Pembeli</p>
-                    <p className="text-2xl font-bold text-slate-900">{pembeli.length}</p>
-                </div>
-                <div className="card p-4">
-                    <p className="text-xs text-slate-500">Rata-rata Harga/kg</p>
-                    <p className="text-2xl font-bold text-slate-900">
-                        Rp {totalBerat > 0 ? Math.round(totalPendapatan / totalBerat).toLocaleString('id-ID') : 0}
-                    </p>
-                </div>
-            </div>
-
             {/* Profit Per Kolam */}
             <div className="card p-6 mb-8">
                 <h2 className="text-lg font-semibold text-slate-900 mb-4">Profit Per Kolam</h2>
@@ -204,8 +180,8 @@ export default function PenjualanPage() {
             </div>
 
             {/* Data Pembeli */}
-            <div className="table-wrapper">
-                <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+            <div className="table-wrapper mb-8">
+                <div className="px-6 py-4 border-b border-slate-200 bg-white">
                     <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         <span>📋</span>
                         <span>Data Pembeli</span>
@@ -261,7 +237,7 @@ export default function PenjualanPage() {
 
             {/* Riwayat Penjualan */}
             <div className="table-wrapper">
-                <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="px-6 py-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         <span>📊</span>
                         <span>Riwayat Penjualan</span>
@@ -278,14 +254,12 @@ export default function PenjualanPage() {
                     </select>
                 </div>
                 {filteredPenjualan.length === 0 ? (
-                    <div className="card overflow-hidden">
-                        <div className="p-6">
-                            <EmptyState
-                                title="Belum Ada Penjualan"
-                                description="Belum ada data penjualan yang tercatat"
-                                icon="💵"
-                            />
-                        </div>
+                    <div className="p-6">
+                        <EmptyState
+                            title="Belum Ada Penjualan"
+                            description="Belum ada data penjualan yang tercatat"
+                            icon="💵"
+                        />
                     </div>
                 ) : (
                     <table className="table table-compact">

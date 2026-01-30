@@ -234,47 +234,63 @@ export default function KolamPage() {
                         return (
                             <div key={k.id} className="card p-6">
                                 {/* Header */}
-                                <div className="flex items-start justify-between mb-4">
+                                <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-3">
                                         <div className="icon-box icon-box-primary">
                                             🐟
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-lg text-slate-900">{k.nama}</h3>
-                                            <span className={`badge ${badgeClass}`}>
-                                                {statusLabels[displayStatus as keyof typeof statusLabels]}
-                                            </span>
+                                            {k.tanggalTebar && (
+                                                <p className="text-sm text-slate-500">
+                                                    Tebar: {new Date(k.tanggalTebar).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
+                                    <span className={`badge ${badgeClass}`}>
+                                        {statusLabels[displayStatus as keyof typeof statusLabels]}
+                                    </span>
                                 </div>
 
                                 {/* Stats */}
                                 <div className="grid grid-cols-2 gap-4 mb-4">
-                                    <div className="bg-slate-50 rounded-lg p-3">
-                                        <p className="text-xs text-slate-500 uppercase tracking-wide">Dimensi (m)</p>
-                                        <p className="font-semibold text-slate-900">{k.panjang} × {k.lebar} × {k.kedalaman}</p>
+                                    {/* Dimensi */}
+                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4 border border-blue-200/50">
+                                        <p className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-2">Dimensi</p>
+                                        <p className="text-base font-semibold text-blue-900">{k.panjang} × {k.lebar} × {k.kedalaman}<span className="text-xs font-normal text-blue-700"> m</span></p>
                                     </div>
-                                    <div className="bg-slate-50 rounded-lg p-3">
-                                        <p className="text-xs text-slate-500 uppercase tracking-wide">Luas & Vol</p>
-                                        <p className="font-semibold text-slate-900">{parseFloat(luas.toFixed(1))} m² <span className="text-slate-400">|</span> {parseFloat(volume.toFixed(1))} m³</p>
+                                    
+                                    {/* Luas & Volume */}
+                                    <div className="bg-gradient-to-br from-cyan-50 to-cyan-100/50 rounded-xl p-4 border border-cyan-200/50">
+                                        <p className="text-[11px] font-bold text-cyan-600 uppercase tracking-wider mb-2">Luas & Volume</p>
+                                        <p className="text-base font-semibold text-cyan-900">{parseFloat(luas.toFixed(1))}<span className="text-xs font-normal text-cyan-700"> m²</span> <span className="text-slate-400">|</span> {parseFloat(volume.toFixed(1))}<span className="text-xs font-normal text-cyan-700"> m³</span></p>
                                     </div>
-                                    <div className={`${isEmpty ? 'col-span-2' : ''} bg-slate-50 rounded-lg p-3 flex justify-between items-center`}>
-                                        <div>
-                                            <p className="text-xs text-slate-500 uppercase tracking-wide">Populasi</p>
-                                            <p className="font-semibold text-slate-900 text-lg">{k.jumlahIkan.toLocaleString('id-ID')}</p>
+                                    
+                                    {/* Populasi */}
+                                    <div className={`${isEmpty ? 'col-span-2' : ''} bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4 border border-emerald-200/50`}>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-2">Populasi</p>
+                                                <p className="text-base font-semibold text-emerald-900">{k.jumlahIkan.toLocaleString('id-ID')}</p>
+                                            </div>
+                                            {isEmpty && (
+                                                <span className="px-2 py-1 bg-emerald-200/50 text-emerald-700 text-xs font-semibold rounded-lg">Siap Tebar</span>
+                                            )}
                                         </div>
-                                        {isEmpty && (
-                                            <span className="text-xs text-slate-400 italic">Siap ditebar</span>
-                                        )}
                                     </div>
 
                                     {/* Feed Rec Box */}
                                     {feedRec && (
-                                        <div className="bg-amber-50 rounded-lg p-3 border border-amber-100 flex flex-col justify-center">
-                                            <p className="text-[10px] uppercase font-bold text-amber-700 tracking-wider mb-1">Pakan ({feedRec.type.split(' ')[0]}) ({feedRec.ratePercent})</p>
-                                            <div className="flex flex-col">
-                                                <div className="flex items-baseline justify-between">
-                                                    <p className="font-bold text-amber-900 text-lg leading-none">{feedRec.amount} <span className="text-xs font-normal">/ hari</span></p>
+                                        <div className="col-span-2 bg-gradient-to-br from-amber-50 to-orange-100/50 rounded-xl p-4 border border-amber-200/50">
+                                            <div className="flex items-start justify-between">
+                                                <div>
+                                                    <p className="text-[11px] font-bold text-amber-600 uppercase tracking-wider mb-2">Rekomendasi Pakan</p>
+                                                    <p className="text-xs text-amber-700 mb-2">{feedRec.type} ({feedRec.ratePercent})</p>
+                                                    <p className="text-base font-semibold text-amber-900">{feedRec.amount} <span className="text-xs font-normal text-amber-700">kg/hari</span></p>
+                                                </div>
+                                                <div className="bg-white/60 rounded-lg px-3 py-2 text-right">
+                                                    <p className="text-xs text-amber-600 font-semibold">Optimal</p>
                                                 </div>
                                             </div>
                                         </div>

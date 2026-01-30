@@ -857,6 +857,76 @@ export default function DesignSystemPage() {
             {/* Extended Components Section */}
             {activeTab === 'extended' && (
                 <div className="space-y-8">
+                    {/* Stat Box / Info Box */}
+                    <section className="card p-6">
+                        <h2 className="text-xl font-bold text-slate-900 mb-4">Stat Box / Info Box</h2>
+                        <p className="text-sm text-slate-500 mb-6">Komponen untuk menampilkan metrik, informasi, dan nilai data dalam format kotak yang menarik dan mudah dipahami.</p>
+
+                        <div className="space-y-6">
+                            {/* New Design - With Icon & Gradient */}
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Modern Design (Default - No Icon)</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    {/* Blue - Dimensi */}
+                                    <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4 border border-blue-200/50">
+                                        <p className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-2">Dimensi</p>
+                                        <p className="text-base font-semibold text-blue-900">2.6 × 2.2 × 2<span className="text-xs font-normal text-blue-700"> m</span></p>
+                                    </div>
+                                    
+                                    {/* Cyan - Luas & Volume */}
+                                    <div className="bg-gradient-to-br from-cyan-50 to-cyan-100/50 rounded-xl p-4 border border-cyan-200/50">
+                                        <p className="text-[11px] font-bold text-cyan-600 uppercase tracking-wider mb-2">Luas & Volume</p>
+                                        <p className="text-base font-semibold text-cyan-900">5.7<span className="text-xs font-normal text-cyan-700"> m²</span> <span className="text-slate-400">|</span> 11.4<span className="text-xs font-normal text-cyan-700"> m³</span></p>
+                                    </div>
+                                    
+                                    {/* Emerald - Populasi */}
+                                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4 border border-emerald-200/50">
+                                        <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-2">Populasi</p>
+                                        <p className="text-base font-semibold text-emerald-900">30.222</p>
+                                    </div>
+                                    
+                                    {/* Purple - Status */}
+                                    <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl p-4 border border-purple-200/50">
+                                        <p className="text-[11px] font-bold text-purple-600 uppercase tracking-wider mb-2">Kepadatan</p>
+                                        <p className="text-base font-semibold text-purple-900">526<span className="text-xs font-normal text-purple-700"> /m³</span></p>
+                                    </div>
+                                </div>
+                                <code className="text-xs text-slate-400 mt-3 block">className="bg-gradient-to-br from-[color]-50 to-[color]-100/50 rounded-xl p-4 border border-[color]-200/50"</code>
+                            </div>
+
+                            {/* Alert/Recommendation Box */}
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Alert/Recommendation Box (Full Width)</p>
+                                <div className="bg-gradient-to-br from-amber-50 to-orange-100/50 rounded-xl p-4 border border-amber-200/50">
+                                    <div className="flex items-start justify-between">
+                                        <div>
+                                            <p className="text-[11px] font-bold text-amber-600 uppercase tracking-wider mb-2">Rekomendasi Pakan</p>
+                                            <p className="text-xs text-amber-700 mb-2">PF-1000 (6-8%)</p>
+                                            <p className="text-base font-semibold text-amber-900">12,7 - 16,9 <span className="text-xs font-normal text-amber-700">kg/hari</span></p>
+                                        </div>
+                                        <div className="bg-white/60 rounded-lg px-3 py-2 text-right">
+                                            <p className="text-xs text-amber-600 font-semibold">Optimal</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <code className="text-xs text-slate-400 mt-3 block">className="col-span-2 bg-gradient-to-br from-amber-50 to-orange-100/50 rounded-xl p-4"</code>
+                            </div>
+
+                            {/* Features */}
+                            <div className="p-4 bg-slate-50 rounded-lg">
+                                <p className="text-xs text-slate-600 mb-3"><strong>✨ Fitur Design Baru:</strong></p>
+                                <ul className="text-xs text-slate-600 space-y-1 ml-4 list-disc">
+                                    <li>🎨 Gradient background untuk visual yang lebih menarik</li>
+                                    <li>🔤 Emoji icon di atas untuk quick recognition</li>
+                                    <li>📏 Typography hierarchy yang lebih jelas (label kecil, value besar)</li>
+                                    <li>🎯 Color-coded per tipe informasi (blue, cyan, emerald, purple, amber)</li>
+                                    <li>⚡ Border subtle untuk depth dan visual separation</li>
+                                    <li>🔘 Rounded-xl (16px) untuk tampilan yang lebih modern</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </section>
+
                     {/* Tab Navigation */}
                     <section className="card p-6">
                         <h2 className="text-xl font-bold text-slate-900 mb-4">Tab Navigation</h2>
@@ -1232,7 +1302,9 @@ export default function DesignSystemPage() {
                                         <p className="text-xs text-slate-500">5,000 ekor</p>
                                     </div>
                                 </div>
-                                <ArrowRightIcon className="w-5 h-5 text-slate-400" />
+                                <div className="flex items-center">
+                                    <ArrowRightIcon className="w-5 h-5 text-slate-400" />
+                                </div>
                             </div>
                             <div className="list-item list-item-warning">
                                 <div className="flex items-center gap-3">
@@ -1242,7 +1314,9 @@ export default function DesignSystemPage() {
                                         <p className="text-xs text-slate-500">Sisa 5 kg</p>
                                     </div>
                                 </div>
-                                <span className="badge badge-sm badge-warning">Waspada</span>
+                                <div className="flex items-center">
+                                    <span className="badge badge-sm badge-warning">WASPADA</span>
+                                </div>
                             </div>
                             <div className="list-item list-item-danger">
                                 <div className="flex items-center gap-3">
@@ -1252,7 +1326,9 @@ export default function DesignSystemPage() {
                                         <p className="text-xs text-slate-500">Kepadatan tinggi</p>
                                     </div>
                                 </div>
-                                <span className="badge badge-sm badge-danger">Kritis</span>
+                                <div className="flex items-center">
+                                    <span className="badge badge-sm badge-danger">KRITIS</span>
+                                </div>
                             </div>
                         </div>
                     </section>

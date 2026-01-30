@@ -567,6 +567,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
             if (res.ok) {
                 const created = await res.json();
                 setPakan(prev => [...prev, { ...created, tanggal: created.tanggal.split('T')[0] }]);
+                
+                // Tambahkan ke pengeluaran juga
+                const stok = stokPakan.find(s => s.jenisPakan === newPakan.jenisPakan);
+                if (stok) {
+                    const totalBiaya = newPakan.jumlahKg * stok.hargaPerKg;
+                    await addPengeluaran({
+                        kolamId: newPakan.kolamId,
+                        tanggal: newPakan.tanggal,
+                        kategori: 'PAKAN',
+                        keterangan: `Pakan ${newPakan.jenisPakan} - ${newPakan.jumlahKg} kg`,
+                        jumlah: totalBiaya
+                    });
+                }
             }
         } catch (error) {
             console.error('Failed to add pakan:', error);

@@ -1444,12 +1444,22 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 16px;
     padding: 12px;
     background: white;
     border-radius: 12px;
     border: 1px solid var(--slate-200);
     transition: all 0.2s ease;
     cursor: pointer;
+  }
+
+  .list-item > *:first-child {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .list-item > *:last-child {
+    flex-shrink: 0;
   }
 
   .list-item:hover {

@@ -109,8 +109,7 @@ const navigationGroups = [
   {
     title: 'Keuangan',
     items: [
-      { name: 'Penjualan', href: '/penjualan', icon: PenjualanIcon },
-      { name: 'Pengeluaran', href: '/pengeluaran', icon: PengeluaranIcon },
+      { name: 'Keuangan', href: '/keuangan', icon: WalletIcon },
       { name: 'Laporan', href: '/laporan', icon: LaporanIcon }
     ]
   }
@@ -159,7 +158,7 @@ export default function Sidebar({ isCollapsed = false, toggleCollapse }: Sidebar
           </div>
 
           {/* 4. Keuangan */}
-          <Link href="/laporan" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/laporan') || pathname.startsWith('/penjualan') ? 'text-teal-600' : 'text-slate-400'}`}>
+          <Link href="/keuangan" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/keuangan') ? 'text-teal-600' : 'text-slate-400'}`}>
             <WalletIcon />
             <span className="text-[10px] font-medium">Keuangan</span>
           </Link>

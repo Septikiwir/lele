@@ -26,11 +26,15 @@ export default function PakanPage() {
         getAllJenisPakan,
     } = useApp();
 
-    const [activeTab, setActiveTab] = useState<'riwayat' | 'stok' | 'jadwal'>('jadwal');
+    const [activeTab, setActiveTab] = useState<'riwayat' | 'stok' | 'jadwal'>('stok');
     const [showForm, setShowForm] = useState(false);
     const [showStokForm, setShowStokForm] = useState(false);
     const [showJadwalForm, setShowJadwalForm] = useState(false);
     const [deleteModal, setDeleteModal] = useState<{ type: 'stok' | 'jadwal', id: string } | null>(null);
+    
+    // Pagination states
+    const [limitRiwayatPakan, setLimitRiwayatPakan] = useState(10);
+    const [limitStokPakan, setLimitStokPakan] = useState(10);
 
     // Initial Active Tab Logic based on hash or default
     useEffect(() => {
@@ -142,6 +146,15 @@ export default function PakanPage() {
 
     // Derived Data
     const allJenisPakan = getAllJenisPakan();
+    
+    // Filtered and sorted data
+    const filteredRiwayatPakan = pakan
+        .sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime())
+        .slice(0, limitRiwayatPakan);
+    
+    const filteredStokPakan = stokPakan
+        .sort((a, b) => new Date(b.tanggalTambah).getTime() - new Date(a.tanggalTambah).getTime())
+        .slice(0, limitStokPakan);
     const uniqueJenisInUse = [...new Set(jadwalPakan.map(j => j.jenisPakan))]; // For options if needed
     const sortedJadwal = [...jadwalPakan].sort((a, b) => a.waktu.localeCompare(b.waktu));
 
@@ -196,33 +209,24 @@ export default function PakanPage() {
             )}
 
             {/* Tabs */}
-            <div className="flex border-b border-slate-200 mb-6">
+            <div className="tab-container border-b border-slate-200 mb-6">
+                <button
+                    onClick={() => setActiveTab('stok')}
+                    className={`tab tab-underline ${activeTab === 'stok' ? 'tab-active' : ''}`}
+                >
+                    📦 Stok Pakan
+                </button>
                 <button
                     onClick={() => setActiveTab('jadwal')}
-                    className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 ${activeTab === 'jadwal'
-                        ? 'border-teal-600 text-teal-600'
-                        : 'border-transparent text-slate-500 hover:text-slate-700'
-                        }`}
+                    className={`tab tab-underline ${activeTab === 'jadwal' ? 'tab-active' : ''}`}
                 >
                     📅 Jadwal Pakan
                 </button>
                 <button
                     onClick={() => setActiveTab('riwayat')}
-                    className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 ${activeTab === 'riwayat'
-                        ? 'border-teal-600 text-teal-600'
-                        : 'border-transparent text-slate-500 hover:text-slate-700'
-                        }`}
+                    className={`tab tab-underline ${activeTab === 'riwayat' ? 'tab-active' : ''}`}
                 >
                     📝 Riwayat Pemberian
-                </button>
-                <button
-                    onClick={() => setActiveTab('stok')}
-                    className={`px-6 py-3 font-medium text-sm transition-colors border-b-2 ${activeTab === 'stok'
-                        ? 'border-teal-600 text-teal-600'
-                        : 'border-transparent text-slate-500 hover:text-slate-700'
-                        }`}
-                >
-                    📦 Stok Pakan
                 </button>
             </div>
 
@@ -279,7 +283,7 @@ export default function PakanPage() {
             {activeTab === 'riwayat' && (
                 <>
                     <div className="table-wrapper">
-                        <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                        <div className="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center">
                             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                                 <span>📝</span>
                                 <span>Riwayat Pemberian Pakan</span>
@@ -310,7 +314,7 @@ export default function PakanPage() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    pakan.map(p => {
+                                    filteredRiwayatPakan.map(p => {
                                             const k = kolam.find(item => item.id === p.kolamId);
                                             const fcr = calculateFCR(p.kolamId);
                                             return (
@@ -332,6 +336,27 @@ export default function PakanPage() {
                                     )}
                                 </tbody>
                             </table>
+                            {pakan.length > 0 && (
+                                <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <p className="text-sm text-slate-500">
+                                        Menampilkan {Math.min(limitRiwayatPakan, filteredRiwayatPakan.length)} dari {pakan.length} data
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-sm text-slate-600">Tampilkan:</label>
+                                        <select 
+                                            value={limitRiwayatPakan} 
+                                            onChange={(e) => setLimitRiwayatPakan(Number(e.target.value))} 
+                                            className="input py-1 px-2 text-sm"
+                                        >
+                                            <option value={10}>10</option>
+                                            <option value={25}>25</option>
+                                            <option value={50}>50</option>
+                                            <option value={100}>100</option>
+                                            <option value={9999}>Semua</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
                     </div>
                 </>
             )}
@@ -370,6 +395,9 @@ export default function PakanPage() {
                     </div>
 
                     <div className="table-wrapper mt-8">
+                        <div className="px-6 py-4 border-b border-slate-200 bg-white">
+                            <h3 className="text-lg font-bold text-slate-900">Riwayat Stok</h3>
+                        </div>
                         <table className="table table-compact">
                             <thead>
                                 <tr>
@@ -383,26 +411,59 @@ export default function PakanPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {stokPakan.sort((a, b) => new Date(b.tanggalTambah).getTime() - new Date(a.tanggalTambah).getTime()).map(s => (
-                                    <tr key={s.id}>
-                                        <td className="text-small">{s.tanggalTambah}</td>
-                                        <td className="text-strong">{s.jenisPakan}</td>
-                                        <td className="text-right text-small text-green-600">+{s.stokAwal}</td>
-                                        <td className="text-right text-small">Rp {s.hargaPerKg.toLocaleString('id-ID')}</td>
-                                        <td className="text-right text-strong">Rp {(s.stokAwal * s.hargaPerKg).toLocaleString('id-ID')}</td>
-                                        <td className="text-muted text-small max-w-xs truncate">{s.keterangan || '-'}</td>
-                                        <td className="action-cell">
-                                            <button
-                                                onClick={() => setDeleteModal({ type: 'stok', id: s.id })}
-                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                            >
-                                                <TrashIcon />
-                                            </button>
+                                {stokPakan.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="p-0">
+                                            <EmptyState
+                                                title="Belum Ada Riwayat Stok"
+                                                description="Belum ada data penambahan stok pakan"
+                                                icon="💊"
+                                            />
                                         </td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    filteredStokPakan.map(s => (
+                                        <tr key={s.id}>
+                                            <td className="text-small">{s.tanggalTambah}</td>
+                                            <td className="text-strong">{s.jenisPakan}</td>
+                                            <td className="text-right text-small text-green-600">+{s.stokAwal}</td>
+                                            <td className="text-right text-small">Rp {s.hargaPerKg.toLocaleString('id-ID')}</td>
+                                            <td className="text-right text-strong">Rp {(s.stokAwal * s.hargaPerKg).toLocaleString('id-ID')}</td>
+                                            <td className="text-muted text-small max-w-xs truncate">{s.keterangan || '-'}</td>
+                                            <td className="action-cell">
+                                                <button
+                                                    onClick={() => setDeleteModal({ type: 'stok', id: s.id })}
+                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                >
+                                                    <TrashIcon />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
+                        {stokPakan.length > 0 && (
+                            <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <p className="text-sm text-slate-500">
+                                    Menampilkan {Math.min(limitStokPakan, filteredStokPakan.length)} dari {stokPakan.length} data
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <label className="text-sm text-slate-600">Tampilkan:</label>
+                                    <select 
+                                        value={limitStokPakan} 
+                                        onChange={(e) => setLimitStokPakan(Number(e.target.value))} 
+                                        className="input py-1 px-2 text-sm"
+                                    >
+                                        <option value={10}>10</option>
+                                        <option value={25}>25</option>
+                                        <option value={50}>50</option>
+                                        <option value={100}>100</option>
+                                        <option value={9999}>Semua</option>
+                                    </select>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </>
             )}

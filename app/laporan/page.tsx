@@ -37,6 +37,9 @@ export default function LaporanPage() {
         getProfitByKolam,
     } = useApp();
     const [periode, setPeriode] = useState<'semua' | 'minggu' | 'bulan'>('semua');
+    
+    // Pagination state
+    const [limitLaporan, setLimitLaporan] = useState(10);
 
     // Filter by period
     const filterByPeriod = <T extends { tanggal: string }>(data: T[]): T[] => {
@@ -183,6 +186,9 @@ export default function LaporanPage() {
         modal: totalModal,
         profit: reportData.reduce((sum, r) => sum + r.profit, 0),
     };
+    
+    // Filtered report data for pagination
+    const filteredReportData = reportData.slice(0, limitLaporan);
 
     return (
         <DashboardLayout>
@@ -332,7 +338,7 @@ export default function LaporanPage() {
 
             {/* Report Table */}
             <div className="table-wrapper">
-                <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                <div className="px-6 py-4 border-b border-slate-200 bg-white">
                     <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         <span>📊</span>
                         <span>Laporan Per Kolam</span>
@@ -347,6 +353,7 @@ export default function LaporanPage() {
                         />
                     </div>
                 ) : (
+                    <>
                     <table className="table table-compact">
                             <thead>
                                 <tr>
@@ -363,7 +370,7 @@ export default function LaporanPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {reportData.map(r => (
+                                {filteredReportData.map(r => (
                                     <tr key={r.id}>
                                         <td className="text-strong">{r.nama}</td>
                                         <td className="text-muted text-small">{r.dimensi}</td>
@@ -410,6 +417,26 @@ export default function LaporanPage() {
                                 </tr>
                             </tfoot>
                         </table>
+                        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <p className="text-sm text-slate-500">
+                                Menampilkan {Math.min(limitLaporan, filteredReportData.length)} dari {reportData.length} kolam
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm text-slate-600">Tampilkan:</label>
+                                <select 
+                                    value={limitLaporan} 
+                                    onChange={(e) => setLimitLaporan(Number(e.target.value))} 
+                                    className="input py-1 px-2 text-sm"
+                                >
+                                    <option value={10}>10</option>
+                                    <option value={25}>25</option>
+                                    <option value={50}>50</option>
+                                    <option value={100}>100</option>
+                                    <option value={9999}>Semua</option>
+                                </select>
+                            </div>
+                        </div>
+                        </>
                     )}
                 </div>
         </DashboardLayout>

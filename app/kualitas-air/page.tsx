@@ -72,6 +72,16 @@ export default function KualitasAirPage() {
     const { kolam, kondisiAir, addKondisiAir } = useApp();
     const [showForm, setShowForm] = useState(false);
     const [showRekomendasi, setShowRekomendasi] = useState<string[] | null>(null);
+    
+    // Pagination state
+    const [limitKondisiAir, setLimitKondisiAir] = useState(10);
+    
+    // Filtered and sorted data
+    const filteredKondisiAir = kondisiAir
+        .slice()
+        .sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime())
+        .slice(0, limitKondisiAir);
+    
     const [formData, setFormData] = useState({
         kolamId: '',
         tanggal: new Date().toISOString().split('T')[0],
@@ -188,7 +198,7 @@ export default function KualitasAirPage() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="py-4 text-center">
+                                <div className="py-4 text-center !border-dashed !border-slate-300 !bg-slate-50 rounded-lg border-2">
                                     <p className="text-sm text-slate-400 italic">Belum ada data</p>
                                 </div>
                             )}
@@ -199,7 +209,7 @@ export default function KualitasAirPage() {
 
             {/* Histori */}
             <div className="table-wrapper">
-                <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                <div className="px-6 py-4 border-b border-slate-200 bg-white">
                     <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         <span>💧</span>
                         <span>Histori Kondisi Air</span>
@@ -214,6 +224,7 @@ export default function KualitasAirPage() {
                         />
                     </div>
                 ) : (
+                    <>
                     <table className="table table-compact">
                         <thead>
                             <tr>
@@ -227,7 +238,7 @@ export default function KualitasAirPage() {
                             </tr>
                         </thead>
                         <tbody>
-                                {kondisiAir.map(ka => {
+                                {filteredKondisiAir.map(ka => {
                                     const k = kolam.find(kol => kol.id === ka.kolamId);
                                     const warnaStatus = warnaOptions.find(w => w.value === ka.warna)?.status || 'good';
 
@@ -249,6 +260,26 @@ export default function KualitasAirPage() {
                                 })}
                         </tbody>
                     </table>
+                    <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <p className="text-sm text-slate-500">
+                            Menampilkan {Math.min(limitKondisiAir, filteredKondisiAir.length)} dari {kondisiAir.length} data
+                        </p>
+                        <div className="flex items-center gap-2">
+                            <label className="text-sm text-slate-600">Tampilkan:</label>
+                            <select 
+                                value={limitKondisiAir} 
+                                onChange={(e) => setLimitKondisiAir(Number(e.target.value))} 
+                                className="input py-1 px-2 text-sm"
+                            >
+                                <option value={10}>10</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                                <option value={9999}>Semua</option>
+                            </select>
+                        </div>
+                    </div>
+                    </>
                 )}
             </div>
 

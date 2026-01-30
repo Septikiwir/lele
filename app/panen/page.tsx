@@ -18,6 +18,15 @@ export default function ProduksiPage() {
     const [growthRate, setGrowthRate] = useState('2');
     const [hargaPerKg, setHargaPerKg] = useState('25000');
     const [ukuranBibitEst, setUkuranBibitEst] = useState('5');
+    
+    // Pagination state
+    const [limitRiwayatPanen, setLimitRiwayatPanen] = useState(10);
+    
+    // Filtered and sorted data
+    const filteredRiwayatPanen = riwayatPanen
+        .slice()
+        .sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime())
+        .slice(0, limitRiwayatPanen);
 
     // Tebar Modal
     const [isTebarModalOpen, setIsTebarModalOpen] = useState(false);
@@ -341,7 +350,11 @@ export default function ProduksiPage() {
                                                 </div>
                                                 <div>
                                                     <h3 className="font-bold text-slate-900">{k.nama}</h3>
-                                                    <p className="text-xs text-slate-500">{k.jumlahIkan.toLocaleString()} ekor</p>
+                                                    {k.tanggalTebar && (
+                                                        <p className="text-xs text-slate-500">
+                                                            Tebar: {new Date(k.tanggalTebar).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
                                             <span className="badge badge-success">Aktif: {days} Hari</span>
@@ -428,60 +441,10 @@ export default function ProduksiPage() {
                 )}
             </section>
 
-            {/* --- DETAILS SECTION --- */}
-            <section className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <h2 className="text-xl font-bold text-slate-800 mb-4">Riwayat Panen Global</h2>
-
-                {/* Harvest History Table */}
-                <div className="card">
-                    <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-                        <h3 className="font-semibold text-slate-800">Daftar Panen Terakhir</h3>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
-                                <tr>
-                                    <th className="px-6 py-3 text-left">Tanggal</th>
-                                    <th className="px-6 py-3 text-left">Kolam</th>
-                                    <th className="px-6 py-3 text-center">Tipe</th>
-                                    <th className="px-6 py-3 text-right">Berat (Kg)</th>
-                                    <th className="px-6 py-3 text-right">Total (Rp)</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {riwayatPanen.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={5} className="px-6 py-8 text-center text-slate-400">Belum ada data panen</td>
-                                    </tr>
-                                ) : (
-                                    riwayatPanen.slice().sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()).map(p => (
-                                        <tr key={p.id}>
-                                            <td className="px-6 py-3">{p.tanggal}</td>
-                                            <td className="px-6 py-3 font-medium text-slate-800">{p.kolam?.nama || '-'}</td>
-                                            <td className="px-6 py-3 text-center">
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${p.tipe === 'TOTAL' ? 'bg-red-100 text-red-600' : 'bg-teal-100 text-teal-600'}`}>
-                                                    {p.tipe}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-3 text-right">{p.beratTotalKg}</td>
-                                            <td className="px-6 py-3 text-right font-medium text-emerald-600">
-                                                {(p.beratTotalKg * p.hargaPerKg).toLocaleString('id-ID')}
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
             {/* --- EMPTY PONDS (SIAP TEBAR) --- */}
-            <section>
-                <h2 className="text-xl font-bold text-slate-800 mb-4">Siap Ditebar ({emptyPonds.length})</h2>
-                {emptyPonds.length === 0 ? (
-                    <p className="text-slate-500 italic">Semua kolam sedang aktif digunakan.</p>
-                ) : (
+            {emptyPonds.length > 0 && (
+                <section className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <h2 className="text-xl font-bold text-slate-800 mb-4">Siap Ditebar ({emptyPonds.length})</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-6">
                         {emptyPonds.map(k => (
                             <div key={k.id} className="card p-5 border border-dashed border-slate-300 hover:border-blue-400 transition-colors bg-slate-50">
@@ -506,7 +469,76 @@ export default function ProduksiPage() {
                             </div>
                         ))}
                     </div>
-                )}
+                </section>
+            )}
+
+            {/* --- DETAILS SECTION --- */}
+            <section>
+                {/* Harvest History Table */}
+                <div className="table-wrapper">
+                    <div className="px-6 py-4 border-b border-slate-200 bg-white">
+                        <h3 className="text-lg font-bold text-slate-900">Daftar Panen Terakhir</h3>
+                    </div>
+                    {riwayatPanen.length === 0 ? (
+                        <div className="p-6">
+                            <EmptyState
+                                title="Belum Ada Data Panen"
+                                description="Belum ada riwayat panen yang tercatat."
+                                icon="🌾"
+                            />
+                        </div>
+                    ) : (
+                        <>
+                        <table className="table table-compact">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Kolam</th>
+                                    <th>Tipe</th>
+                                    <th className="text-right">Berat (Kg)</th>
+                                    <th className="text-right">Total (Rp)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredRiwayatPanen.map(p => (
+                                    <tr key={p.id}>
+                                        <td className="text-small">{p.tanggal}</td>
+                                        <td className="text-strong">{p.kolam?.nama || '-'}</td>
+                                        <td>
+                                            <span className={`badge ${p.tipe === 'TOTAL' ? 'bg-red-100 text-red-600' : 'bg-teal-100 text-teal-600'}`}>
+                                                {p.tipe}
+                                            </span>
+                                        </td>
+                                        <td className="text-right text-muted">{p.beratTotalKg}</td>
+                                        <td className="text-right text-strong text-emerald-600">
+                                            Rp {(p.beratTotalKg * p.hargaPerKg).toLocaleString('id-ID')}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <p className="text-sm text-slate-500">
+                                Menampilkan {Math.min(limitRiwayatPanen, filteredRiwayatPanen.length)} dari {riwayatPanen.length} data
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm text-slate-600">Tampilkan:</label>
+                                <select 
+                                    value={limitRiwayatPanen} 
+                                    onChange={(e) => setLimitRiwayatPanen(Number(e.target.value))} 
+                                    className="input py-1 px-2 text-sm"
+                                >
+                                    <option value={10}>10</option>
+                                    <option value={25}>25</option>
+                                    <option value={50}>50</option>
+                                    <option value={100}>100</option>
+                                    <option value={9999}>Semua</option>
+                                </select>
+                            </div>
+                        </div>
+                        </>
+                    )}
+                </div>
             </section>
 
             {/* --- MODALS --- */}
