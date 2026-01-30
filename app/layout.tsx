@@ -5,7 +5,7 @@ import { ToastProvider } from "./context/ToastContext";
 import { AppProvider } from "./context/AppContext";
 import { FarmProvider } from "./context/FarmContext";
 import { AuthProvider } from "./context/AuthContext";
-import SessionProvider from "./providers/AuthProvider";
+import NextAuthProvider from "./providers/AuthProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,7 +44,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SessionProvider>
+        <NextAuthProvider>
           <AuthProvider>
             <FarmProvider>
               <ToastProvider>
@@ -54,7 +54,7 @@ export default function RootLayout({
               </ToastProvider>
             </FarmProvider>
           </AuthProvider>
-        </SessionProvider>
+        </NextAuthProvider>
       </body>
     </html>
   );
