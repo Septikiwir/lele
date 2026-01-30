@@ -19,32 +19,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const { isSidebarCollapsed, toggleSidebar, kolam, pembeli, addRiwayatPanen, addPenjualan, addPembeli, getLatestSampling } = useApp();
     const { showToast } = useToast();
 
-    // Redirect to login if not authenticated
-    useEffect(() => {
-        if (status === 'loading') return; // Wait for session to load
-        if (!session) {
-            router.push('/login');
-        }
-    }, [session, status, router]);
-
-    // Show loading while checking authentication
-    if (status === 'loading') {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-slate-50">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-slate-500">Loading...</p>
-                </div>
-            </div>
-        );
-    }
-
-    // Don't render if not authenticated
-    if (!session) {
-        return null;
-    }
-
-    // Panen Modal
+    // Panen Modal - Must be declared before any conditional returns
     const [isPanenModalOpen, setIsPanenModalOpen] = useState(false);
     const [panenForm, setPanenForm] = useState({
         kolamId: '',
@@ -66,6 +41,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         alamat: ''
     });
 
+    // Redirect to login if not authenticated
+    useEffect(() => {
+        if (status === 'loading') return; // Wait for session to load
+        if (!session) {
+            router.push('/login');
+        }
+    }, [session, status, router]);
+
     // Auto-calculate fish count when weight changes
     useEffect(() => {
         if (!panenForm.kolamId || !panenForm.beratTotalKg) return;
@@ -85,6 +68,23 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [panenForm.beratTotalKg, panenForm.kolamId]);
+
+    // Show loading while checking authentication
+    if (status === 'loading') {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-slate-50">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-slate-500">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Don't render if not authenticated
+    if (!session) {
+        return null;
+    }
 
     const handlePanenSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
