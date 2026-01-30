@@ -246,16 +246,16 @@ export default function KeuanganPage() {
             {/* Content: Pendapatan */}
             <div>
                     {/* Action Buttons */}
-                    <div className="flex gap-2 mb-6">
-                        <button onClick={() => setShowPembeliForm(true)} className="btn btn-secondary">
+                    <div className="flex flex-wrap gap-2 mb-6">
+                        <button onClick={() => setShowPembeliForm(true)} className="btn btn-secondary flex-1 sm:flex-none">
                             <PlusIcon />
                             Pembeli
                         </button>
-                        <button onClick={() => setShowPenjualanForm(true)} className="btn btn-primary">
+                        <button onClick={() => setShowPenjualanForm(true)} className="btn btn-primary flex-1 sm:flex-none">
                             <PlusIcon />
                             Penjualan
                         </button>
-                        <button onClick={() => setShowPengeluaranForm(true)} className="btn bg-red-600 text-white hover:bg-red-700">
+                        <button onClick={() => setShowPengeluaranForm(true)} className="btn bg-red-600 text-white hover:bg-red-700 flex-1 sm:flex-none">
                             <PlusIcon />
                             Pengeluaran
                         </button>
@@ -378,17 +378,17 @@ export default function KeuanganPage() {
                     {/* Riwayat Transaksi (Combined) */}
                     <div className="table-wrapper">
                         <div className="px-6 py-4 border-b border-slate-200 bg-white">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex flex-col gap-4">
                                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                                     <span>📊</span>
                                     <span>Riwayat Transaksi</span>
                                 </h2>
-                                <div className="flex gap-4 items-center">
+                                <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
                                     {/* Pill Tabs */}
-                                    <div className="inline-flex bg-slate-100 rounded-lg p-1">
+                                    <div className="inline-flex bg-slate-100 rounded-lg p-1 w-full sm:w-auto">
                                         <button
                                             onClick={() => setTransactionTab('penjualan')}
-                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                                            className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all ${
                                                 transactionTab === 'penjualan'
                                                     ? 'bg-white text-teal-600 shadow-sm'
                                                     : 'text-slate-600 hover:text-slate-900'
@@ -398,7 +398,7 @@ export default function KeuanganPage() {
                                         </button>
                                         <button
                                             onClick={() => setTransactionTab('pengeluaran')}
-                                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                                            className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all ${
                                                 transactionTab === 'pengeluaran'
                                                     ? 'bg-white text-red-600 shadow-sm'
                                                     : 'text-slate-600 hover:text-slate-900'
@@ -411,7 +411,7 @@ export default function KeuanganPage() {
                                     <select
                                         value={transactionTab === 'penjualan' ? filterKolamPenjualan : filterKolamPengeluaran}
                                         onChange={(e) => transactionTab === 'penjualan' ? setFilterKolamPenjualan(e.target.value) : setFilterKolamPengeluaran(e.target.value)}
-                                        className="input py-2 sm:max-w-xs w-full"
+                                        className="input py-2 w-full sm:w-auto"
                                     >
                                         <option value="">Semua Kolam</option>
                                         {transactionTab === 'pengeluaran' && <option value="UMUM">Umum (Farm Level)</option>}
