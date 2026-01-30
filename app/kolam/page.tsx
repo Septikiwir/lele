@@ -7,8 +7,7 @@ import { useState } from 'react';
 
 import { PlusIcon, EditIcon, TrashIcon, EyeIcon, LoadingSpinner } from '../components/ui/Icons';
 import EmptyState from '../components/ui/EmptyState';
-import Modal from '../components/ui/Modal';
-import { useToast } from '../context/ToastContext'; // Import Toast
+import Modal from '../components/ui/Modal';import PanenModal from '../components/modals/PanenModal';import { useToast } from '../context/ToastContext'; // Import Toast
 import { TipePembeli } from '../context/AppContext';
 
 const statusColors = {
@@ -47,16 +46,7 @@ export default function KolamPage() {
 
     // Harvest Modal State
     const [isPanenModalOpen, setIsPanenModalOpen] = useState(false);
-    const [panenForm, setPanenForm] = useState({
-        kolamId: '',
-        pembeliId: '',
-        tanggal: new Date().toISOString().split('T')[0],
-        beratTotalKg: '',
-        jumlahEkor: '',
-        hargaPerKg: '25000',
-        tipe: 'PARSIAL' as 'PARSIAL' | 'TOTAL',
-        catatan: ''
-    });
+    const [selectedKolamId, setSelectedKolamId] = useState<string>('');
 
     // Tebar Modal State
     const [isTebarModalOpen, setIsTebarModalOpen] = useState(false);
@@ -134,62 +124,7 @@ export default function KolamPage() {
         }
     };
 
-    const handlePanenSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (isSubmitting) return;
-        
-        setIsSubmitting(true);
-        try {
-            if (!panenForm.pembeliId) {
-                showToast('Harap pilih pembeli!', 'error');
-                return;
-            }
 
-            // 1. Add Harvest Record
-            await addRiwayatPanen({
-                kolamId: panenForm.kolamId,
-                tanggal: panenForm.tanggal,
-                beratTotalKg: parseFloat(panenForm.beratTotalKg),
-                jumlahEkor: parseInt(panenForm.jumlahEkor),
-                hargaPerKg: parseFloat(panenForm.hargaPerKg),
-                tipe: panenForm.tipe,
-                catatan: panenForm.catatan,
-            });
-
-            // 2. Add Sales Record
-            const totalPendapatan = parseFloat(panenForm.beratTotalKg) * parseFloat(panenForm.hargaPerKg);
-
-            addPenjualan({
-                kolamId: panenForm.kolamId,
-                pembeliId: panenForm.pembeliId,
-                tanggal: panenForm.tanggal,
-                beratKg: parseFloat(panenForm.beratTotalKg),
-                hargaPerKg: parseFloat(panenForm.hargaPerKg),
-                // Note: Penjualan interface doesn't have catatan field
-            });
-
-            showToast('Panen & Penjualan berhasil dicatat!', 'success');
-            setIsPanenModalOpen(false);
-
-            // Reset form
-            setPanenForm({
-                kolamId: '',
-                pembeliId: '',
-                tanggal: new Date().toISOString().split('T')[0],
-                beratTotalKg: '',
-                jumlahEkor: '',
-                hargaPerKg: '25000',
-                tipe: 'PARSIAL',
-                catatan: ''
-            });
-
-        } catch (error) {
-            console.error(error);
-            showToast('Gagal mencatat panen', 'error');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
 
     const handleDelete = (id: string) => {
         deleteKolam(id);
@@ -350,7 +285,7 @@ export default function KolamPage() {
                                             </button>
                                             <button
                                                 onClick={() => {
-                                                    setPanenForm(prev => ({ ...prev, kolamId: k.id }));
+                                                    setSelectedKolamId(k.id);
                                                     setIsPanenModalOpen(true);
                                                 }}
                                                 className="btn btn-success"
@@ -482,153 +417,11 @@ export default function KolamPage() {
             </Modal>
 
             {/* HARVEST MODAL */}
-            <Modal 
-                isOpen={isPanenModalOpen} 
-                onClose={() => setIsPanenModalOpen(false)} 
-                title="Form Panen Cepat"
-                size="lg"
-                footer={
-                    <>
-                        <button type="button" onClick={() => setIsPanenModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
-                        <button type="submit" form="panen-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan Panen'}
-                        </button>
-                    </>
-                }
-            >
-                <form id="panen-form" onSubmit={handlePanenSubmit} className="space-y-4">
-                    <div className="form-group">
-                        <label className="form-label">Kolam</label>
-                        <select
-                            className="input bg-slate-100"
-                            value={panenForm.kolamId}
-                            disabled
-                        >
-                            {kolam.map(k => <option key={k.id} value={k.id}>{k.nama}</option>)}
-                        </select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="form-group">
-                            <label className="form-label">Tipe Panen</label>
-                            <select
-                                className="input"
-                                value={panenForm.tipe}
-                                onChange={(e) => setPanenForm({ ...panenForm, tipe: e.target.value as any })}
-                            >
-                                <option value="PARSIAL">Parsial (Sebagian)</option>
-                                <option value="TOTAL">Total (Panen Raya)</option>
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Tanggal</label>
-                            <input
-                                type="date"
-                                className="input"
-                                value={panenForm.tanggal}
-                                onChange={(e) => setPanenForm({ ...panenForm, tanggal: e.target.value })}
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Pembeli</label>
-                        <select
-                            className="input"
-                            value={panenForm.pembeliId}
-                            onChange={(e) => setPanenForm({ ...panenForm, pembeliId: e.target.value })}
-                            required
-                        >
-                            <option value="">-- Pilih Pembeli --</option>
-                            {pembeli.map(p => (
-                                <option key={p.id} value={p.id}>{p.nama} ({p.tipe})</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="form-group">
-                            <label className="form-label">Jumlah Ekor</label>
-                            <input
-                                type="number"
-                                className="input"
-                                value={panenForm.jumlahEkor}
-                                onChange={(e) => {
-                                    const count = parseInt(e.target.value);
-                                    let estimatedWeight = panenForm.beratTotalKg;
-
-                                    if (count > 0 && panenForm.kolamId) {
-                                        const latestSampling = getLatestSampling(panenForm.kolamId);
-                                        if (latestSampling && latestSampling.jumlahIkanPerKg > 0) {
-                                            estimatedWeight = (count / latestSampling.jumlahIkanPerKg).toFixed(1);
-                                        }
-                                    }
-
-                                    setPanenForm({
-                                        ...panenForm,
-                                        jumlahEkor: e.target.value,
-                                        beratTotalKg: estimatedWeight
-                                    });
-                                }}
-                                required
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Berat Total (kg)</label>
-                            <input
-                                type="number"
-                                step="0.1"
-                                className="input"
-                                value={panenForm.beratTotalKg}
-                                onChange={(e) => {
-                                    const totalWeight = parseFloat(e.target.value);
-                                    let estimatedCount = panenForm.jumlahEkor;
-
-                                    if (totalWeight > 0 && panenForm.kolamId) {
-                                        const latestSampling = getLatestSampling(panenForm.kolamId);
-                                        if (latestSampling && latestSampling.jumlahIkanPerKg > 0) {
-                                            estimatedCount = Math.round(totalWeight * latestSampling.jumlahIkanPerKg).toString();
-                                        }
-                                    }
-
-                                    setPanenForm({
-                                        ...panenForm,
-                                        beratTotalKg: e.target.value,
-                                        jumlahEkor: estimatedCount
-                                    });
-                                }}
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Harga Per Kg</label>
-                        <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">Rp</span>
-                            <input
-                                type="number"
-                                className="input"
-                                style={{ paddingLeft: '42px' }}
-                                value={panenForm.hargaPerKg}
-                                onChange={(e) => setPanenForm({ ...panenForm, hargaPerKg: e.target.value })}
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Catatan (Opsional)</label>
-                        <input
-                            type="text"
-                            className="input"
-                            value={panenForm.catatan}
-                            onChange={(e) => setPanenForm({ ...panenForm, catatan: e.target.value })}
-                        />
-                    </div>
-                </form>
-            </Modal>
+            <PanenModal
+                isOpen={isPanenModalOpen}
+                onClose={() => setIsPanenModalOpen(false)}
+                defaultKolamId={selectedKolamId}
+            />
             {/* TEBAR MODAL */}
             <Modal 
                 isOpen={isTebarModalOpen} 

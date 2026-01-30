@@ -8,6 +8,7 @@ import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 import Modal from '../components/ui/Modal';
 import { PlusIcon, LoadingSpinner } from '../components/ui/Icons';
 import EmptyState from '../components/ui/EmptyState';
+import PanenModal from '../components/modals/PanenModal';
 
 export default function ProduksiPage() {
     const { kolam, pakan, riwayatPanen, pembeli, addRiwayatPanen, addPenjualan, addPembeli, getPanenByKolam, tebarBibit, getLatestSampling, getFeedRecommendation } = useApp();
@@ -267,6 +268,8 @@ export default function ProduksiPage() {
             showToast(panenForm.pembeliId ? 'Panen & Penjualan berhasil dicatat' : 'Panen berhasil dicatat', 'success');
         } catch (error: any) {
             showToast(error.message || 'Gagal mencatat panen', 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -612,98 +615,13 @@ export default function ProduksiPage() {
                 </form>
             </Modal>
 
-            {/* Modal Panen */}
-            <Modal 
-                isOpen={isPanenModalOpen} 
-                onClose={() => setIsPanenModalOpen(false)} 
-                title="Catat Panen"
-                footer={
-                    <>
-                        <button type="button" onClick={() => setIsPanenModalOpen(false)} className="btn btn-secondary">Batal</button>
-                        <button type="submit" form="form-panen" className="btn bg-emerald-600 text-white hover:bg-emerald-700 border-transparent">Simpan Panen</button>
-                    </>
-                }
-            >
-                <form id="form-panen" onSubmit={handlePanenSubmit} className="space-y-4">
-                    <div className="form-group">
-                        <label className="form-label">Tanggal</label>
-                        <input type="date" className="input w-full" required
-                            value={panenForm.tanggal} onChange={e => setPanenForm({ ...panenForm, tanggal: e.target.value })} />
-                    </div>
-                    <div className="form-group">
-                        <label className="form-label">Pembeli</label>
-                        <div className="flex gap-2">
-                            <select
-                                className="input w-full"
-                                value={panenForm.pembeliId}
-                                onChange={e => setPanenForm({ ...panenForm, pembeliId: e.target.value })}
-                                required
-                            >
-                                <option value="">-- Pilih Pembeli --</option>
-                                {pembeli.map(p => (
-                                    <option key={p.id} value={p.id}>{p.nama} ({p.tipe})</option>
-                                ))}
-                            </select>
-                            <button
-                                type="button"
-                                onClick={() => setIsBuyerModalOpen(true)}
-                                className="btn btn-secondary px-3"
-                                title="Tambah Pembeli Baru"
-                            >
-                                <PlusIcon />
-                            </button>
-                        </div>
-                        <p className="text-xs text-slate-400 mt-1">Data akan otomatis masuk ke menu Penjualan.</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="form-group">
-                            <label className="form-label">Berat Total (Kg)</label>
-                            <input type="number" className="input w-full" required placeholder="0"
-                                value={panenForm.beratTotalKg} onChange={e => setPanenForm({ ...panenForm, beratTotalKg: e.target.value })} />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Jlh Ekor (Opsional)</label>
-                            <input type="number" className="input w-full" placeholder="0"
-                                value={panenForm.jumlahEkor} onChange={e => setPanenForm({ ...panenForm, jumlahEkor: e.target.value })} />
-                        </div>
-                    </div>
-                    <div className="form-group">
-                        <label className="form-label">Harga Jual (Rp/kg)</label>
-                        <input type="text" className="input w-full" required
-                            value={formatCurrencyInput(panenForm.hargaPerKg)}
-                            onChange={e => setPanenForm({ ...panenForm, hargaPerKg: parseCurrencyInput(e.target.value) })} />
-                    </div>
-                    <div className="form-group">
-                        <label className="form-label">Tipe</label>
-                        <select
-                            className="input w-full"
-                            value={panenForm.tipe}
-                            onChange={e => {
-                                const newTipe = e.target.value as 'PARSIAL' | 'TOTAL';
-                                setPanenForm(prev => {
-                                    let updates = { ...prev, tipe: newTipe };
+            {/* Modal Panen - Reusable Component */}
+            <PanenModal 
+                isOpen={isPanenModalOpen}
+                onClose={() => setIsPanenModalOpen(false)}
+                defaultKolamId={selectedKolamId}
+            />
 
-                                    // Auto-fill if 'TOTAL'
-                                    if (newTipe === 'TOTAL' && prev.kolamId) {
-                                        const k = kolam.find(p => p.id === prev.kolamId);
-                                        if (k) {
-                                            const est = calculateEstimation(k);
-                                            updates.jumlahEkor = k.jumlahIkan.toString();
-                                            if (est && est.currentBiomass) {
-                                                updates.beratTotalKg = est.currentBiomass;
-                                            }
-                                        }
-                                    }
-                                    return updates;
-                                });
-                            }}
-                        >
-                            <option value="PARSIAL">Parsial</option>
-                            <option value="TOTAL">Total (Panen Raya)</option>
-                        </select>
-                    </div>
-                </form>
-            </Modal>
             {/* Modal Quick Add Buyer */}
             <Modal 
                 isOpen={isBuyerModalOpen} 

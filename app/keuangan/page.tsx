@@ -8,6 +8,7 @@ import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 import { PlusIcon, TrashIcon, LoadingSpinner } from '../components/ui/Icons';
 import Modal from '../components/ui/Modal';
 import EmptyState from '../components/ui/EmptyState';
+import PanenModal from '../components/modals/PanenModal';
 
 const tipePembeliOptions: { value: TipePembeli; label: string; emoji: string }[] = [
     { value: 'TENGKULAK', label: 'Tengkulak', emoji: '🚛' },
@@ -283,6 +284,7 @@ export default function KeuanganPage() {
 
                     {/* Kategori Summary Cards */}
                     <div className="card p-6">
+                        <h2 className="text-lg font-semibold text-slate-900 mb-4">Pengeluaran</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
                             {kategoriTotals.map((k, idx) => {
                                 const colorClasses = [
@@ -398,12 +400,12 @@ export default function KeuanganPage() {
                     {/* Riwayat Transaksi (Combined) */}
                     <div className="table-wrapper">
                         <div className="px-6 py-4 border-b border-slate-200 bg-white">
-                            <div className="flex flex-col gap-4">
+                            <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
                                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                                     <span>📊</span>
                                     <span>Riwayat Transaksi</span>
                                 </h2>
-                                <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+                                <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
                                     {/* Pill Tabs */}
                                     <div className="inline-flex bg-slate-100 rounded-lg p-1 w-full sm:w-auto">
                                         <button
@@ -431,7 +433,7 @@ export default function KeuanganPage() {
                                     <select
                                         value={transactionTab === 'penjualan' ? filterKolamPenjualan : filterKolamPengeluaran}
                                         onChange={(e) => transactionTab === 'penjualan' ? setFilterKolamPenjualan(e.target.value) : setFilterKolamPengeluaran(e.target.value)}
-                                        className="input py-2 w-full sm:w-auto"
+                                        className="input text-sm py-1.5 px-3 w-full sm:w-auto"
                                     >
                                         <option value="">Semua Kolam</option>
                                         {transactionTab === 'pengeluaran' && <option value="UMUM">Umum (Farm Level)</option>}
@@ -596,120 +598,11 @@ export default function KeuanganPage() {
             </div>
 
             {/* Modals */}
-            {/* Form Modal - Penjualan */}
-            <Modal 
-                isOpen={showPenjualanForm} 
-                onClose={() => setShowPenjualanForm(false)} 
-                title="Catat Penjualan Baru"
-                footer={
-                    <>
-                        <button type="button" onClick={() => setShowPenjualanForm(false)} className="btn btn-secondary">Batal</button>
-                        <button type="submit" form="form-penjualan" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan'}
-                        </button>
-                    </>
-                }
-            >
-                <form id="form-penjualan" onSubmit={handlePenjualanSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="form-group">
-                            <label className="form-label">Kolam</label>
-                            <select
-                                value={penjualanForm.kolamId}
-                                onChange={(e) => setPenjualanForm({ ...penjualanForm, kolamId: e.target.value })}
-                                className="input"
-                                required
-                            >
-                                <option value="">-- Pilih --</option>
-                                {kolam.map(k => (
-                                    <option key={k.id} value={k.id}>{k.nama}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Pembeli</label>
-                            <select
-                                value={penjualanForm.pembeliId}
-                                onChange={(e) => setPenjualanForm({ ...penjualanForm, pembeliId: e.target.value })}
-                                className="input"
-                                required
-                            >
-                                <option value="">-- Pilih --</option>
-                                {pembeli.map(p => (
-                                    <option key={p.id} value={p.id}>{p.nama}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Tanggal</label>
-                        <input
-                            type="date"
-                            value={penjualanForm.tanggal}
-                            onChange={(e) => setPenjualanForm({ ...penjualanForm, tanggal: e.target.value })}
-                            className="input"
-                            required
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="form-group">
-                            <label className="form-label">Berat (kg)</label>
-                            <input
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                value={penjualanForm.beratKg}
-                                onChange={(e) => setPenjualanForm({ ...penjualanForm, beratKg: e.target.value })}
-                                placeholder="Contoh: 100"
-                                className="input"
-                                required
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">Harga/kg (Rp)</label>
-                            <input
-                                type="text"
-                                value={formatCurrencyInput(penjualanForm.hargaPerKg)}
-                                onChange={(e) => setPenjualanForm({ ...penjualanForm, hargaPerKg: parseCurrencyInput(e.target.value) })}
-                                placeholder="Contoh: 25.000"
-                                className="input"
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    {penjualanForm.beratKg && penjualanForm.hargaPerKg && (
-                        <div className="p-4 bg-green-50 rounded-xl">
-                            <p className="text-sm text-green-700">Total: <span className="font-bold">Rp {(parseFloat(penjualanForm.beratKg) * parseFloat(penjualanForm.hargaPerKg)).toLocaleString('id-ID')}</span></p>
-                        </div>
-                    )}
-
-                    <div className="form-group">
-                        <label className="form-label">Jumlah Ikan (opsional)</label>
-                        <input
-                            type="number"
-                            min="0"
-                            value={penjualanForm.jumlahIkan}
-                            onChange={(e) => setPenjualanForm({ ...penjualanForm, jumlahIkan: e.target.value })}
-                            placeholder="Contoh: 500"
-                            className="input"
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Keterangan (opsional)</label>
-                        <input
-                            type="text"
-                            value={penjualanForm.keterangan}
-                            onChange={(e) => setPenjualanForm({ ...penjualanForm, keterangan: e.target.value })}
-                            placeholder="Contoh: Panen parsial"
-                            className="input"
-                        />
-                    </div>
-                </form>
-            </Modal>
+            {/* Panen Modal - Reusable Component */}
+            <PanenModal 
+                isOpen={showPenjualanForm}
+                onClose={() => setShowPenjualanForm(false)}
+            />
 
             {/* Form Modal - Pembeli */}
             <Modal 
