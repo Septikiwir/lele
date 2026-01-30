@@ -34,7 +34,8 @@ export default function ProduksiPage() {
         kolamId: '',
         tanggal: new Date().toISOString().split('T')[0],
         jumlah: '',
-        beratPerEkor: '5'
+        beratPerEkor: '5',
+        hargaPerEkor: ''
     });
 
     // Panen Modal
@@ -187,10 +188,11 @@ export default function ProduksiPage() {
             await tebarBibit(tebarForm.kolamId, {
                 tanggal: tebarForm.tanggal,
                 jumlah: parseInt(tebarForm.jumlah),
-                beratPerEkor: parseFloat(tebarForm.beratPerEkor)
+                beratPerEkor: parseFloat(tebarForm.beratPerEkor),
+                hargaPerEkor: parseFloat(tebarForm.hargaPerEkor)
             });
             setIsTebarModalOpen(false);
-            setTebarForm({ ...tebarForm, jumlah: '', beratPerEkor: '5' });
+            setTebarForm({ ...tebarForm, jumlah: '', beratPerEkor: '5', hargaPerEkor: '' });
             showToast('Siklus berhasil dimulai', 'success');
         } catch (error) {
             showToast('Gagal menebar bibit', 'error');
@@ -580,6 +582,22 @@ export default function ProduksiPage() {
                                 </p>
                             )}
                         </div>
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Harga Per Ekor <span className="text-red-500">*</span></label>
+                        <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">Rp</span>
+                            <input
+                                type="number"
+                                className="input w-full"
+                                style={{ paddingLeft: '42px' }}
+                                value={tebarForm.hargaPerEkor}
+                                onChange={e => setTebarForm({ ...tebarForm, hargaPerEkor: e.target.value })}
+                                placeholder="Contoh: 250"
+                                required
+                            />
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">Harga pembelian bibit per ekor</p>
                     </div>
                 </form>
             </Modal>

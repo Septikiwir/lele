@@ -241,8 +241,12 @@ interface AppContextType {
     isSidebarCollapsed: boolean;
     toggleSidebar: () => void;
 
+    // Harga Pasar
+    hargaPasarPerKg: number;
+    setHargaPasarPerKg: (harga: number) => void;
+
     // Tebar
-    tebarBibit: (kolamId: string, data: { tanggal: string; jumlah: number; beratPerEkor: number }) => Promise<void>;
+    tebarBibit: (kolamId: string, data: { tanggal: string; jumlah: number; beratPerEkor: number; hargaPerEkor: number }) => Promise<void>;
 
     // Refresh
     refreshData: () => Promise<void>;
@@ -316,6 +320,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [riwayatSampling, setRiwayatSampling] = useState<RiwayatSampling[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+    const [hargaPasarPerKg, setHargaPasarPerKg] = useState(35000); // Default Rp 35.000/kg
 
     // Fetch active farm
     const fetchFarm = useCallback(async () => {
@@ -1210,8 +1215,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const calculateTotalAssetValue = (pricePerKg: number): number => {
         let totalVal = 0;
         kolam.forEach(k => {
-            const { totalBiomass } = calculateBiomass(k.id);
-            totalVal += totalBiomass * pricePerKg;
+            if (k.jumlahIkan > 0) {
+                // Menggunakan range 85-150 gram, kita ambil nilai tengah = 117.5 gram
+                const avgWeightInRange = 117.5; // gram
+                const beratTotalKg = (k.jumlahIkan * avgWeightInRange) / 1000;
+                totalVal += beratTotalKg * pricePerKg;
+            }
         });
         return totalVal;
     };
@@ -1286,7 +1295,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
 
 
-    const tebarBibit = async (kolamId: string, data: { tanggal: string; jumlah: number; beratPerEkor: number }) => {
+    const tebarBibit = async (kolamId: string, data: { tanggal: string; jumlah: number; beratPerEkor: number; hargaPerEkor: number }) => {
         if (!activeFarmId) return;
 
         try {
@@ -1311,6 +1320,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     catatan: `Bibit awal: ${data.beratPerEkor} gram/ekor`
                 });
             }
+
+            // Catat pengeluaran bibit
+            const totalHarga = data.jumlah * data.hargaPerEkor;
+            await addPengeluaran({
+                tanggal: data.tanggal,
+                kategori: 'BIBIT',
+                keterangan: `Pembelian bibit ${data.jumlah} ekor @ Rp${data.hargaPerEkor.toLocaleString('id-ID')}`,
+                jumlah: totalHarga,
+                kolamId
+            });
 
             await refreshData();
         } catch (error) {
@@ -1476,6 +1495,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             calculateFCR,
             isSidebarCollapsed,
             toggleSidebar,
+            hargaPasarPerKg,
+            setHargaPasarPerKg,
             tebarBibit,
             refreshData,
             getFeedRecommendation,

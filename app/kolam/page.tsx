@@ -29,7 +29,8 @@ export default function KolamPage() {
     const {
         kolam, deleteKolam, calculateKepadatan, getUnifiedStatus,
         getLatestSampling, getFeedRecommendation,
-        addPakan, addRiwayatPanen, addPenjualan, pembeli, getAllJenisPakan, tebarBibit
+        addPakan, addRiwayatPanen, addPenjualan, pembeli, getAllJenisPakan, tebarBibit,
+        hargaPasarPerKg
     } = useApp();
     const { showToast } = useToast();
     const [deleteModal, setDeleteModal] = useState<string | null>(null);
@@ -62,22 +63,25 @@ export default function KolamPage() {
         kolamId: '',
         tanggal: new Date().toISOString().split('T')[0],
         jumlah: '',
-        beratPerEkor: '5' // Default 5g
+        beratPerEkor: '5', // Default 5g
+        hargaPerEkor: '' // Harga per ekor bibit
     });
 
     const handleTebarSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!tebarForm.kolamId || !tebarForm.jumlah) return;
+        if (!tebarForm.kolamId || !tebarForm.jumlah || !tebarForm.hargaPerEkor) return;
 
         try {
             // Execute tebarBibit
             await tebarBibit(tebarForm.kolamId, {
                 tanggal: tebarForm.tanggal,
                 jumlah: parseInt(tebarForm.jumlah),
-                beratPerEkor: parseFloat(tebarForm.beratPerEkor) || 5, // Default 5g if empty/invalid
+                beratPerEkor: parseFloat(tebarForm.beratPerEkor),
+                hargaPerEkor: parseFloat(tebarForm.hargaPerEkor)
             });
             showToast('Tebar bibit berhasil!', 'success');
             setIsTebarModalOpen(false);
+            setTebarForm({ ...tebarForm, jumlah: '', beratPerEkor: '5', hargaPerEkor: '' });
         } catch (error) {
             console.error(error);
             showToast('Gagal tebar bibit', 'error');
@@ -212,11 +216,11 @@ export default function KolamPage() {
 
                         // Feed Rec Logic (Pre-calculated)
                         let feedRec = null;
+                        let currentWeight = 0;
                         if (!isEmpty) {
                             const latestSampling = getLatestSampling(k.id);
                             const today = new Date();
                             const growth = 2; // Default 2g/day
-                            let currentWeight = 0;
 
                             if (latestSampling && latestSampling.jumlahIkanPerKg > 0) {
                                 const lastWeight = 1000 / latestSampling.jumlahIkanPerKg;
@@ -231,6 +235,9 @@ export default function KolamPage() {
                             const totalBiomass = (k.jumlahIkan * currentWeight) / 1000;
                             feedRec = getFeedRecommendation(currentWeight, totalBiomass);
                         }
+
+                        // Estimasi Aset per kolam
+                        const estimasiAset = isEmpty ? 0 : (k.jumlahIkan * currentWeight / 1000) * hargaPasarPerKg;
 
                         return (
                             <div key={k.id} className="card p-6">
@@ -280,6 +287,16 @@ export default function KolamPage() {
                                             )}
                                         </div>
                                     </div>
+
+                                    {/* Estimasi Aset */}
+                                    {!isEmpty && (
+                                        <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl p-4 border border-purple-200/50">
+                                            <p className="text-[11px] font-bold text-purple-600 uppercase tracking-wider mb-2">Estimasi Aset</p>
+                                            <p className="text-base font-semibold text-purple-900">
+                                                Rp{estimasiAset.toLocaleString('id-ID')}
+                                            </p>
+                                        </div>
+                                    )}
 
                                     {/* Feed Rec Box */}
                                     {feedRec && (
@@ -647,6 +664,22 @@ export default function KolamPage() {
                             placeholder="Default: 5"
                         />
                         <p className="form-hint">Biarkan 5g jika tidak ditimbang</p>
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">Harga Per Ekor <span className="text-red-500">*</span></label>
+                        <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">Rp</span>
+                            <input
+                                type="number"
+                                className="input"
+                                style={{ paddingLeft: '42px' }}
+                                value={tebarForm.hargaPerEkor}
+                                onChange={(e) => setTebarForm({ ...tebarForm, hargaPerEkor: e.target.value })}
+                                placeholder="Contoh: 250"
+                                required
+                            />
+                        </div>
+                        <p className="form-hint">Harga pembelian bibit per ekor</p>
                     </div>
                 </form>
             </Modal>
