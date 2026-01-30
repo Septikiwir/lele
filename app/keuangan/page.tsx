@@ -309,7 +309,7 @@ export default function KeuanganPage() {
                     {/* Profit Per Kolam */}
                     <div className="card p-6">
                         <h2 className="text-lg font-semibold text-slate-900 mb-4">Profit Per Kolam</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                             {kolam.map(k => {
                                 const pendapatan = getTotalPenjualanByKolam(k.id);
                                 const pengeluaranTotal = getTotalPengeluaranByKolam(k.id);
@@ -317,23 +317,32 @@ export default function KeuanganPage() {
                                 const isProfit = profit >= 0;
 
                                 return (
-                                    <div key={k.id} className="bg-slate-50 rounded-xl p-4">
-                                        <h3 className="font-semibold text-slate-900 mb-3">{k.nama}</h3>
-                                        <div className="space-y-2 text-sm">
-                                            <div className="flex justify-between">
-                                                <span className="text-slate-500">💰 Pendapatan</span>
-                                                <span className="font-medium text-green-600">Rp {pendapatan.toLocaleString('id-ID')}</span>
+                                    <div key={k.id} className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-md transition-shadow">
+                                        {/* Header */}
+                                        <div className="p-5 pb-4">
+                                            <h3 className="font-bold text-base text-slate-900">{k.nama}</h3>
+                                        </div>
+                                        
+                                        {/* Body */}
+                                        <div className="px-5 pb-4 space-y-3">
+                                            <div>
+                                                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Pendapatan</p>
+                                                <p className="text-base font-semibold text-emerald-600">Rp {pendapatan.toLocaleString('id-ID')}</p>
                                             </div>
-                                            <div className="flex justify-between">
-                                                <span className="text-slate-500">💸 Pengeluaran</span>
-                                                <span className="font-medium text-red-600">Rp {pengeluaranTotal.toLocaleString('id-ID')}</span>
+                                            <div>
+                                                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Pengeluaran</p>
+                                                <p className="text-base font-semibold text-red-600">Rp {pengeluaranTotal.toLocaleString('id-ID')}</p>
                                             </div>
-                                            <div className="flex justify-between pt-2 border-t font-semibold">
-                                                <span>{isProfit ? '📈 Profit' : '📉 Rugi'}</span>
-                                                <span className={isProfit ? 'text-green-600' : 'text-red-600'}>
-                                                    Rp {Math.abs(profit).toLocaleString('id-ID')}
-                                                </span>
-                                            </div>
+                                        </div>
+
+                                        {/* Footer */}
+                                        <div className={`p-5 ${isProfit ? 'bg-slate-900' : 'bg-slate-900'}`}>
+                                            <p className="text-[11px] font-bold uppercase tracking-wider text-white/70 mb-2">
+                                                {isProfit ? 'Profit' : 'Rugi'}
+                                            </p>
+                                            <p className="text-xl font-bold text-white">
+                                                Rp {Math.abs(profit).toLocaleString('id-ID')}
+                                            </p>
                                         </div>
                                     </div>
                                 );
