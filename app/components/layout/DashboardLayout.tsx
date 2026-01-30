@@ -77,7 +77,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 pembeliId: panenForm.pembeliId,
                 kolamId: panenForm.kolamId,
                 tanggal: panenForm.tanggal,
-                jumlahKg: parseFloat(panenForm.beratTotalKg),
+                beratKg: parseFloat(panenForm.beratTotalKg),
                 hargaPerKg: parseFloat(panenForm.hargaPerKg),
                 catatan: panenForm.catatan
             });
