@@ -464,13 +464,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     // Load sidebar state from localStorage
     useEffect(() => {
-        const saved = localStorage.getItem('lele_sidebar_collapsed');
-        if (saved) setIsSidebarCollapsed(JSON.parse(saved));
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem('lele_sidebar_collapsed');
+            if (saved) setIsSidebarCollapsed(JSON.parse(saved));
+        }
     }, []);
 
     // Save sidebar state
     useEffect(() => {
-        localStorage.setItem('lele_sidebar_collapsed', JSON.stringify(isSidebarCollapsed));
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('lele_sidebar_collapsed', JSON.stringify(isSidebarCollapsed));
+        }
     }, [isSidebarCollapsed]);
 
     // Fetch farm on auth
