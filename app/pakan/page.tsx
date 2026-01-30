@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useApp, JadwalPakan } from '../context/AppContext';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 
-import { PlusIcon, TrashIcon, WarningIcon, ClockIcon, LoadingSpinner } from '../components/ui/Icons';
+import { PlusIcon, TrashIcon, WarningIcon, ClockIcon, LoadingSpinner, CalendarIcon, ArrowRightIcon } from '../components/ui/Icons';
 import Modal from '../components/ui/Modal';
 import EmptyState from '../components/ui/EmptyState';
 
@@ -26,22 +26,19 @@ export default function PakanPage() {
         getAllJenisPakan,
     } = useApp();
 
-    const [activeTab, setActiveTab] = useState<'riwayat' | 'stok' | 'jadwal'>('stok');
+
     const [showForm, setShowForm] = useState(false);
     const [showStokForm, setShowStokForm] = useState(false);
     const [showJadwalForm, setShowJadwalForm] = useState(false);
     const [deleteModal, setDeleteModal] = useState<{ type: 'stok' | 'jadwal', id: string } | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
+
     // Pagination states
     const [limitRiwayatPakan, setLimitRiwayatPakan] = useState(10);
-    const [limitStokPakan, setLimitStokPakan] = useState(10);
+
 
     // Initial Active Tab Logic based on hash or default
-    useEffect(() => {
-        if (window.location.hash === '#riwayat') setActiveTab('riwayat');
-        if (window.location.hash === '#stok') setActiveTab('stok');
-    }, []);
+
 
     const [formData, setFormData] = useState({
         kolamId: '',
@@ -165,18 +162,16 @@ export default function PakanPage() {
 
     // Derived Data
     const allJenisPakan = getAllJenisPakan();
-    
+
     // Filtered and sorted data
     const filteredRiwayatPakan = pakan
         .sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime())
         .slice(0, limitRiwayatPakan);
-    
-    const filteredStokPakan = stokPakan
-        .sort((a, b) => new Date(b.tanggalTambah).getTime() - new Date(a.tanggalTambah).getTime())
-        .slice(0, limitStokPakan);
-    const uniqueJenisInUse = [...new Set(jadwalPakan.map(j => j.jenisPakan))]; // For options if needed
-    const sortedJadwal = [...jadwalPakan].sort((a, b) => a.waktu.localeCompare(b.waktu));
 
+
+    // ... (keep existing state and logic)
+
+    // Calculate Grid KPIs
     // Next Feeding Logic
     const getNextFeeding = () => {
         const now = new Date();
@@ -197,309 +192,303 @@ export default function PakanPage() {
     const nextFeeding = getNextFeeding();
     const nextKolam = nextFeeding ? kolam.find(k => k.id === nextFeeding.kolamId) : null;
 
+    // Calculate Grid KPIs
+    const totalStokKg = allJenisPakan.reduce((sum, jenis) => sum + getStokTersediaByJenis(jenis), 0);
+    const pakanHariIni = pakan
+        .filter(p => p.tanggal === new Date().toISOString().split('T')[0])
+        .reduce((sum, p) => sum + p.jumlahKg, 0);
+
+    // Sort schedules
+    const sortedJadwal = [...jadwalPakan].sort((a, b) => a.waktu.localeCompare(b.waktu));
+
     return (
         <DashboardLayout>
-            <div className="flex flex-col gap-6 sm:gap-8">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="flex flex-col gap-6">
+                {/* Header & Actions */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-900">Manajemen Pakan</h1>
-                        <p className="text-slate-500 mt-1">Jadwal, stok, dan pencatatan pemberian pakan</p>
+                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Manajemen Pakan</h1>
+                        <p className="text-slate-500 text-sm">Monitor stok, jadwal, dan riwayat pemberian pakan.</p>
+                    </div>
+                    <div className="flex gap-3">
+                        <button onClick={() => setShowStokForm(true)} className="btn btn-secondary text-sm">
+                            📦 Tambah Stok
+                        </button>
+                        <button onClick={() => setShowForm(true)} className="btn btn-primary text-sm">
+                            🍚 Catat Pakan
+                        </button>
                     </div>
                 </div>
 
-                {/* Next Feeding Reminder Banner */}
-                {nextFeeding && activeTab === 'jadwal' && (
-                    <div className="p-6 bg-gradient-to-r from-teal-500 to-cyan-600 rounded-2xl text-white shadow-lg shadow-teal-200">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center animate-pulse">
+                {/* KPI Cards Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                    {/* 1. Total Stok */}
+                    <div className="stat-card p-6 bg-white border border-slate-100 group relative overflow-hidden">
+                        <div className="flex items-start justify-between z-10 relative">
+                            <div>
+                                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Stok</p>
+                                <div className="flex items-baseline gap-1 mt-1">
+                                    <p className="text-2xl font-bold text-slate-900">{totalStokKg.toFixed(1)}</p>
+                                    <span className="text-xs text-slate-400 font-normal">kg</span>
+                                </div>
+                            </div>
+                            <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 group-hover:bg-orange-100 transition-colors">
+                                <span className="text-xl">📦</span>
+                            </div>
+                        </div>
+                        <div className="mt-4 text-xs text-slate-500">
+                            {allJenisPakan.length} jenis pakan tersedia
+                        </div>
+                    </div>
+
+                    {/* 2. Pakan Hari Ini */}
+                    <div className="stat-card p-6 bg-white border border-slate-100 group relative overflow-hidden">
+                        <div className="flex items-start justify-between z-10 relative">
+                            <div>
+                                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Konsumsi Hari Ini</p>
+                                <div className="flex items-baseline gap-1 mt-1">
+                                    <p className="text-2xl font-bold text-slate-900">{pakanHariIni.toFixed(1)}</p>
+                                    <span className="text-xs text-slate-400 font-normal">kg</span>
+                                </div>
+                            </div>
+                            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-100 transition-colors">
+                                <CalendarIcon />
+                            </div>
+                        </div>
+                        <div className="mt-4 text-xs text-slate-500">
+                            Total pakan diberikan hari ini
+                        </div>
+                    </div>
+
+                    {/* 3. Jadwal Berikutnya */}
+                    <div className="stat-card p-6 bg-white border border-slate-100 group relative overflow-hidden">
+                        <div className="flex items-start justify-between z-10 relative">
+                            <div>
+                                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Jadwal Berikutnya</p>
+                                {nextFeeding ? (
+                                    <div className="mt-1">
+                                        <div className="flex items-baseline gap-2">
+                                            <p className="text-2xl font-bold text-teal-600">{nextFeeding.waktu}</p>
+                                            <span className="text-sm font-medium text-slate-700 truncate max-w-[120px]">
+                                                {nextKolam?.nama}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-baseline gap-1 mt-1">
+                                        <p className="text-xl font-bold text-slate-400">Selesai</p>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600 group-hover:bg-teal-100 transition-colors">
                                 <ClockIcon />
                             </div>
-                            <div>
-                                <p className="text-teal-100 font-medium text-sm uppercase tracking-wider">Jadwal Selanjutnya</p>
-                                <h2 className="text-2xl font-bold mt-1">
-                                    Pukul {nextFeeding.waktu} • {nextKolam?.nama}
-                                </h2>
-                                <p className="text-white/90 mt-1">
-                                    {nextFeeding.jumlahKg} kg {nextFeeding.jenisPakan} {nextFeeding.keterangan && `(${nextFeeding.keterangan})`}
-                                </p>
-                            </div>
                         </div>
-                    </div>
-                )}
-
-                {/* Tabs */}
-                <div className="tab-container border-b border-slate-200">
-                    <button
-                        onClick={() => setActiveTab('stok')}
-                        className={`tab tab-underline ${activeTab === 'stok' ? 'tab-active' : ''}`}
-                    >
-                        📦 Stok Pakan
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('jadwal')}
-                        className={`tab tab-underline ${activeTab === 'jadwal' ? 'tab-active' : ''}`}
-                    >
-                        📅 Jadwal Pakan
-                    </button>
-                    <button
-                    onClick={() => setActiveTab('riwayat')}
-                    className={`tab tab-underline ${activeTab === 'riwayat' ? 'tab-active' : ''}`}
-                >
-                    📝 Riwayat Pemberian
-                </button>
-            </div>
-
-            {/* Content: Jadwal Pakan */}
-            {activeTab === 'jadwal' && (
-                <div>
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-lg font-semibold text-slate-900">Rutinitas Pemberian Pakan</h2>
-                        <button onClick={() => setShowJadwalForm(true)} className="btn btn-primary">
-                            <PlusIcon /> Tambah Jadwal
-                        </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-                        {sortedJadwal.map(jadwal => {
-                            const k = kolam.find(item => item.id === jadwal.kolamId);
-                            return (
-                                <div key={jadwal.id} className={`card p-4 border-l-4 ${jadwal.aktif ? 'border-l-teal-500' : 'border-l-slate-300 opacity-75'}`}>
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div className="bg-teal-50 text-teal-700 px-3 py-1 rounded-lg font-bold text-lg">
-                                            {jadwal.waktu}
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <label className="relative inline-flex items-center cursor-pointer">
-                                                <input
-                                                    type="checkbox"
-                                                    className="sr-only peer"
-                                                    checked={jadwal.aktif}
-                                                    onChange={() => toggleJadwalAktif(jadwal.id, jadwal.aktif)}
-                                                />
-                                                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-teal-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-600"></div>
-                                            </label>
-                                            <button
-                                                onClick={() => setDeleteModal({ type: 'jadwal', id: jadwal.id })}
-                                                className="text-slate-400 hover:text-red-500"
-                                            >
-                                                <TrashIcon />
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <h3 className="font-semibold text-slate-900 text-lg mb-1">{k?.nama}</h3>
-                                    <p className="text-slate-600 text-sm mb-2">{jadwal.jumlahKg} kg • {jadwal.jenisPakan}</p>
-                                    {jadwal.keterangan && (
-                                        <p className="text-xs text-slate-400 italic">"{jadwal.keterangan}"</p>
-                                    )}
-                                </div>
-                            );
-                        })}
+                        <div className="mt-4 text-xs text-slate-500">
+                            {nextFeeding ? `${nextFeeding.jumlahKg} kg • ${nextFeeding.jenisPakan}` : 'Tidak ada jadwal tersisa hari ini'}
+                        </div>
                     </div>
                 </div>
-            )}
 
-            {/* Content: Riwayat */}
-            {activeTab === 'riwayat' && (
-                <>
-                    <div className="table-wrapper">
-                        <div className="px-6 py-4 border-b border-slate-200 bg-white flex justify-between items-center">
-                            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                                <span>📝</span>
-                                <span>Riwayat Pemberian Pakan</span>
-                            </h2>
-                            <button onClick={() => setShowForm(true)} className="btn btn-primary btn-sm">
-                                <PlusIcon /> Catat
-                            </button>
-                        </div>
-                        <table className="table table-compact">
-                            <thead>
-                                <tr>
-                                    <th>Tanggal</th>
-                                    <th>Kolam</th>
-                                    <th>Jenis Pakan</th>
-                                    <th className="text-right">Jumlah (kg)</th>
-                                    <th className="text-right">Est. FCR</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {pakan.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={5} className="p-0">
-                                            <EmptyState
-                                                title="Belum Ada Riwayat"
-                                                description="Belum ada data pemberian pakan yang tercatat"
-                                                icon="📝"
-                                            />
-                                        </td>
-                                    </tr>
+                {/* Main Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    {/* LEFT COLUMN (2/3) - Jadwal & Riwayat */}
+                    <div className="lg:col-span-2 space-y-6">
+
+                        {/* Section: Jadwal Rutin */}
+                        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+                                    <ClockIcon /> Rutinitas Pemberian Pakan
+                                </h3>
+                                <button onClick={() => setShowJadwalForm(true)} className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                                    + Atur Jadwal
+                                </button>
+                            </div>
+                            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {sortedJadwal.length === 0 ? (
+                                    <div className="col-span-full py-8 text-center text-slate-400 italic">
+                                        Belum ada jadwal rutin.
+                                    </div>
                                 ) : (
-                                    filteredRiwayatPakan.map(p => {
-                                            const k = kolam.find(item => item.id === p.kolamId);
-                                            const fcr = calculateFCR(p.kolamId);
-                                            return (
-                                            <tr key={p.id}>
-                                                <td className="text-small">{p.tanggal}</td>
-                                                <td className="text-strong">{k?.nama}</td>
-                                                <td>
-                                                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
-                                                        {p.jenisPakan}
-                                                    </span>
-                                                </td>
-                                                <td className="text-right text-small">{p.jumlahKg}</td>
-                                                <td className="text-right text-muted">
-                                                    {fcr > 0 ? fcr.toFixed(2) : '-'}
+                                    sortedJadwal.map(jadwal => {
+                                        const k = kolam.find(item => item.id === jadwal.kolamId);
+                                        return (
+                                            <div key={jadwal.id} className={`flex items-start gap-4 p-4 rounded-xl border transition-all ${jadwal.aktif ? 'bg-white border-slate-200 hover:border-teal-300 hover:shadow-sm' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
+                                                <div className={`mt-1 font-bold text-lg ${jadwal.aktif ? 'text-teal-600' : 'text-slate-400'}`}>
+                                                    {jadwal.waktu}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-semibold text-slate-900 truncate">{k?.nama}</h4>
+                                                    <p className="text-sm text-slate-500 truncate">{jadwal.jumlahKg} kg • {jadwal.jenisPakan}</p>
+                                                    {jadwal.keterangan && <p className="text-xs text-slate-400 mt-1 italic">&quot;{jadwal.keterangan}&quot;</p>}
+                                                </div>
+                                                <div className="flex flex-col gap-2">
+                                                    <label className="relative inline-flex items-center cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="sr-only peer"
+                                                            checked={jadwal.aktif}
+                                                            onChange={() => toggleJadwalAktif(jadwal.id, jadwal.aktif)}
+                                                        />
+                                                        <div className="w-7 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-teal-500"></div>
+                                                    </label>
+                                                    <button
+                                                        onClick={() => setDeleteModal({ type: 'jadwal', id: jadwal.id })}
+                                                        className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                                                    >
+                                                        <TrashIcon />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Section: Riwayat Table */}
+                        <div className="bg-white rounded-2xl border border-slate-100 hover:shadow-md transition-all overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-transparent">
+                                <h3 className="font-bold text-slate-800">Riwayat Terakhir</h3>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Waktu</th>
+                                            <th>Kolam</th>
+                                            <th>Pakan</th>
+                                            <th className="text-right">Jumlah</th>
+                                            <th className="text-right">FCR Est.</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {pakan.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={5} className="text-center text-slate-400 py-8">
+                                                    Belum ada data riwayat.
                                                 </td>
                                             </tr>
-                                            );
-                                        })
-                                    )}
-                                </tbody>
-                            </table>
-                            {pakan.length > 0 && (
-                                <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                    <p className="text-sm text-slate-500">
-                                        Menampilkan {Math.min(limitRiwayatPakan, filteredRiwayatPakan.length)} dari {pakan.length} data
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        <label className="text-sm text-slate-600">Tampilkan:</label>
-                                        <select 
-                                            value={limitRiwayatPakan} 
-                                            onChange={(e) => setLimitRiwayatPakan(Number(e.target.value))} 
-                                            className="input py-1 px-2 text-sm"
-                                        >
-                                            <option value={10}>10</option>
-                                            <option value={25}>25</option>
-                                            <option value={50}>50</option>
-                                            <option value={100}>100</option>
-                                            <option value={9999}>Semua</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            )}
-                    </div>
-                </>
-            )}
-
-            {/* Content: Stok Pakan */}
-            {activeTab === 'stok' && (
-                <>
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-lg font-semibold text-slate-900">Pakan Tersedia</h2>
-                        <button onClick={() => setShowStokForm(true)} className="btn btn-primary">
-                            <PlusIcon /> Tambah Stok
-                        </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {allJenisPakan.map(jenis => {
-                            const tersedia = getStokTersediaByJenis(jenis);
-                            const isLow = tersedia <= 10;
-                            return (
-                                <div key={jenis} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                                    {/* Header dengan background kuning */}
-                                    <div className={`${isLow ? 'bg-gradient-to-br from-amber-100 to-yellow-100' : 'bg-gradient-to-br from-yellow-50 to-amber-50'} px-6 py-4 flex items-center justify-between`}>
-                                        <div className="flex items-center gap-3">
-                                            <div className="text-2xl">💊</div>
-                                            <h3 className="font-bold text-slate-800">{jenis}</h3>
-                                        </div>
-                                        {isLow && (
-                                            <span className="px-2 py-1 bg-amber-200/60 text-amber-700 text-xs font-bold rounded-lg flex items-center gap-1">
-                                                <WarningIcon /> Menipis
-                                            </span>
+                                        ) : (
+                                            filteredRiwayatPakan.map(p => {
+                                                const k = kolam.find(item => item.id === p.kolamId);
+                                                const fcr = calculateFCR(p.kolamId);
+                                                return (
+                                                    <tr key={p.id}>
+                                                        <td className="text-slate-500">{p.tanggal}</td>
+                                                        <td className="font-medium text-slate-900">{k?.nama}</td>
+                                                        <td>
+                                                            <span className="badge badge-warning">
+                                                                {p.jenisPakan}
+                                                            </span>
+                                                        </td>
+                                                        <td className="text-right font-medium text-slate-900">{p.jumlahKg} kg</td>
+                                                        <td className="text-right text-slate-500">{fcr > 0 ? fcr.toFixed(2) : '-'}</td>
+                                                    </tr>
+                                                );
+                                            })
                                         )}
-                                    </div>
-                                    
-                                    {/* Content dengan background putih */}
-                                    <div className="px-6 py-6">
-                                        <p className="text-3xl font-bold text-slate-900">
-                                            {tersedia.toFixed(1)} <span className="text-lg font-normal text-slate-400">kg</span>
-                                        </p>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    <div className="table-wrapper mt-8">
-                        <div className="px-6 py-4 border-b border-slate-200 bg-white">
-                            <h3 className="text-lg font-bold text-slate-900">Riwayat Stok</h3>
-                        </div>
-                        <table className="table table-compact">
-                            <thead>
-                                <tr>
-                                    <th>Tanggal</th>
-                                    <th>Jenis Pakan</th>
-                                    <th className="text-right">Jumlah (kg)</th>
-                                    <th className="text-right">Harga/kg</th>
-                                    <th className="text-right">Total</th>
-                                    <th>Keterangan</th>
-                                    <th className="text-right">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {stokPakan.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={7} className="p-0">
-                                            <EmptyState
-                                                title="Belum Ada Riwayat Stok"
-                                                description="Belum ada data penambahan stok pakan"
-                                                icon="💊"
-                                            />
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    filteredStokPakan.map(s => (
-                                        <tr key={s.id}>
-                                            <td className="text-small">{s.tanggalTambah}</td>
-                                            <td className="text-strong">{s.jenisPakan}</td>
-                                            <td className="text-right text-small text-green-600">+{s.stokAwal}</td>
-                                            <td className="text-right text-small">Rp {s.hargaPerKg.toLocaleString('id-ID')}</td>
-                                            <td className="text-right text-strong">Rp {(s.stokAwal * s.hargaPerKg).toLocaleString('id-ID')}</td>
-                                            <td className="text-muted text-small max-w-xs truncate">{s.keterangan || '-'}</td>
-                                            <td className="action-cell">
-                                                <button
-                                                    onClick={() => setDeleteModal({ type: 'stok', id: s.id })}
-                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                >
-                                                    <TrashIcon />
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                        {stokPakan.length > 0 && (
-                            <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <p className="text-sm text-slate-500">
-                                    Menampilkan {Math.min(limitStokPakan, filteredStokPakan.length)} dari {stokPakan.length} data
-                                </p>
-                                <div className="flex items-center gap-2">
-                                    <label className="text-sm text-slate-600">Tampilkan:</label>
-                                    <select 
-                                        value={limitStokPakan} 
-                                        onChange={(e) => setLimitStokPakan(Number(e.target.value))} 
-                                        className="input py-1 px-2 text-sm"
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="px-6 py-4 border-t border-slate-100 flex justify-end items-center bg-slate-50/50">
+                                <div className="flex items-center gap-2 text-sm text-slate-500">
+                                    <span>Tampilkan</span>
+                                    <select
+                                        value={limitRiwayatPakan}
+                                        onChange={(e) => setLimitRiwayatPakan(Number(e.target.value))}
+                                        className="bg-white border border-slate-200 text-xs rounded-lg px-2 py-1 focus:ring-slate-200 focus:border-slate-300 cursor-pointer font-medium outline-none"
                                     >
                                         <option value={10}>10</option>
-                                        <option value={25}>25</option>
+                                        <option value={20}>20</option>
                                         <option value={50}>50</option>
-                                        <option value={100}>100</option>
-                                        <option value={9999}>Semua</option>
                                     </select>
+                                    <span>Item</span>
                                 </div>
                             </div>
-                        )}
+                        </div>
+
                     </div>
-                </>
-            )}
+
+                    {/* RIGHT COLUMN (1/3) - Stok Pakan */}
+                    <div className="space-y-6">
+                        <div className="bg-white rounded-2xl border border-slate-100 hover:shadow-md transition-all p-6 h-full">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="font-semibold text-slate-800">Stok Pakan</h3>
+                                <button onClick={() => setShowStokForm(true)} className="text-xs btn btn-outline btn-sm py-1 px-2 h-auto min-h-0">
+                                    + Isi Stok
+                                </button>
+                            </div>
+                            <div className="space-y-3">
+                                {allJenisPakan.length === 0 && (
+                                    <div className="text-center text-slate-400 italic">
+                                        Belum ada jenis pakan.
+                                    </div>
+                                )}
+                                {allJenisPakan.map((jenis, index) => {
+                                    const tersedia = getStokTersediaByJenis(jenis);
+                                    const isLow = tersedia <= 10;
+
+                                    const feedThemes = [
+                                        { bg: 'hover:bg-cyan-50/30', border: 'hover:border-cyan-200', bar: 'bg-cyan-500' },
+                                        { bg: 'hover:bg-amber-50/30', border: 'hover:border-amber-200', bar: 'bg-amber-500' },
+                                        { bg: 'hover:bg-purple-50/30', border: 'hover:border-purple-200', bar: 'bg-purple-500' },
+                                        { bg: 'hover:bg-blue-50/30', border: 'hover:border-blue-200', bar: 'bg-blue-500' },
+                                        { bg: 'hover:bg-emerald-50/30', border: 'hover:border-emerald-200', bar: 'bg-emerald-500' },
+                                        { bg: 'hover:bg-rose-50/30', border: 'hover:border-rose-200', bar: 'bg-rose-500' },
+                                    ];
+                                    const theme = feedThemes[index % feedThemes.length];
+
+                                    return (
+                                        <div key={jenis} className={`p-3 rounded-xl border transition-all bg-white border-slate-100 ${theme.bg} ${theme.border}`}>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="text-sm font-semibold text-slate-800">{jenis}</h4>
+                                                    {isLow && (
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-red-600 bg-red-100 px-1.5 py-0.5 rounded-md">
+                                                            !
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className={`text-sm font-medium block ${isLow ? 'text-red-600' : 'text-slate-900'}`}>
+                                                        {tersedia.toFixed(1)} <span className="text-xs font-normal text-slate-500">kg</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="w-full bg-slate-100 rounded-full h-1.5">
+                                                <div
+                                                    className={`h-1.5 rounded-full ${isLow ? 'bg-red-500' : theme.bar}`}
+                                                    style={{ width: `${Math.min(tersedia, 100)}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Riwayat Stok Small Link */}
+                            <div className="mt-6 text-center">
+                                <button
+                                    onClick={() => {
+                                        alert("Fitur Riwayat Stok Detail akan segera hadir!");
+                                    }}
+                                    className="text-xs text-slate-500 hover:text-slate-800 font-medium flex items-center justify-center gap-1 w-full"
+                                >
+                                    Lihat Riwayat Masuk <ArrowRightIcon className="w-3 h-3" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Modal - Tambah Pemberian Pakan */}
-            <Modal 
-                isOpen={showForm} 
-                onClose={() => setShowForm(false)} 
+            <Modal
+                isOpen={showForm}
+                onClose={() => setShowForm(false)}
                 title="Catat Pemberian Pakan"
                 footer={
                     <>
@@ -570,9 +559,9 @@ export default function PakanPage() {
             </Modal>
 
             {/* Modal - Tambah Stok */}
-            <Modal 
-                isOpen={showStokForm} 
-                onClose={() => setShowStokForm(false)} 
+            <Modal
+                isOpen={showStokForm}
+                onClose={() => setShowStokForm(false)}
                 title="Tambah Stok Pakan"
                 footer={
                     <>
@@ -655,9 +644,9 @@ export default function PakanPage() {
             </Modal>
 
             {/* Modal - Tambah Jadwal */}
-            <Modal 
-                isOpen={showJadwalForm} 
-                onClose={() => setShowJadwalForm(false)} 
+            <Modal
+                isOpen={showJadwalForm}
+                onClose={() => setShowJadwalForm(false)}
                 title="Tambah Jadwal Pakan"
                 footer={
                     <>
@@ -744,7 +733,7 @@ export default function PakanPage() {
             >
                 <div className="text-center">
                     <div className="icon-box icon-box-lg icon-box-danger mx-auto mb-4">
-                        ⚠️
+                        <WarningIcon className="w-10 h-10" />
                     </div>
                     <p className="text-slate-600 mb-6">Data yang dihapus tidak dapat dikembalikan.</p>
                     <div className="flex gap-3">
@@ -757,6 +746,6 @@ export default function PakanPage() {
                     </div>
                 </div>
             </Modal>
-        </DashboardLayout>
+        </DashboardLayout >
     );
 }

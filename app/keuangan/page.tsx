@@ -42,6 +42,15 @@ const kategoriColors: Record<KategoriPengeluaran, string> = {
     LAINNYA: 'badge-neutral',
 };
 
+const kategoriThemes: Record<KategoriPengeluaran, { bg: string; border: string; bar: string; iconBg: string; text: string }> = {
+    BIBIT: { bg: 'hover:bg-cyan-50/30', border: 'hover:border-cyan-200', bar: 'bg-cyan-500', iconBg: 'bg-cyan-50', text: 'text-cyan-700' },
+    PAKAN: { bg: 'hover:bg-amber-50/30', border: 'hover:border-amber-200', bar: 'bg-amber-500', iconBg: 'bg-amber-50', text: 'text-amber-700' },
+    OBAT: { bg: 'hover:bg-purple-50/30', border: 'hover:border-purple-200', bar: 'bg-purple-500', iconBg: 'bg-purple-50', text: 'text-purple-700' },
+    LISTRIK: { bg: 'hover:bg-blue-50/30', border: 'hover:border-blue-200', bar: 'bg-blue-500', iconBg: 'bg-blue-50', text: 'text-blue-700' },
+    TENAGA_KERJA: { bg: 'hover:bg-emerald-50/30', border: 'hover:border-emerald-200', bar: 'bg-emerald-500', iconBg: 'bg-emerald-50', text: 'text-emerald-700' },
+    LAINNYA: { bg: 'hover:bg-slate-50/30', border: 'hover:border-slate-200', bar: 'bg-slate-500', iconBg: 'bg-slate-50', text: 'text-slate-700' },
+};
+
 export default function KeuanganPage() {
     const {
         kolam, pembeli, penjualan, pengeluaran,
@@ -51,21 +60,21 @@ export default function KeuanganPage() {
         getTotalPenjualan, getTotalPenjualanByKolam, getProfitByKolam,
         getTotalPengeluaranByKolam, getTotalPengeluaranByKategori
     } = useApp();
-    
+
     // Transaction tab state
     const [transactionTab, setTransactionTab] = useState<'penjualan' | 'pengeluaran'>('penjualan');
-    
+
     // Penjualan state
     const [showPenjualanForm, setShowPenjualanForm] = useState(false);
     const [showPembeliForm, setShowPembeliForm] = useState(false);
     const [filterKolamPenjualan, setFilterKolamPenjualan] = useState('');
     const [limitPenjualan, setLimitPenjualan] = useState(10);
-    
+
     // Pengeluaran state
     const [showPengeluaranForm, setShowPengeluaranForm] = useState(false);
     const [filterKolamPengeluaran, setFilterKolamPengeluaran] = useState('');
     const [limitPengeluaran, setLimitPengeluaran] = useState(10);
-    
+
     const [deleteModal, setDeleteModal] = useState<{ type: 'penjualan' | 'pembeli' | 'pengeluaran'; id: string } | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -195,11 +204,11 @@ export default function KeuanganPage() {
     // Calculate totals
     const totalPendapatan = getTotalPenjualan();
     const totalBerat = penjualan.reduce((sum, p) => sum + p.beratKg, 0);
-    
+
     const totalFeedCostAllKolam = kolam.reduce((sum, k) => sum + getTotalPengeluaranByKolam(k.id), 0);
     const totalGeneralExpenses = pengeluaran.filter(p => !p.kolamId).reduce((sum, p) => sum + p.jumlah, 0);
     const grandTotalPengeluaran = totalFeedCostAllKolam + totalGeneralExpenses;
-    
+
     const netProfit = totalPendapatan - grandTotalPengeluaran;
 
     const filteredPenjualan = (filterKolamPenjualan
@@ -215,8 +224,8 @@ export default function KeuanganPage() {
     const filteredPengeluaran = (filterKolamPengeluaran === 'UMUM'
         ? pengeluaran.filter(p => !p.kolamId)
         : filterKolamPengeluaran
-        ? pengeluaran.filter(p => p.kolamId === filterKolamPengeluaran)
-        : pengeluaran)
+            ? pengeluaran.filter(p => p.kolamId === filterKolamPengeluaran)
+            : pengeluaran)
         .sort((a, b) => {
             const dateCompare = new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime();
             if (dateCompare !== 0) return dateCompare;
@@ -236,222 +245,183 @@ export default function KeuanganPage() {
         };
     });
 
+    // Sort logic for display
+    const sortedKolamProfit = [...kolam].map(k => {
+        const profit = getProfitByKolam(k.id);
+        return { ...k, profit };
+    }).sort((a, b) => b.profit - a.profit); // Highest profit first
+
     return (
         <DashboardLayout>
-            <div className="flex flex-col gap-6 sm:gap-8">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="flex flex-col gap-8">
+                {/* Header & Actions */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-900">Keuangan</h1>
-                        <p className="text-slate-500 mt-1">Kelola pendapatan dan pengeluaran peternakan</p>
+                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Keuangan</h1>
+                        <p className="text-slate-500 text-sm">Analisis profitabilitas dan arus kas.</p>
+                    </div>
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setShowPembeliForm(true)}
+                            className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 font-medium text-sm hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-2"
+                        >
+                            <PlusIcon /> Pembeli
+                        </button>
+                        <button
+                            onClick={() => setShowPengeluaranForm(true)}
+                            className="px-4 py-2 bg-white border border-red-100 rounded-lg text-red-600 font-medium text-sm hover:bg-red-50 hover:border-red-200 transition-all flex items-center gap-2"
+                        >
+                            <PlusIcon /> Pengeluaran
+                        </button>
+                        <button
+                            onClick={() => setShowPenjualanForm(true)}
+                            className="px-4 py-2 bg-teal-600 text-white rounded-lg font-medium text-sm hover:bg-teal-700 shadow-sm shadow-teal-200 transition-all flex items-center gap-2"
+                        >
+                            <PlusIcon /> Penjualan
+                        </button>
                     </div>
                 </div>
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    <div className="bg-white rounded-2xl overflow-hidden border border-slate-200 col-span-2 lg:col-span-1">
-                        <div className="h-1 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
-                        <div className="p-6">
-                            <p className="text-slate-500 text-sm mb-2">Total Pendapatan</p>
-                            <p className="text-3xl font-bold text-emerald-600 mb-1">Rp {totalPendapatan.toLocaleString('id-ID')}</p>
-                            <p className="text-slate-400 text-sm">{totalBerat.toLocaleString('id-ID')} kg terjual</p>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-2xl overflow-hidden border border-slate-200">
-                        <div className="h-1 bg-gradient-to-r from-red-500 to-red-600"></div>
-                        <div className="p-6">
-                            <p className="text-slate-500 text-sm mb-2">Total Pengeluaran</p>
-                            <p className="text-3xl font-bold text-red-600">Rp {grandTotalPengeluaran.toLocaleString('id-ID')}</p>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-2xl overflow-hidden border border-slate-200">
-                        <div className="h-1 bg-gradient-to-r from-blue-500 to-blue-600"></div>
-                        <div className="p-6">
-                            <p className="text-slate-500 text-sm mb-2">Biaya Umum (Non-Kolam)</p>
-                            <p className="text-3xl font-bold text-blue-600">Rp {totalGeneralExpenses.toLocaleString('id-ID')}</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Content: Pendapatan */}
-                <div className="flex flex-col gap-6 sm:gap-8">
-                    {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-2">
-                        <button onClick={() => setShowPembeliForm(true)} className="btn btn-secondary flex-1 sm:flex-none">
-                            <PlusIcon />
-                            Pembeli
-                        </button>
-                        <button onClick={() => setShowPenjualanForm(true)} className="btn btn-primary flex-1 sm:flex-none">
-                            <PlusIcon />
-                            Penjualan
-                        </button>
-                        <button onClick={() => setShowPengeluaranForm(true)} className="btn bg-red-600 text-white hover:bg-red-700 flex-1 sm:flex-none">
-                            <PlusIcon />
-                            Pengeluaran
-                        </button>
-                    </div>
-
-                    {/* Kategori Summary Cards */}
-                    <div className="card p-6">
-                        <h2 className="text-lg font-semibold text-slate-900 mb-4">Pengeluaran</h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-                            {kategoriTotals.map((k, idx) => {
-                                const colorClasses = [
-                                    { card: 'bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50', label: 'text-blue-600', value: 'text-blue-900' },
-                                    { card: 'bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50', label: 'text-amber-600', value: 'text-amber-900' },
-                                    { card: 'bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/50', label: 'text-purple-600', value: 'text-purple-900' },
-                                    { card: 'bg-gradient-to-br from-yellow-50 to-yellow-100/50 border border-yellow-200/50', label: 'text-yellow-600', value: 'text-yellow-900' },
-                                    { card: 'bg-gradient-to-br from-cyan-50 to-cyan-100/50 border border-cyan-200/50', label: 'text-cyan-600', value: 'text-cyan-900' },
-                                    { card: 'bg-gradient-to-br from-slate-50 to-slate-100/50 border border-slate-200/50', label: 'text-slate-600', value: 'text-slate-900' },
-                                ];
-                                const color = colorClasses[idx % colorClasses.length];
-                                return (
-                                    <div key={k.value} className={`${color.card} rounded-xl p-4`}>
-                                        <p className={`text-[11px] font-bold ${color.label} uppercase tracking-wider mb-2`}>{k.emoji} {k.label}</p>
-                                        <p className={`text-base font-semibold ${color.value}`}>Rp {k.total.toLocaleString('id-ID')}</p>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Profit Per Kolam */}
-                    <div className="card p-6">
-                        <h2 className="text-lg font-semibold text-slate-900 mb-4">Profit Per Kolam</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            {kolam.map(k => {
-                                const pendapatan = getTotalPenjualanByKolam(k.id);
-                                const pengeluaranTotal = getTotalPengeluaranByKolam(k.id);
-                                const profit = getProfitByKolam(k.id);
-                                const isProfit = profit >= 0;
-
-                                return (
-                                    <div key={k.id} className="bg-white rounded-2xl overflow-hidden border border-slate-200 hover:shadow-md transition-shadow">
-                                        {/* Header */}
-                                        <div className="p-5 pb-4">
-                                            <h3 className="font-bold text-base text-slate-900">{k.nama}</h3>
-                                        </div>
-                                        
-                                        {/* Body */}
-                                        <div className="px-5 pb-4 space-y-3">
-                                            <div>
-                                                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Pendapatan</p>
-                                                <p className="text-base font-semibold text-emerald-600">Rp {pendapatan.toLocaleString('id-ID')}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Pengeluaran</p>
-                                                <p className="text-base font-semibold text-red-600">Rp {pengeluaranTotal.toLocaleString('id-ID')}</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Footer */}
-                                        <div className={`p-5 ${isProfit ? 'bg-gradient-to-br from-emerald-50 to-emerald-100/50 border-t border-emerald-200/50' : 'bg-gradient-to-br from-red-50 to-red-100/50 border-t border-red-200/50'}`}>
-                                            <p className={`text-[11px] font-bold uppercase tracking-wider mb-2 ${isProfit ? 'text-emerald-600' : 'text-red-600'}`}>
-                                                {isProfit ? 'Profit' : 'Rugi'}
-                                            </p>
-                                            <p className={`text-xl font-bold ${isProfit ? 'text-emerald-900' : 'text-red-900'}`}>
-                                                Rp {Math.abs(profit).toLocaleString('id-ID')}
-                                            </p>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Data Pembeli */}
-                    <div className="table-wrapper">
-                        <div className="px-6 py-4 border-b border-slate-200 bg-white">
-                            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                                <span>📋</span>
-                                <span>Data Pembeli</span>
-                            </h2>
-                        </div>
-                        {pembeli.length === 0 ? (
-                            <div className="p-6">
-                                <EmptyState
-                                    title="Belum Ada Pembeli"
-                                    description="Belum ada data pembeli yang tercatat"
-                                    icon="👤"
-                                />
+                {/* KPI Cards Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                    {/* 1. Net Profit */}
+                    <div className="stat-card p-6 bg-white border border-slate-100 rounded-2xl group relative overflow-hidden hover:shadow-md transition-all">
+                        <div className="flex items-start justify-between z-10 relative">
+                            <div>
+                                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Net Profit</p>
+                                <div className="flex items-baseline gap-1 mt-1">
+                                    <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                        Rp {Math.abs(netProfit).toLocaleString('id-ID')}
+                                    </p>
+                                </div>
                             </div>
-                        ) : (
-                            <table className="table">
-                                <thead>
-                                    <tr>
-                                        <th>Nama</th>
-                                        <th>Tipe</th>
-                                        <th>Kontak</th>
-                                        <th>Alamat</th>
-                                        <th className="text-right">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {pembeli.map(p => {
-                                        const tipe = tipePembeliOptions.find(t => t.value === p.tipe);
-                                        return (
-                                            <tr key={p.id}>
-                                                <td className="text-strong">{p.nama}</td>
-                                                <td>
-                                                    <span className={`badge ${tipePembeliColors[p.tipe]}`}>
-                                                        {tipe?.emoji} {tipe?.label}
-                                                    </span>
-                                                </td>
-                                                <td className="text-muted">{p.kontak || '-'}</td>
-                                                <td className="text-muted">{p.alamat || '-'}</td>
-                                                <td className="action-cell">
-                                                    <button
-                                                        onClick={() => setDeleteModal({ type: 'pembeli', id: p.id })}
-                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                                                    >
-                                                        <TrashIcon />
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        )}
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${netProfit >= 0 ? 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100' : 'bg-red-50 text-red-600 group-hover:bg-red-100'}`}>
+                                <span className="text-xl">💰</span>
+                            </div>
+                        </div>
+                        <div className="mt-4 text-xs text-slate-500">
+                            {netProfit >= 0 ? 'Profit bersih saat ini' : 'Defisit (Pengeluaran > Pendapatan)'}
+                        </div>
                     </div>
 
-                    {/* Riwayat Transaksi (Combined) */}
-                    <div className="table-wrapper">
-                        <div className="px-6 py-4 border-b border-slate-200 bg-white">
-                            <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-                                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                                    <span>📊</span>
-                                    <span>Riwayat Transaksi</span>
-                                </h2>
-                                <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-                                    {/* Pill Tabs */}
-                                    <div className="inline-flex bg-slate-100 rounded-lg p-1 w-full sm:w-auto">
+                    {/* 2. Total Pendapatan */}
+                    <div className="stat-card p-6 bg-white border border-slate-100 rounded-2xl group relative overflow-hidden hover:shadow-md transition-all">
+                        <div className="flex items-start justify-between z-10 relative">
+                            <div>
+                                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Pendapatan</p>
+                                <div className="flex items-baseline gap-1 mt-1">
+                                    <p className="text-2xl font-bold text-slate-900">Rp {totalPendapatan.toLocaleString('id-ID')}</p>
+                                </div>
+                            </div>
+                            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-100 transition-colors">
+                                <span className="text-xl">📈</span>
+                            </div>
+                        </div>
+                        <div className="mt-4 text-xs text-slate-500">
+                            {totalBerat.toLocaleString('id-ID')} kg ikan terjual
+                        </div>
+                    </div>
+
+                    {/* 3. Total Pengeluaran */}
+                    <div className="stat-card p-6 bg-white border border-slate-100 rounded-2xl group relative overflow-hidden hover:shadow-md transition-all">
+                        <div className="flex items-start justify-between z-10 relative">
+                            <div>
+                                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Pengeluaran</p>
+                                <div className="flex items-baseline gap-1 mt-1">
+                                    <p className="text-2xl font-bold text-slate-900">Rp {grandTotalPengeluaran.toLocaleString('id-ID')}</p>
+                                </div>
+                            </div>
+                            <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 group-hover:bg-orange-100 transition-colors">
+                                <span className="text-xl">💸</span>
+                            </div>
+                        </div>
+                        <div className="mt-4 text-xs text-slate-500">
+                            Termasuk biaya operasional & umum
+                        </div>
+                    </div>
+                </div>
+
+                {/* Main Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    {/* LEFT COLUMN (2/3) - Profit & History */}
+                    <div className="lg:col-span-2 space-y-6">
+
+                        {/* Section: Profit Per Kolam */}
+                        <div className="bg-white rounded-2xl border border-slate-100 hover:shadow-md transition-all overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+                                    <span>📊</span> Profitabilitas Kolam
+                                </h3>
+                            </div>
+                            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {sortedKolamProfit.map(k => {
+                                    const pendapatan = getTotalPenjualanByKolam(k.id);
+                                    const pengeluaranTotal = getTotalPengeluaranByKolam(k.id);
+                                    const profit = k.profit;
+                                    const isProfit = profit >= 0;
+
+                                    return (
+                                        <div key={k.id} className="p-4 rounded-xl border border-slate-100 hover:border-slate-300 transition-all bg-white relative group">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <h4 className="font-bold text-slate-900">{k.nama}</h4>
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${isProfit ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                                    {isProfit ? 'Profit' : 'Rugi'}
+                                                </span>
+                                            </div>
+
+                                            <div className="space-y-2 text-sm">
+                                                <div className="flex justify-between">
+                                                    <span className="text-slate-500">Pendapatan</span>
+                                                    <span className="font-medium text-emerald-600">+Rp {pendapatan.toLocaleString('id-ID')}</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span className="text-slate-500">Pengeluaran</span>
+                                                    <span className="font-medium text-red-600">-Rp {pengeluaranTotal.toLocaleString('id-ID')}</span>
+                                                </div>
+                                                <div className="pt-2 border-t border-slate-50 flex justify-between items-center">
+                                                    <span className="font-semibold text-slate-700">Net</span>
+                                                    <span className={`font-bold ${isProfit ? 'text-slate-900' : 'text-red-600'}`}>
+                                                        Rp {Math.abs(profit).toLocaleString('id-ID')}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Section: Tabbed Transaction History */}
+                        <div className="bg-white rounded-2xl border border-slate-100 hover:shadow-md transition-all overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
+                                <h3 className="font-semibold text-slate-800">Riwayat Transaksi</h3>
+
+                                <div className="flex gap-2">
+                                    <div className="inline-flex bg-white border border-slate-200 rounded-lg p-1">
                                         <button
                                             onClick={() => setTransactionTab('penjualan')}
-                                            className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                                                transactionTab === 'penjualan'
-                                                    ? 'bg-white text-teal-600 shadow-sm'
-                                                    : 'text-slate-600 hover:text-slate-900'
-                                            }`}
+                                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${transactionTab === 'penjualan'
+                                                ? 'bg-emerald-50 text-emerald-700 shadow-sm'
+                                                : 'text-slate-500 hover:text-slate-800'
+                                                }`}
                                         >
                                             Penjualan
                                         </button>
                                         <button
                                             onClick={() => setTransactionTab('pengeluaran')}
-                                            className={`flex-1 sm:flex-none px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                                                transactionTab === 'pengeluaran'
-                                                    ? 'bg-white text-red-600 shadow-sm'
-                                                    : 'text-slate-600 hover:text-slate-900'
-                                            }`}
+                                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${transactionTab === 'pengeluaran'
+                                                ? 'bg-red-50 text-red-700 shadow-sm'
+                                                : 'text-slate-500 hover:text-slate-800'
+                                                }`}
                                         >
                                             Pengeluaran
                                         </button>
                                     </div>
-                                    {/* Filter */}
                                     <select
                                         value={transactionTab === 'penjualan' ? filterKolamPenjualan : filterKolamPengeluaran}
                                         onChange={(e) => transactionTab === 'penjualan' ? setFilterKolamPenjualan(e.target.value) : setFilterKolamPengeluaran(e.target.value)}
-                                        className="input text-sm py-1.5 px-3 w-full sm:w-auto"
+                                        className="bg-white border border-slate-200 text-xs rounded-lg px-2 py-1 focus:ring-0 focus:border-slate-300"
                                     >
                                         <option value="">Semua Kolam</option>
                                         {transactionTab === 'pengeluaran' && <option value="UMUM">Umum (Farm Level)</option>}
@@ -461,171 +431,217 @@ export default function KeuanganPage() {
                                     </select>
                                 </div>
                             </div>
+
+                            {/* Penjualan Table */}
+                            {transactionTab === 'penjualan' && (
+                                <div className="overflow-x-auto">
+                                    <table className="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Tanggal</th>
+                                                <th>Kolam</th>
+                                                <th>Pembeli</th>
+                                                <th className="text-right">Nilai</th>
+                                                <th className="text-right">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {filteredPenjualan.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={5} className="text-center text-slate-400 py-8">
+                                                        Belum ada data penjualan.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                filteredPenjualan.map(p => {
+                                                    const k = kolam.find(kol => kol.id === p.kolamId);
+                                                    const buyer = pembeli.find(b => b.id === p.pembeliId);
+                                                    const total = p.beratKg * p.hargaPerKg;
+                                                    return (
+                                                        <tr key={p.id}>
+                                                            <td className="text-slate-500">{p.tanggal}</td>
+                                                            <td className="font-medium text-slate-900">{k?.nama}</td>
+                                                            <td className="text-slate-600">{buyer?.nama || '-'}</td>
+                                                            <td className="text-right font-medium text-emerald-600">
+                                                                Rp {total.toLocaleString('id-ID')}
+                                                                <div className="text-xs font-normal text-slate-400">
+                                                                    {p.beratKg} kg @ {p.hargaPerKg.toLocaleString('id-ID')}
+                                                                </div>
+                                                            </td>
+                                                            <td className="text-right">
+                                                                <button onClick={() => setDeleteModal({ type: 'penjualan', id: p.id })} className="text-slate-300 hover:text-red-500 transition-colors">
+                                                                    <TrashIcon />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+
+                            {/* Pengeluaran Table */}
+                            {transactionTab === 'pengeluaran' && (
+                                <div className="overflow-x-auto">
+                                    <table className="table">
+                                        <thead>
+                                            <tr>
+                                                <th>Tanggal</th>
+                                                <th>Kategori</th>
+                                                <th>Detail</th>
+                                                <th className="text-right">Jumlah</th>
+                                                <th className="text-right">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {filteredPengeluaran.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={5} className="text-center text-slate-400 py-8">
+                                                        Belum ada data pengeluaran.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                filteredPengeluaran.map(p => {
+                                                    const cat = kategoriOptions.find(c => c.value === p.kategori);
+                                                    return (
+                                                        <tr key={p.id}>
+                                                            <td className="text-slate-500">{p.tanggal}</td>
+                                                            <td>
+                                                                <span className={`badge ${kategoriColors[p.kategori]}`}>
+                                                                    {cat?.emoji} {cat?.label}
+                                                                </span>
+                                                            </td>
+                                                            <td className="text-slate-600 max-w-xs truncate">
+                                                                {p.keterangan}
+                                                                {p.kolamId && <span className="ml-1 text-xs text-slate-400">({kolam.find(k => k.id === p.kolamId)?.nama})</span>}
+                                                            </td>
+                                                            <td className="text-right font-medium text-red-600">
+                                                                Rp {p.jumlah.toLocaleString('id-ID')}
+                                                            </td>
+                                                            <td className="text-right">
+                                                                <button onClick={() => setDeleteModal({ type: 'pengeluaran', id: p.id })} className="text-slate-300 hover:text-red-500 transition-colors">
+                                                                    <TrashIcon />
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                            <div className="px-6 py-4 border-t border-slate-100 flex justify-end items-center bg-slate-50/50">
+                                <div className="flex items-center gap-2 text-sm text-slate-500">
+                                    <span>Tampilkan</span>
+                                    <select
+                                        value={transactionTab === 'penjualan' ? limitPenjualan : limitPengeluaran}
+                                        onChange={(e) => transactionTab === 'penjualan' ? setLimitPenjualan(Number(e.target.value)) : setLimitPengeluaran(Number(e.target.value))}
+                                        className="bg-white border border-slate-200 text-xs rounded-lg px-2 py-1 focus:ring-slate-200 focus:border-slate-300 cursor-pointer font-medium outline-none"
+                                    >
+                                        <option value={10}>10</option>
+                                        <option value={20}>20</option>
+                                        <option value={50}>50</option>
+                                    </select>
+                                    <span>Item</span>
+                                </div>
+                            </div>
                         </div>
-                        
-                        {/* Penjualan Table */}
-                        {transactionTab === 'penjualan' && (
-                            filteredPenjualan.length === 0 ? (
-                                <div className="p-6">
-                                    <EmptyState
-                                        title="Belum Ada Penjualan"
-                                        description="Belum ada data penjualan yang tercatat"
-                                        icon="💵"
-                                    />
-                                </div>
-                            ) : (
-                                <>
-                                <table className="table table-compact">
-                                    <thead>
-                                        <tr>
-                                            <th>Tanggal</th>
-                                            <th>Kolam</th>
-                                            <th>Pembeli</th>
-                                            <th className="text-right">Berat (kg)</th>
-                                            <th className="text-right">Harga/kg</th>
-                                            <th className="text-right">Total</th>
-                                            <th>Keterangan</th>
-                                            <th className="text-right">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filteredPenjualan.map(p => {
-                                            const k = kolam.find(kol => kol.id === p.kolamId);
-                                            const buyer = pembeli.find(b => b.id === p.pembeliId);
-                                            const total = p.beratKg * p.hargaPerKg;
-                                            return (
-                                                <tr key={p.id}>
-                                                    <td className="text-small">{p.tanggal}</td>
-                                                    <td className="text-strong">{k?.nama || 'Unknown'}</td>
-                                                    <td className="text-muted">{buyer?.nama || 'Unknown'}</td>
-                                                    <td className="text-right text-small">{p.beratKg}</td>
-                                                    <td className="text-right text-small">Rp {p.hargaPerKg.toLocaleString('id-ID')}</td>
-                                                    <td className="text-right text-strong text-green-600">
-                                                        Rp {total.toLocaleString('id-ID')}
-                                                    </td>
-                                                    <td className="text-muted text-small">{p.keterangan || '-'}</td>
-                                                    <td className="action-cell">
-                                                        <button
-                                                            onClick={() => setDeleteModal({ type: 'penjualan', id: p.id })}
-                                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                                                        >
-                                                            <TrashIcon />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                                <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                    <p className="text-sm text-slate-500">
-                                        Menampilkan {filteredPenjualan.length} dari {filterKolamPenjualan ? penjualan.filter(p => p.kolamId === filterKolamPenjualan).length : penjualan.length} data
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        <label className="text-sm text-slate-600">Tampilkan:</label>
-                                        <select 
-                                            value={limitPenjualan} 
-                                            onChange={(e) => setLimitPenjualan(Number(e.target.value))} 
-                                            className="input py-1 px-2 text-sm"
-                                        >
-                                            <option value={10}>10</option>
-                                            <option value={25}>25</option>
-                                            <option value={50}>50</option>
-                                            <option value={100}>100</option>
-                                            <option value={9999}>Semua</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                </>
-                            )
-                        )}
-                        
-                        {/* Pengeluaran Table */}
-                        {transactionTab === 'pengeluaran' && (
-                            filteredPengeluaran.length === 0 ? (
-                                <div className="p-6">
-                                    <EmptyState
-                                        title="Belum Ada Pengeluaran"
-                                        description="Belum ada data pengeluaran yang tercatat."
-                                        icon="💰"
-                                    />
-                                </div>
-                            ) : (
-                                <>
-                                <table className="table table-compact">
-                                    <thead>
-                                        <tr>
-                                            <th>Tanggal</th>
-                                            <th>Kolam</th>
-                                            <th>Kategori</th>
-                                            <th>Keterangan</th>
-                                            <th className="text-right">Jumlah</th>
-                                            <th className="text-right">Aksi</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filteredPengeluaran.map(p => {
-                                            const k = kolam.find(kol => kol.id === p.kolamId);
-                                            const cat = kategoriOptions.find(c => c.value === p.kategori);
-                                            return (
-                                                <tr key={p.id}>
-                                                    <td className="text-small">{p.tanggal}</td>
-                                                    <td className="text-strong">{p.kolamId ? k?.nama : 'Umum (Farm Level)'}</td>
-                                                    <td>
-                                                        <span className={`badge ${kategoriColors[p.kategori]}`}>
-                                                            {cat?.emoji} {cat?.label}
+
+                    </div>
+
+                    {/* RIGHT COLUMN (1/3) - Categories & Buyers */}
+                    <div className="space-y-6">
+
+                        {/* Section: Expense Breakdown */}
+                        <div className="bg-white rounded-2xl p-6 border border-slate-100 hover:shadow-md transition-all">
+                            <div className="mb-4">
+                                <h3 className="font-semibold text-slate-800">Komposisi Pengeluaran</h3>
+                            </div>
+                            <div className="space-y-3">
+                                {kategoriTotals.sort((a, b) => b.total - a.total).map((k) => {
+                                    const percentage = grandTotalPengeluaran > 0 ? (k.total / grandTotalPengeluaran) * 100 : 0;
+                                    const theme = kategoriThemes[k.value];
+                                    return (
+                                        <div key={k.value} className={`p-3 rounded-xl border transition-all bg-white border-slate-100 ${theme.bg} ${theme.border}`}>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${theme.iconBg}`}>
+                                                        {k.emoji}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-sm font-semibold text-slate-800">{k.label}</h4>
+                                                        <span className="text-xs text-slate-500">{percentage.toFixed(1)}%</span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-sm font-medium text-slate-900 block">Rp {k.total.toLocaleString('id-ID')}</span>
+                                                </div>
+                                            </div>
+                                            <div className="w-full bg-slate-100 rounded-full h-1.5">
+                                                <div
+                                                    className={`h-1.5 rounded-full ${theme.bar}`}
+                                                    style={{ width: `${percentage}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Section: Buyer List */}
+                        <div className="bg-white rounded-2xl border border-slate-100 hover:shadow-md transition-all overflow-hidden">
+                            <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                                <h3 className="font-semibold text-slate-800">Daftar Pembeli</h3>
+                                <button onClick={() => setShowPembeliForm(true)} className="text-xs text-primary-600 font-medium hover:underline">
+                                    + Baru
+                                </button>
+                            </div>
+                            <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
+                                {pembeli.length === 0 ? (
+                                    <div className="p-6 text-center text-slate-400">Belum ada pembeli.</div>
+                                ) : (
+                                    pembeli.map(p => {
+                                        const tipe = tipePembeliOptions.find(t => t.value === p.tipe);
+                                        return (
+                                            <div key={p.id} className="p-4 flex items-start justify-between hover:bg-slate-50 group">
+                                                <div>
+                                                    <h4 className="font-medium text-slate-900 text-sm">{p.nama}</h4>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                                                            {tipe?.emoji} {tipe?.label}
                                                         </span>
-                                                    </td>
-                                                    <td className="text-muted text-small">{p.keterangan}</td>
-                                                    <td className="text-right text-strong text-red-600">
-                                                        Rp {p.jumlah.toLocaleString('id-ID')}
-                                                    </td>
-                                                    <td className="action-cell">
-                                                        <button
-                                                            onClick={() => setDeleteModal({ type: 'pengeluaran', id: p.id })}
-                                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                                                        >
-                                                            <TrashIcon />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                                <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                    <p className="text-sm text-slate-500">
-                                        Menampilkan {Math.min(limitPengeluaran, filteredPengeluaran.length)} dari {filterKolamPengeluaran ? pengeluaran.filter(p => p.kolamId === filterKolamPengeluaran).length : pengeluaran.length} data
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        <label className="text-sm text-slate-600">Tampilkan:</label>
-                                        <select value={limitPengeluaran} onChange={(e) => setLimitPengeluaran(Number(e.target.value))} className="input py-1 px-2 text-sm">
-                                            <option value={10}>10</option>
-                                            <option value={25}>25</option>
-                                            <option value={50}>50</option>
-                                            <option value={100}>100</option>
-                                            <option value={9999}>Semua</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                </>
-                            )
-                        )}
+                                                        {p.kontak && <span className="text-xs text-slate-400">• {p.kontak}</span>}
+                                                    </div>
+                                                </div>
+                                                <button onClick={() => setDeleteModal({ type: 'pembeli', id: p.id })} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all px-2">
+                                                    <TrashIcon />
+                                                </button>
+                                            </div>
+                                        );
+                                    })
+                                )}
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
 
             {/* Modals */}
             {/* Panen Modal - Reusable Component */}
-            <PanenModal 
+            <PanenModal
                 isOpen={showPenjualanForm}
                 onClose={() => setShowPenjualanForm(false)}
             />
 
             {/* Form Modal - Pembeli */}
-            <Modal 
-                isOpen={showPembeliForm} 
-                onClose={() => setShowPembeliForm(false)} 
+            <Modal
+                isOpen={showPembeliForm}
+                onClose={() => setShowPembeliForm(false)}
                 title="Tambah Pembeli Baru"
                 footer={
                     <>
@@ -694,9 +710,9 @@ export default function KeuanganPage() {
             </Modal>
 
             {/* Form Modal - Pengeluaran */}
-            <Modal 
-                isOpen={showPengeluaranForm} 
-                onClose={() => setShowPengeluaranForm(false)} 
+            <Modal
+                isOpen={showPengeluaranForm}
+                onClose={() => setShowPengeluaranForm(false)}
                 title="Tambah Pengeluaran"
                 footer={
                     <>
@@ -796,6 +812,6 @@ export default function KeuanganPage() {
                     </button>
                 </div>
             </Modal>
-        </DashboardLayout>
+        </DashboardLayout >
     );
 }
