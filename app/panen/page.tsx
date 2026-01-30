@@ -6,7 +6,7 @@ import { useApp, Kolam, TipePembeli } from '../context/AppContext';
 import { useToast } from '../context/ToastContext'; // Import Toast
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 import Modal from '../components/ui/Modal';
-import { PlusIcon } from '../components/ui/Icons';
+import { PlusIcon, LoadingSpinner } from '../components/ui/Icons';
 import EmptyState from '../components/ui/EmptyState';
 
 export default function ProduksiPage() {

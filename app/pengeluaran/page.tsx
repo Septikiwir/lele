@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useApp, KategoriPengeluaran } from '../context/AppContext';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 
-import { PlusIcon, TrashIcon } from '../components/ui/Icons';
+import { PlusIcon, TrashIcon, LoadingSpinner } from '../components/ui/Icons';
 import Modal from '../components/ui/Modal';
 import EmptyState from '../components/ui/EmptyState';
 
