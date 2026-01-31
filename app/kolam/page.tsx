@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useApp } from '../context/AppContext';
 import { useState } from 'react';
 
-import { PlusIcon, EditIcon, TrashIcon, EyeIcon, LoadingSpinner, ChevronLeftIcon, ChevronRightIcon, XIcon, CalendarIcon, DollarSignIcon, ScaleIcon } from '../components/ui/Icons';
+import { PlusIcon, EditIcon, TrashIcon, EyeIcon, LoadingSpinner, ChevronLeftIcon, ChevronRightIcon, XIcon, CalendarIcon, DollarSignIcon, ScaleIcon, KolamIcon, FishIcon } from '../components/ui/Icons';
 import EmptyState from '../components/ui/EmptyState';
 import Modal from '../components/ui/Modal'; import PanenModal from '../components/modals/PanenModal'; import { useToast } from '../context/ToastContext'; // Import Toast
 import { TipePembeli, CycleSummary } from '../context/AppContext';
@@ -163,19 +163,99 @@ export default function KolamPage() {
         setDeleteModal(null);
     };
 
+    const totalKolam = kolam.length;
+    const kolamAktif = kolam.filter(k => k.jumlahIkan > 0).length;
+    const totalIkan = kolam.reduce((sum, k) => sum + k.jumlahIkan, 0);
+
+    // Calculate Total Estimasi Aset
+    const totalEstimasiAset = kolam.reduce((sum, k) => {
+        if (k.jumlahIkan === 0) return sum;
+        const latestSampling = getLatestSampling(k.id);
+        const growth = 2; // g/day
+        let currentWeight = 0;
+        const today = new Date();
+
+        if (latestSampling && latestSampling.jumlahIkanPerKg > 0) {
+            const lastWeight = 1000 / latestSampling.jumlahIkanPerKg;
+            const samplingDate = new Date(latestSampling.tanggal);
+            const daysSinceSampling = Math.max(0, Math.floor((today.getTime() - samplingDate.getTime()) / (1000 * 60 * 60 * 24)));
+            currentWeight = lastWeight + (daysSinceSampling * growth);
+        } else {
+            const tebarDate = k.tanggalTebar ? new Date(k.tanggalTebar) : new Date();
+            const daysPassed = Math.max(0, Math.floor((today.getTime() - tebarDate.getTime()) / (1000 * 60 * 60 * 24)));
+            currentWeight = 5 + (daysPassed * growth);
+        }
+        return sum + ((k.jumlahIkan * currentWeight / 1000) * hargaPasarPerKg);
+    }, 0);
+
     return (
         <DashboardLayout>
             <div className="flex flex-col gap-6 sm:gap-8">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 border-b border-slate-100 pb-6">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Manajemen Kolam</h1>
-                        <p className="text-slate-500 text-sm">Kelola semua kolam peternakan Anda.</p>
+                        <p className="text-slate-500 text-sm">Kelola operasional dan status budidaya setiap kolam.</p>
                     </div>
-                    <Link href="/kolam/tambah" className="btn btn-primary">
-                        <PlusIcon />
-                        Tambah Kolam
-                    </Link>
+                    <div className="flex gap-3">
+                        <Link href="/pakan" className="btn btn-secondary text-sm">
+                            🍚 Input Pakan
+                        </Link>
+                        <Link href="/kolam/tambah" className="btn btn-primary text-sm">
+                            <PlusIcon /> Tambah Kolam
+                        </Link>
+                    </div>
+                </div>
+
+                {/* Summary KPIs */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {/* Total Kolam */}
+                    <div className="stat-card p-6 bg-white border border-slate-100 hover:shadow-md transition-all group">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Kolam</p>
+                                <p className="text-2xl font-bold text-slate-900">{totalKolam}</p>
+                                <p className="text-xs text-slate-500 mt-1">
+                                    <span className="text-emerald-600 font-semibold">{kolamAktif}</span> Aktif <span className="text-slate-300 mx-1">•</span> <span className="text-slate-400">{totalKolam - kolamAktif}</span> Kosong
+                                </p>
+                            </div>
+                            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-100 transition-colors">
+                                <KolamIcon />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Total Populasi */}
+                    <div className="stat-card p-6 bg-white border border-slate-100 hover:shadow-md transition-all group">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Populasi Ikan</p>
+                                <p className="text-2xl font-bold text-slate-900">{totalIkan.toLocaleString('id-ID')}</p>
+                                <p className="text-xs text-slate-500 mt-1">
+                                    Total ekor di seluruh kolam
+                                </p>
+                            </div>
+                            <div className="w-12 h-12 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600 group-hover:bg-cyan-100 transition-colors">
+                                <FishIcon />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Estimasi Aset */}
+                    <div className="stat-card p-6 bg-white border border-slate-100 hover:shadow-md transition-all group">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Estimasi Nilai Aset</p>
+                                <p className="text-2xl font-bold text-slate-900">Rp{totalEstimasiAset.toLocaleString('id-ID')}</p>
+                                <p className="text-xs text-slate-500 mt-1">
+                                    Berdasarkan berat estimasi & harga pasar
+                                </p>
+                            </div>
+                            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-100 transition-colors">
+                                💰
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Tab Navigation */}
@@ -224,31 +304,33 @@ export default function KolamPage() {
                                 {/* Siap Tebar Section */}
                                 {kolam.filter(k => k.jumlahIkan === 0).length > 0 && (
                                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                        <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                            Siap Ditebar
-                                            <span className="badge bg-orange-500 text-white border-none badge-sm font-medium">
-                                                {kolam.filter(k => k.jumlahIkan === 0).length}
-                                            </span>
-                                        </h3>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                                Siap Ditebar
+                                                <span className="px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 text-xs font-bold uppercase tracking-wider">
+                                                    {kolam.filter(k => k.jumlahIkan === 0).length} Kolam
+                                                </span>
+                                            </h3>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                                             {kolam.filter(k => k.jumlahIkan === 0).map(k => (
-                                                <div key={k.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all">
-                                                    <div className="flex items-center gap-4 mb-4">
-                                                        <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center text-2xl">
+                                                <div key={k.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all group">
+                                                    <div className="flex items-center gap-4 mb-5">
+                                                        <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-teal-50 transition-colors">
                                                             🐟
                                                         </div>
                                                         <div>
-                                                            <h4 className="font-bold text-slate-800">{k.nama}</h4>
+                                                            <h4 className="font-bold text-slate-900">{k.nama}</h4>
                                                             <p className="text-xs text-slate-500 font-medium">
-                                                                {k.panjang}x{k.lebar}m <span className="text-slate-300">•</span> {k.kedalaman}m tinggi
+                                                                {k.panjang}x{k.lebar}m <span className="text-slate-300 mx-1">•</span> {k.kedalaman}m tgi
                                                             </p>
                                                         </div>
                                                     </div>
                                                     <button
                                                         onClick={() => handleOpenTebar(k.id)}
-                                                        className="btn btn-primary w-full shadow-sm shadow-emerald-200 active:scale-[0.98]"
+                                                        className="btn btn-primary w-full shadow-sm active:scale-[0.98] py-2.5 text-sm"
                                                     >
-                                                        <span className="text-lg mr-1">+</span> Mulai Siklus
+                                                        <PlusIcon className="w-4 h-4" /> Mulai Siklus
                                                     </button>
                                                 </div>
                                             ))}
@@ -259,13 +341,15 @@ export default function KolamPage() {
                                 {/* Active Ponds Grid */}
                                 {kolam.filter(k => k.jumlahIkan > 0).length > 0 && (
                                     <div>
-                                        <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                            Kolam Aktif
-                                            <span className="badge bg-blue-500 text-white border-none badge-sm font-medium">
-                                                {kolam.filter(k => k.jumlahIkan > 0).length}
-                                            </span>
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                                Kolam Aktif
+                                                <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 text-xs font-bold uppercase tracking-wider">
+                                                    {kolam.filter(k => k.jumlahIkan > 0).length} Kolam
+                                                </span>
+                                            </h3>
+                                        </div>
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                                             {kolam.filter(k => k.jumlahIkan > 0).map(k => {
                                                 const isEmpty = k.jumlahIkan === 0;
                                                 const unifiedStatus = getUnifiedStatus(k.id);
@@ -301,75 +385,63 @@ export default function KolamPage() {
                                                 const estimasiAset = isEmpty ? 0 : (k.jumlahIkan * currentWeight / 1000) * hargaPasarPerKg;
 
                                                 return (
-                                                    <div key={k.id} className="card p-6">
+                                                    <div key={k.id} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
                                                         {/* Header */}
-                                                        <div className="flex items-center justify-between mb-4">
+                                                        <div className="flex items-center justify-between mb-6">
                                                             <div className="flex items-center gap-3">
-                                                                <div className="icon-box icon-box-primary">
+                                                                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-2xl">
                                                                     🐟
                                                                 </div>
                                                                 <div>
                                                                     <h3 className="font-bold text-lg text-slate-900">{k.nama}</h3>
                                                                     {k.tanggalTebar && (
-                                                                        <p className="text-sm text-slate-500">
-                                                                            Tebar: {new Date(k.tanggalTebar).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                                        <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                                                                            Ditebar {new Date(k.tanggalTebar).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                                                                         </p>
                                                                     )}
                                                                 </div>
                                                             </div>
-                                                            <span className={`badge ${badgeClass}`}>
+                                                            <span className={`badge ${badgeClass} border-none font-bold uppercase tracking-widest text-[10px]`}>
                                                                 {statusLabels[displayStatus as keyof typeof statusLabels]}
                                                             </span>
                                                         </div>
 
-                                                        {/* Stats */}
-                                                        <div className="grid grid-cols-2 gap-4 mb-4">
-                                                            {/* Dimensi */}
-                                                            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl p-4 border border-blue-200/50">
-                                                                <p className="text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-2">Dimensi</p>
-                                                                <p className="text-base font-semibold text-blue-900">{k.panjang} × {k.lebar} × {k.kedalaman}<span className="text-xs font-normal text-blue-700"> m</span></p>
-                                                            </div>
-
-                                                            {/* Luas & Volume */}
-                                                            <div className="bg-gradient-to-br from-cyan-50 to-cyan-100/50 rounded-xl p-4 border border-cyan-200/50">
-                                                                <p className="text-[11px] font-bold text-cyan-600 uppercase tracking-wider mb-2">Luas & Volume</p>
-                                                                <p className="text-base font-semibold text-cyan-900">{parseFloat(luas.toFixed(1))}<span className="text-xs font-normal text-cyan-700"> m²</span> <span className="text-slate-400">|</span> {parseFloat(volume.toFixed(1))}<span className="text-xs font-normal text-cyan-700"> m³</span></p>
-                                                            </div>
-
+                                                        {/* Stats Grid */}
+                                                        <div className="grid grid-cols-2 gap-3 mb-6">
                                                             {/* Populasi */}
-                                                            <div className={`${isEmpty ? 'col-span-2' : ''} bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4 border border-emerald-200/50`}>
-                                                                <div className="flex justify-between items-start">
-                                                                    <div>
-                                                                        <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-2">Populasi</p>
-                                                                        <p className="text-base font-semibold text-emerald-900">{k.jumlahIkan.toLocaleString('id-ID')}</p>
-                                                                    </div>
-                                                                    {isEmpty && (
-                                                                        <span className="px-2 py-1 bg-emerald-200/50 text-emerald-700 text-xs font-semibold rounded-lg">Siap Tebar</span>
-                                                                    )}
-                                                                </div>
+                                                            <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Populasi</p>
+                                                                <p className="text-lg font-bold text-slate-900">{k.jumlahIkan.toLocaleString('id-ID')}<span className="text-[10px] font-normal text-slate-400 ml-1">ekor</span></p>
                                                             </div>
 
                                                             {/* Estimasi Aset */}
-                                                            {!isEmpty && (
-                                                                <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl p-4 border border-purple-200/50">
-                                                                    <p className="text-[11px] font-bold text-purple-600 uppercase tracking-wider mb-2">Estimasi Aset</p>
-                                                                    <p className="text-base font-semibold text-purple-900">
-                                                                        Rp{estimasiAset.toLocaleString('id-ID')}
-                                                                    </p>
-                                                                </div>
-                                                            )}
+                                                            <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nilai Aset</p>
+                                                                <p className="text-lg font-bold text-slate-900">Rp{(estimasiAset / 1000).toFixed(0)}k</p>
+                                                            </div>
+
+                                                            {/* Dimensi */}
+                                                            <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Dimensi</p>
+                                                                <p className="text-sm font-bold text-slate-900">{k.panjang}x{k.lebar}x{k.kedalaman}<span className="text-[10px] font-normal text-slate-400 ml-1">m</span></p>
+                                                            </div>
+
+                                                            {/* Volume */}
+                                                            <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Volume</p>
+                                                                <p className="text-sm font-bold text-slate-900">{volume.toFixed(1)}<span className="text-[10px] font-normal text-slate-400 ml-1">m³</span></p>
+                                                            </div>
 
                                                             {/* Feed Rec Box */}
                                                             {feedRec && (
-                                                                <div className="col-span-2 bg-gradient-to-br from-amber-50 to-orange-100/50 rounded-xl p-4 border border-amber-200/50">
-                                                                    <div className="flex items-start justify-between">
+                                                                <div className="col-span-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-100">
+                                                                    <div className="flex items-center justify-between">
                                                                         <div>
-                                                                            <p className="text-[11px] font-bold text-amber-600 uppercase tracking-wider mb-2">Rekomendasi Pakan</p>
-                                                                            <p className="text-xs text-amber-700 mb-2">{feedRec.type} ({feedRec.ratePercent})</p>
-                                                                            <p className="text-base font-semibold text-amber-900">{feedRec.amount} <span className="text-xs font-normal text-amber-700">kg/hari</span></p>
+                                                                            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-1">Rekomendasi Pakan</p>
+                                                                            <p className="text-sm font-bold text-amber-900">{feedRec.amount} kg/hari <span className="text-xs font-normal text-amber-700 ml-1">({feedRec.type})</span></p>
                                                                         </div>
-                                                                        <div className="bg-white/60 rounded-lg px-3 py-2 text-right">
-                                                                            <p className="text-xs text-amber-600 font-semibold">Optimal</p>
+                                                                        <div className="bg-white/80 rounded-lg px-2 py-1">
+                                                                            <p className="text-[10px] text-amber-600 font-bold uppercase">{feedRec.ratePercent}</p>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -377,55 +449,46 @@ export default function KolamPage() {
                                                         </div>
 
                                                         {/* Action Buttons */}
-                                                        <div className="mb-4">
-                                                            {isEmpty ? (
+                                                        <div className="flex flex-col gap-2">
+                                                            <div className="grid grid-cols-2 gap-2">
                                                                 <button
-                                                                    onClick={() => handleOpenTebar(k.id)}
-                                                                    className="btn btn-primary w-full"
+                                                                    onClick={() => handleOpenFeed(k.id)}
+                                                                    className="btn btn-primary text-sm py-2.5"
                                                                 >
-                                                                    🐟 Tebar Bibit Baru
+                                                                    🍚 Pakan
                                                                 </button>
-                                                            ) : (
-                                                                <div className="grid grid-cols-2 gap-3">
-                                                                    <button
-                                                                        onClick={() => handleOpenFeed(k.id)}
-                                                                        className="btn btn-primary"
-                                                                    >
-                                                                        🍽️ Beri Pakan
-                                                                    </button>
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setSelectedKolamId(k.id);
-                                                                            setIsPanenModalOpen(true);
-                                                                        }}
-                                                                        className="btn btn-success"
-                                                                    >
-                                                                        🌾 Panen
-                                                                    </button>
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Actions */}
-                                                        <div className="flex gap-2">
-                                                            <Link
-                                                                href={`/kolam/${k.id}`}
-                                                                className="flex-1 btn btn-secondary text-sm"
-                                                            >
-                                                                <EyeIcon /> Detail
-                                                            </Link>
-                                                            <Link
-                                                                href={`/kolam/${k.id}/edit`}
-                                                                className="btn btn-ghost text-sm"
-                                                            >
-                                                                <EditIcon />
-                                                            </Link>
-                                                            <button
-                                                                onClick={() => setDeleteModal(k.id)}
-                                                                className="btn btn-ghost text-red-600 hover:bg-red-50 text-sm"
-                                                            >
-                                                                <TrashIcon />
-                                                            </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setSelectedKolamId(k.id);
+                                                                        setIsPanenModalOpen(true);
+                                                                    }}
+                                                                    className="btn btn-success text-sm py-2.5 text-white"
+                                                                >
+                                                                    🌾 Panen
+                                                                </button>
+                                                            </div>
+                                                            <div className="flex gap-2 mt-2 pt-4 border-t border-slate-50">
+                                                                <Link
+                                                                    href={`/kolam/${k.id}`}
+                                                                    className="flex-1 btn btn-secondary text-xs uppercase font-bold tracking-wider py-2"
+                                                                >
+                                                                    <EyeIcon className="w-4 h-4" /> Detail
+                                                                </Link>
+                                                                <Link
+                                                                    href={`/kolam/${k.id}/edit`}
+                                                                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                                                    title="Edit Kolam"
+                                                                >
+                                                                    <EditIcon className="w-5 h-5" />
+                                                                </Link>
+                                                                <button
+                                                                    onClick={() => setDeleteModal(k.id)}
+                                                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                                    title="Hapus Kolam"
+                                                                >
+                                                                    <TrashIcon className="w-5 h-5" />
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 );
@@ -440,28 +503,31 @@ export default function KolamPage() {
 
                 {/* History Tab Content */}
                 {activeTab === 'riwayat' && (
-                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                         <div className="overflow-x-auto">
-                            <table className="table w-full">
+                            <table className="w-full text-left">
                                 <thead>
-                                    <tr>
-                                        <th>Kolam</th>
-                                        <th>Siklus</th>
-                                        <th>Periode</th>
-                                        <th>Selesai</th>
-                                        <th>Durasi</th>
-                                        <th>Tebar</th>
-                                        <th>Panen</th>
-                                        <th>FCR</th>
-                                        <th>SR</th>
-                                        <th>Aksi</th>
+                                    <tr className="bg-slate-50 border-b border-slate-200">
+                                        <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Kolam</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Siklus</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Periode</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Selesai</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Durasi</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tebar</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Panen</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">FCR</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">SR</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-slate-100">
                                     {getCycleHistoryForTable().length === 0 ? (
                                         <tr>
-                                            <td colSpan={10} className="text-center py-8 text-slate-400">
-                                                Belum ada riwayat siklus yang selesai.
+                                            <td colSpan={10} className="px-6 py-12 text-center text-slate-400">
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <span className="text-3xl">📋</span>
+                                                    <p className="text-sm">Belum ada riwayat siklus yang selesai.</p>
+                                                </div>
                                             </td>
                                         </tr>
                                     ) : (
@@ -470,50 +536,63 @@ export default function KolamPage() {
                                             const updateTime = cycle.lastInputTime ? new Date(cycle.lastInputTime) : new Date(cycle.startDate);
 
                                             return (
-                                                <tr key={idx} className={cycle.isActive ? 'bg-slate-50' : ''}>
-                                                    <td className="font-medium text-slate-900">
-                                                        {kolamInfo?.nama || 'Unknown'}
-                                                        {cycle.isActive && <span className="ml-2 badge badge-xs badge-neutral">Aktif</span>}
+                                                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
+                                                    <td className="px-6 py-4">
+                                                        <span className="font-bold text-slate-900 block">{kolamInfo?.nama || 'Unknown'}</span>
+                                                        {cycle.isActive && <span className="mt-1 badge badge-neutral badge-xs uppercase tracking-tighter text-[9px] font-bold">Aktif</span>}
                                                     </td>
-                                                    <td>
-                                                        <span className="badge badge-sm badge-ghost font-medium">#{cycle.cycleNumber}</span>
+                                                    <td className="px-4 py-4 text-center">
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">
+                                                            #{cycle.cycleNumber}
+                                                        </span>
                                                     </td>
-                                                    <td className="text-slate-500">
-                                                        {new Date(cycle.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' })}
-                                                        {' - '}
-                                                        {cycle.isActive ? 'Sekarang' : new Date(cycle.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' })}
+                                                    <td className="px-4 py-4">
+                                                        <div className="text-xs font-semibold text-slate-700">
+                                                            {new Date(cycle.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                            <span className="mx-1 text-slate-300">→</span>
+                                                            {cycle.isActive ? 'Sekarang' : new Date(cycle.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-400 mt-0.5">{new Date(cycle.startDate).getFullYear()}</div>
                                                     </td>
-                                                    <td className="text-slate-500 text-xs">
-                                                        <div className="font-medium text-slate-700">
+                                                    <td className="px-4 py-4">
+                                                        <div className="text-xs font-medium text-slate-700">
                                                             {updateTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                                                         </div>
-                                                        <div className="text-[10px]">
+                                                        <div className="text-[10px] text-slate-400 mt-0.5">
                                                             {updateTime.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                                                         </div>
                                                     </td>
-                                                    <td className="text-slate-600">{cycle.totalDays} hari</td>
-                                                    <td className="text-slate-600">{cycle.initialFish.toLocaleString()} ekor</td>
-                                                    <td className="text-slate-600">
-                                                        {cycle.finalFish.toLocaleString()} ekor
-                                                        <span className="text-xs text-slate-400 block">{cycle.totalHarvestKg.toFixed(1)} kg</span>
+                                                    <td className="px-4 py-4">
+                                                        <span className="text-xs font-bold text-slate-700">{cycle.totalDays}</span>
+                                                        <span className="text-[10px] text-slate-400 ml-1">hari</span>
                                                     </td>
-                                                    <td>
-                                                        <span className={`badge badge-sm ${cycle.fcr <= 1.2 ? 'badge-success' : cycle.fcr <= 1.5 ? 'badge-warning' : 'badge-danger'}`}>
+                                                    <td className="px-4 py-4">
+                                                        <span className="text-xs font-bold text-slate-700">{cycle.initialFish.toLocaleString('id-ID')}</span>
+                                                        <span className="text-[10px] text-slate-400 ml-1 block mt-0.5">ekor</span>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-xs">
+                                                        <span className="font-bold text-slate-700">{cycle.finalFish.toLocaleString('id-ID')}</span>
+                                                        <span className="text-[10px] text-slate-400 ml-1">ekor</span>
+                                                        <span className="text-[10px] text-slate-500 block font-medium mt-0.5">{cycle.totalHarvestKg.toFixed(1)} kg</span>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-center">
+                                                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${cycle.fcr <= 1.2 ? 'bg-emerald-100 text-emerald-700' : cycle.fcr <= 1.5 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
                                                             {cycle.fcr.toFixed(2)}
                                                         </span>
                                                     </td>
-                                                    <td>
-                                                        <span className={`font-medium ${cycle.sr >= 90 ? 'text-green-600' : cycle.sr >= 80 ? 'text-amber-600' : 'text-red-600'}`}>
+                                                    <td className="px-4 py-4 text-center">
+                                                        <span className={`text-xs font-bold ${cycle.sr >= 90 ? 'text-emerald-600' : cycle.sr >= 80 ? 'text-amber-600' : 'text-red-600'}`}>
                                                             {cycle.sr.toFixed(1)}%
                                                         </span>
                                                     </td>
-                                                    <td>
+                                                    <td className="px-6 py-4 text-right">
                                                         <button
                                                             onClick={() => {
                                                                 setSelectedCycle(cycle);
                                                                 setIsCycleModalOpen(true);
                                                             }}
-                                                            className="btn btn-sm btn-ghost text-slate-500 hover:text-primary-600"
+                                                            className="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors group-hover:scale-110"
+                                                            title="Lihat Detail Siklus"
                                                         >
                                                             <EyeIcon className="w-4 h-4" />
                                                         </button>
@@ -555,25 +634,28 @@ export default function KolamPage() {
 
                 {/* Harvest History Tab Content */}
                 {activeTab === 'panen' && (
-                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                         <div className="overflow-x-auto">
-                            <table className="table w-full">
+                            <table className="w-full text-left">
                                 <thead>
-                                    <tr>
-                                        <th>Tanggal</th>
-                                        <th>Kolam</th>
-                                        <th>Tipe</th>
-                                        <th className="text-right">Berat (Kg)</th>
-                                        <th className="text-right">Jumlah (Ekor)</th>
-                                        <th className="text-right">Harga/Kg</th>
-                                        <th className="text-right">Total Pendapatan</th>
+                                    <tr className="bg-slate-50 border-b border-slate-200">
+                                        <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tanggal</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Kolam</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Tipe</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Berat</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Jumlah</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Harga/Kg</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Total Pendapatan</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="divide-y divide-slate-100">
                                     {riwayatPanen.length === 0 ? (
                                         <tr>
-                                            <td colSpan={7} className="text-center py-8 text-slate-400">
-                                                Belum ada data panen.
+                                            <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <span className="text-3xl">🌾</span>
+                                                    <p className="text-sm">Belum ada data panen.</p>
+                                                </div>
                                             </td>
                                         </tr>
                                     ) : (
@@ -581,28 +663,37 @@ export default function KolamPage() {
                                             const kolamName = kolam.find(k => k.id === p.kolamId)?.nama || 'Unknown';
                                             const totalPendapatan = p.beratTotalKg * p.hargaPerKg;
                                             return (
-                                                <tr key={p.id} className="hover:bg-slate-50">
-                                                    <td className="text-slate-500">
-                                                        {new Date(p.tanggal).toLocaleDateString('id-ID', {
-                                                            day: 'numeric',
-                                                            month: 'long',
-                                                            year: 'numeric'
-                                                        })}
-                                                        <div className="text-[10px] text-slate-400">
+                                                <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
+                                                    <td className="px-6 py-4">
+                                                        <div className="text-xs font-bold text-slate-700">
+                                                            {new Date(p.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                        </div>
+                                                        <div className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-tighter font-medium">
                                                             {new Date(p.tanggal).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
                                                         </div>
                                                     </td>
-                                                    <td className="font-medium text-slate-900">{kolamName}</td>
-                                                    <td>
-                                                        <span className={`badge badge-sm ${p.tipe === 'TOTAL' ? 'badge-primary' : 'badge-ghost'}`}>
+                                                    <td className="px-4 py-4">
+                                                        <span className="text-sm font-bold text-slate-900">{kolamName}</span>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-center">
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest ${p.tipe === 'TOTAL' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
                                                             {p.tipe}
                                                         </span>
                                                     </td>
-                                                    <td className="text-right text-slate-700">{p.beratTotalKg.toLocaleString('id-ID')}</td>
-                                                    <td className="text-right text-slate-700">{p.jumlahEkor.toLocaleString('id-ID')}</td>
-                                                    <td className="text-right text-slate-700">Rp{p.hargaPerKg.toLocaleString('id-ID')}</td>
-                                                    <td className="text-right">
-                                                        <span className="font-medium text-green-600">
+                                                    <td className="px-4 py-4 text-right">
+                                                        <span className="text-xs font-bold text-slate-700">{p.beratTotalKg.toLocaleString('id-ID')}</span>
+                                                        <span className="text-[10px] text-slate-400 ml-1">kg</span>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-right">
+                                                        <span className="text-xs font-bold text-slate-700">{p.jumlahEkor.toLocaleString('id-ID')}</span>
+                                                        <span className="text-[10px] text-slate-400 ml-1">ekor</span>
+                                                    </td>
+                                                    <td className="px-4 py-4 text-right">
+                                                        <span className="text-[10px] text-slate-400 mr-1">Rp</span>
+                                                        <span className="text-xs font-bold text-slate-700">{p.hargaPerKg.toLocaleString('id-ID')}</span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-right">
+                                                        <span className="text-sm font-bold text-emerald-600">
                                                             Rp{totalPendapatan.toLocaleString('id-ID')}
                                                         </span>
                                                     </td>
@@ -627,107 +718,138 @@ export default function KolamPage() {
                 {selectedCycle && (
                     <div className="space-y-6">
                         {/* Header Summary */}
-                        <div className="p-4 bg-slate-50 rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-900">
-                                    {kolam.find(k => k.id === selectedCycle.kolamId)?.nama}
-                                </h3>
-                                <div className="flex items-center gap-2 text-sm text-slate-500 mt-1">
-                                    <CalendarIcon className="w-4 h-4" />
-                                    <span>
-                                        {new Date(selectedCycle.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                        {' - '}
-                                        {selectedCycle.isActive
-                                            ? 'Sekarang'
-                                            : new Date(selectedCycle.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
-                                        }
-                                    </span>
-                                    <span className="bg-slate-200 px-2 py-0.5 rounded-full text-xs font-medium text-slate-600">
-                                        {selectedCycle.totalDays} Hari
-                                    </span>
+                        <div className="p-5 bg-slate-50 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border border-slate-100">
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-sm border border-slate-100">
+                                    🐟
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-slate-900 leading-tight">
+                                        {kolam.find(k => k.id === selectedCycle.kolamId)?.nama}
+                                    </h3>
+                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">
+                                        <span className="flex items-center gap-1.5">
+                                            <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
+                                            {new Date(selectedCycle.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                            <span className="text-slate-300">→</span>
+                                            {selectedCycle.isActive
+                                                ? 'Sekarang'
+                                                : new Date(selectedCycle.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+                                            }
+                                        </span>
+                                        <span className="px-2 py-0.5 rounded bg-slate-200 text-slate-600">
+                                            {selectedCycle.totalDays} Hari
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="text-right">
-                                <p className="text-sm text-slate-500 mb-1">Profit Bersih</p>
-                                <p className={`text-2xl font-bold ${selectedCycle.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            <div className="text-left md:text-right bg-white p-3 md:p-0 rounded-xl md:rounded-none border border-slate-200 md:border-0 w-full md:w-auto">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Profit Bersih</p>
+                                <p className={`text-2xl font-black ${selectedCycle.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                                     {selectedCycle.netProfit >= 0 ? '+' : ''}Rp{Math.abs(selectedCycle.netProfit).toLocaleString('id-ID')}
                                 </p>
                             </div>
                         </div>
 
                         {/* Metrics Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="p-4 border border-slate-100 rounded-xl bg-white shadow-sm">
-                                <div className="flex items-center gap-2 text-slate-500 mb-2">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="p-4 border border-slate-100 rounded-2xl bg-white shadow-sm hover:border-teal-100 transition-colors">
+                                <div className="flex items-center gap-2 text-slate-400 mb-2">
                                     <ScaleIcon className="w-4 h-4" />
-                                    <span className="text-xs font-semibold uppercase">FCR</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">FCR</span>
                                 </div>
                                 <p className={`text-xl font-bold ${selectedCycle.fcr <= 1.2 ? 'text-emerald-600' : selectedCycle.fcr <= 1.5 ? 'text-amber-600' : 'text-red-500'}`}>
                                     {selectedCycle.fcr.toFixed(2)}
                                 </p>
                             </div>
-                            <div className="p-4 border border-slate-100 rounded-xl bg-white shadow-sm">
-                                <div className="flex items-center gap-2 text-slate-500 mb-2">
-                                    <span className="text-xs font-semibold uppercase">Surv. Rate</span>
+                            <div className="p-4 border border-slate-100 rounded-2xl bg-white shadow-sm hover:border-teal-100 transition-colors">
+                                <div className="flex items-center gap-2 text-slate-400 mb-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Surv. Rate</span>
                                 </div>
                                 <p className={`text-xl font-bold ${selectedCycle.sr >= 90 ? 'text-emerald-600' : selectedCycle.sr >= 80 ? 'text-amber-600' : 'text-red-500'}`}>
                                     {selectedCycle.sr.toFixed(1)}%
                                 </p>
                             </div>
-                            <div className="p-4 border border-slate-100 rounded-xl bg-white shadow-sm">
-                                <div className="flex items-center gap-2 text-slate-500 mb-2">
-                                    <span className="text-xs font-semibold uppercase">Panen Total</span>
+                            <div className="p-4 border border-slate-100 rounded-2xl bg-white shadow-sm hover:border-teal-100 transition-colors">
+                                <div className="flex items-center gap-2 text-slate-400 mb-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Panen Total</span>
                                 </div>
                                 <p className="text-xl font-bold text-slate-900">
-                                    {selectedCycle.totalHarvestKg.toFixed(1)} <span className="text-sm font-normal text-slate-500">kg</span>
+                                    {selectedCycle.totalHarvestKg.toFixed(1)} <span className="text-xs font-normal text-slate-400">kg</span>
                                 </p>
                             </div>
-                            <div className="p-4 border border-slate-100 rounded-xl bg-white shadow-sm">
-                                <div className="flex items-center gap-2 text-slate-500 mb-2">
-                                    <span className="text-xs font-semibold uppercase">Harga Rata-rata</span>
+                            <div className="p-4 border border-slate-100 rounded-2xl bg-white shadow-sm hover:border-teal-100 transition-colors">
+                                <div className="flex items-center gap-2 text-slate-400 mb-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Avg Price</span>
                                 </div>
-                                <p className="text-xl font-bold text-slate-900">
-                                    Rp{selectedCycle.totalHarvestKg > 0 ? (selectedCycle.totalHarvestRevenue / selectedCycle.totalHarvestKg).toLocaleString('id-ID', { maximumFractionDigits: 0 }) : 0}
+                                <p className="text-xl font-bold text-slate-900 whitespace-nowrap">
+                                    <span className="text-xs font-normal text-slate-400 mr-1">Rp</span>
+                                    {selectedCycle.totalHarvestKg > 0 ? (selectedCycle.totalHarvestRevenue / selectedCycle.totalHarvestKg).toLocaleString('id-ID', { maximumFractionDigits: 0 }) : 0}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Financial Breakdown */}
-                        <div>
-                            <h4 className="text-sm font-bold text-slate-900 uppercase tracking-widest mb-3">Rincian Keuangan</h4>
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                    <span className="text-slate-600">Total Pendapatan Panen</span>
-                                    <span className="font-semibold text-slate-900">Rp{selectedCycle.totalHarvestRevenue.toLocaleString('id-ID')}</span>
-                                </div>
-                                <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg border border-red-100">
-                                    <span className="text-red-700">Biaya Pakan ({selectedCycle.totalFeedKg.toFixed(1)} kg)</span>
-                                    <span className="font-semibold text-red-700">-Rp{selectedCycle.totalFeedCost.toLocaleString('id-ID')}</span>
-                                </div>
-                                <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg border border-red-100">
-                                    <span className="text-red-700">Biaya Operasional Lain</span>
-                                    <span className="font-semibold text-red-700">-Rp{selectedCycle.totalExpenses.toLocaleString('id-ID')}</span>
-                                </div>
-                                <div className="border-t border-slate-200 my-2 pt-2 flex justify-between items-center">
-                                    <span className="font-bold text-slate-900">Net Profit</span>
-                                    <span className={`font-bold ${selectedCycle.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                        Rp{selectedCycle.netProfit.toLocaleString('id-ID')}
-                                    </span>
+                        {/* Two Column Layout for Details */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Financial Breakdown */}
+                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Rincian Keuangan</h4>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-slate-600 font-medium">Pendapatan Panen</span>
+                                        <span className="font-bold text-slate-900">Rp{selectedCycle.totalHarvestRevenue.toLocaleString('id-ID')}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-slate-600 font-medium">Biaya Pakan ({selectedCycle.totalFeedKg.toFixed(1)} kg)</span>
+                                        <span className="font-bold text-red-600">-Rp{selectedCycle.totalFeedCost.toLocaleString('id-ID')}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-slate-600 font-medium">Biaya Operasional</span>
+                                        <span className="font-bold text-red-600">-Rp{selectedCycle.totalExpenses.toLocaleString('id-ID')}</span>
+                                    </div>
+                                    <div className="border-t border-slate-200 mt-4 pt-4 flex justify-between items-baseline">
+                                        <span className="font-bold text-slate-900 uppercase tracking-widest text-[10px]">Net Profit</span>
+                                        <span className={`text-xl font-black ${selectedCycle.netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                            Rp{selectedCycle.netProfit.toLocaleString('id-ID')}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Biological Breakdown */}
-                        <div>
-                            <h4 className="text-sm font-bold text-slate-900 uppercase tracking-widest mb-3">Data Populasi</h4>
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div className="p-3 bg-slate-50 rounded-lg">
-                                    <span className="block text-slate-500 mb-1">Tebar Awal</span>
-                                    <span className="font-semibold text-slate-900">{selectedCycle.initialFish.toLocaleString()} ekor</span>
-                                </div>
-                                <div className="p-3 bg-slate-50 rounded-lg">
-                                    <span className="block text-slate-500 mb-1">Panen Akhir</span>
-                                    <span className="font-semibold text-slate-900">{selectedCycle.finalFish.toLocaleString()} ekor</span>
+                            {/* Biological Breakdown */}
+                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                                <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Data Populasi</h4>
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-sm font-bold">
+                                                IN
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tebar Awal</p>
+                                                <p className="text-sm font-bold text-slate-900">{selectedCycle.initialFish.toLocaleString('id-ID')} ekor</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Berat Tebar</p>
+                                            <p className="text-sm font-bold text-slate-900">5g<span className="text-[10px] font-normal ml-0.5">/ekor</span></p>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center text-sm font-bold">
+                                                OUT
+                                            </div>
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Panen Akhir</p>
+                                                <p className="text-sm font-bold text-slate-900">{selectedCycle.finalFish.toLocaleString('id-ID')} ekor</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Berat Panen</p>
+                                            <p className="text-sm font-bold text-slate-900">{(selectedCycle.totalHarvestKg * 1000 / selectedCycle.finalFish).toFixed(0)}g<span className="text-[10px] font-normal ml-0.5">/ekor</span></p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
