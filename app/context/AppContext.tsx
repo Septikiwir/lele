@@ -125,6 +125,7 @@ export interface RiwayatSampling {
 
 export interface CycleSummary {
     kolamId: string;
+    cycleNumber: number; // Added: Order of the cycle (1, 2, 3...)
     startDate: string;
     endDate: string;
     totalDays: number;
@@ -133,14 +134,15 @@ export interface CycleSummary {
     totalFeedKg: number;
     totalFeedCost: number;
     totalHarvestKg: number;
-    totalHarvestRevenue: number;
-    totalExpenses: number; // Operational (non-feed)
+    totalHarvestRevenue: number; // Operational (non-feed)
+    totalExpenses: number;
     netProfit: number;
     fcr: number;
     sr: number; // Survival Rate
     adjustmentNet: number; // Net change from manual adjustments (deaths/corrections)
     isActive: boolean;
     startId?: string; // Optional ID of the start event (Tebar)
+    lastInputTime?: string; // Timestamp of the last data entry for this cycle
 }
 
 export interface Activity {
@@ -266,6 +268,20 @@ interface AppContextType {
     calculateProjectedProfit: (kolamId: string) => { revenue: number; cost: number; profit: number; roi: number };
     detectAppetiteDrop: (kolamId: string) => { hasDrop: boolean; dropPercent: number; diff: number };
     getRecentActivities: (limit?: number) => Activity[];
+
+    // Smart Feed
+    getDailyFeedStatus: (kolamId: string) => {
+        target: number;
+        actual: number;
+        remaining: number;
+        progress: number;
+        status: 'cukup' | 'kurang' | 'berlebih';
+        schedule: {
+            morning: { time: string; amount: number; isNext: boolean };
+            evening: { time: string; amount: number; isNext: boolean };
+            next: string; // 'Pagi' | 'Sore' | 'Besok'
+        }
+    };
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -576,7 +592,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             if (res.ok) {
                 const created = await res.json();
                 setPakan(prev => [...prev, { ...created, tanggal: created.tanggal.split('T')[0] }]);
-                
+
                 // Tambahkan ke pengeluaran juga
                 const stok = stokPakan.find(s => s.jenisPakan === newPakan.jenisPakan);
                 if (stok) {
@@ -1069,9 +1085,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
 
     // Helper to calculate metrics for a specific date range
-    const calculateCycleMetrics = (kolamId: string, startDate: string, endDate: string): CycleSummary => {
+    const calculateCycleMetrics = (kolamId: string, startDate: string, endDate: string, startTimestamp: string, endTimestamp?: string): Omit<CycleSummary, 'cycleNumber'> => {
         const k = getKolamById(kolamId);
-        const rangeFilterInclusive = (d: { tanggal: string }) => d.tanggal >= startDate && d.tanggal <= endDate;
+        const strictFilter = (d: { tanggal: string }) => {
+            const itemTime = new Date((d as any).createdAt || d.tanggal).getTime();
+            const minTime = new Date(startTimestamp || startDate).getTime();
+            const maxTime = endTimestamp ? new Date(endTimestamp).getTime() : Infinity;
+            if ((d as any).createdAt && startTimestamp) {
+                return itemTime >= minTime && itemTime < maxTime;
+            } else {
+                return d.tanggal >= startDate && d.tanggal <= endDate;
+            }
+        };
+        const rangeFilterInclusive = strictFilter;
 
         // Feed
         const cycleFeed = pakan.filter(p => p.kolamId === kolamId && rangeFilterInclusive(p));
@@ -1088,7 +1114,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const cycleExpenses = pengeluaran.filter(p => p.kolamId === kolamId && p.kategori !== 'PAKAN' && rangeFilterInclusive(p));
         const totalExpenses = cycleExpenses.reduce((sum, p) => sum + p.jumlah, 0);
 
-        const initialFish = getRiwayatIkanByKolam(kolamId).find(h => h.tanggal === startDate && (h.keterangan.toLowerCase().includes('tebar') || h.jumlahAkhir === h.jumlahPerubahan))?.jumlahPerubahan || 0;
+        // Initial Fish (Sum of all positive additions in this cycle, EXCLUDING the start of the next cycle)
+        const cycleFishHistory = getRiwayatIkanByKolam(kolamId)
+            .filter(rangeFilterInclusive);
+
+        const initialFish = cycleFishHistory
+            .filter(h => h.jumlahPerubahan > 0)
+            .reduce((sum, h) => sum + h.jumlahPerubahan, 0);
+
+        // Calculate Last Input Time (Strictly from Harvest)
+        const harvestRecords = cycleHarvest.map(r => ({ date: r.tanggal, time: (r as any).createdAt || r.tanggal }));
+
+        let lastInputTime = startDate;
+        if (harvestRecords.length > 0) {
+            harvestRecords.sort((a, b) => {
+                const dateDiff = new Date(b.date).getTime() - new Date(a.date).getTime();
+                if (dateDiff !== 0) return dateDiff;
+                return new Date(b.time).getTime() - new Date(a.time).getTime();
+            });
+            lastInputTime = harvestRecords[0].time;
+        }
 
         // FCR
         const fcr = totalHarvestKg > 0 ? totalFeedKg / totalHarvestKg : 0;
@@ -1120,7 +1165,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             sr,
             adjustmentNet: 0,
             isActive: false,
-            startId: ''
+            startId: '',
+            lastInputTime // Added field
         };
     };
 
@@ -1146,8 +1192,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
             endDate = historyDesc[0].tanggal;
         }
 
-        const metrics = calculateCycleMetrics(kolamId, startDate, endDate);
-        return { ...metrics, startId, isActive };
+        const startTimestamp = (startEvent as any).createdAt || startDate;
+        const metrics = calculateCycleMetrics(kolamId, startDate, endDate, startTimestamp);
+        const cycleNumber = historyDesc.filter(h => h.keterangan.toLowerCase().includes('tebar') || (h.jumlahPerubahan > 0 && h.jumlahAkhir === h.jumlahPerubahan)).length;
+        return { ...metrics, startId, isActive, cycleNumber };
     };
 
 
@@ -1155,40 +1203,66 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const toggleSidebar = () => setIsSidebarCollapsed(prev => !prev);
 
     const getCycleHistory = (kolamId: string): CycleSummary[] => {
-        const history = getRiwayatIkanByKolam(kolamId).sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime());
+        // 1. Get all fish history sorted by CREATED AT (Ascending) for chronological processing
+        const historyAsc = getRiwayatIkanByKolam(kolamId).sort((a, b) => {
+            const timeA = new Date((a as any).createdAt || a.tanggal).getTime();
+            const timeB = new Date((b as any).createdAt || b.tanggal).getTime();
+            return timeA - timeB;
+        });
+
         const cycles: CycleSummary[] = [];
-        let currentCycleStart: { date: string; initialFish: number } | null = null;
 
-        // Find all Tebar events to determine cycle boundaries
-        for (let i = 0; i < history.length; i++) {
-            const h = history[i];
-            const isTebar = h.keterangan.toLowerCase().includes('tebar') || (h.jumlahPerubahan > 0 && h.jumlahAkhir === h.jumlahPerubahan);
+        // 2. Identify Cycle Starts (Tebar events)
+        let tebarEvents = historyAsc.filter(h =>
+            h.keterangan.toLowerCase().includes('tebar') ||
+            (h.jumlahPerubahan > 0 && h.jumlahAkhir === h.jumlahPerubahan)
+        );
 
-            if (isTebar) {
-                // If we were tracking a cycle, close it
-                if (currentCycleStart) {
-                    // This new tebar marks the start of a NEW cycle, so the previous one ended just before.
-                    // Or more likely, the previous one ended when fish count hit 0. 
-                    // Let's rely on getCycleSummary logic but focused on a specific date range?
-                    // Actually, re-using getCycleSummary is hard because it dynamically finds the "Latest".
-                    // Let's implement specific logic here.
+        // 3. Iterate to define strict boundaries
+        for (let i = 0; i < tebarEvents.length; i++) {
+            const startEvent = tebarEvents[i];
+            const startTimestamp = (startEvent as any).createdAt || startEvent.tanggal;
 
-                    // Closure of previous cycle
-                    cycles.push(calculateCycleMetrics(kolamId, currentCycleStart.date, h.tanggal));
+            let endTimestamp: string | undefined = undefined;
+            let endDate = new Date().toISOString().split('T')[0];
+            let isActive = true;
+
+            if (i < tebarEvents.length - 1) {
+                // Determine end based on NEXT cycle start
+                const nextEvent = tebarEvents[i + 1];
+                endTimestamp = (nextEvent as any).createdAt || nextEvent.tanggal;
+
+                // For display, EndDate is the date of the last relevant event (Harvest)
+                const lastHarvest = riwayatPanen.filter(p => {
+                    const t = new Date((p as any).createdAt || p.tanggal).getTime();
+                    return t >= new Date(startTimestamp).getTime() && t < new Date(endTimestamp!).getTime();
+                }).sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime())[0];
+
+                endDate = lastHarvest ? lastHarvest.tanggal : startEvent.tanggal;
+                isActive = false;
+            } else {
+                // Latest cycle
+                const k = getKolamById(kolamId);
+                isActive = k ? k.jumlahIkan > 0 : true;
+
+                if (!isActive) {
+                    const lastHarvest = riwayatPanen
+                        .filter(p => p.kolamId === kolamId && p.tanggal >= startEvent.tanggal)
+                        .sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime())[0];
+                    if (lastHarvest) endDate = lastHarvest.tanggal;
                 }
-                currentCycleStart = { date: h.tanggal, initialFish: h.jumlahPerubahan };
             }
+
+            const metrics = calculateCycleMetrics(kolamId, startEvent.tanggal, endDate, startTimestamp, endTimestamp);
+
+            cycles.push({
+                ...metrics,
+                cycleNumber: i + 1,
+                isActive
+            });
         }
 
-        // Add the current active cycle if exists
-        if (currentCycleStart) {
-            const activeMetrics = calculateCycleMetrics(kolamId, currentCycleStart.date, new Date().toISOString().split('T')[0]);
-            // Force isActive true for the current one
-            activeMetrics.isActive = true;
-            cycles.push(activeMetrics);
-        }
-
-        return cycles.reverse(); // Newest first
+        return cycles.reverse(); // Return Newest First
     };
 
     // === Dashboard Helpers ===
@@ -1342,7 +1416,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     // Constants
     const GROWTH_RATE_PER_DAY = 0.002; // 2 grams per day (kg) -> 0.002 kg
-    const TARGET_WEIGHT_KG = 0.2; // 200 grams
+    const TARGET_WEIGHT_KG = 0.15; // 150 grams
     const ESTIMATED_FEED_PRICE = 13000; // Rp/kg (fallback)
 
     const predictHarvestDate = (kolamId: string) => {
@@ -1437,6 +1511,104 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return { hasDrop, dropPercent, diff };
     };
 
+    const getDailyFeedStatus = (kolamId: string) => {
+        const k = getKolamById(kolamId);
+        if (!k) return {
+            target: 0, actual: 0, remaining: 0, progress: 0, status: 'kurang' as const,
+            schedule: {
+                morning: { time: '05:00', amount: 0, isNext: false },
+                evening: { time: '17:00', amount: 0, isNext: false },
+                next: '-'
+            }
+        };
+
+        // 1. Calculate Target
+        // We need average weight. If we have sampling, use it. If not, estimate based on days?
+        // Let's use getLatestSampling.
+        const sampling = getLatestSampling(kolamId);
+        // Default to 10g avg weight (0.01kg) if unknown, or maybe small bibit 5g
+        let avgWeightKg = 0.01;
+        if (sampling && sampling.jumlahIkanPerKg > 0) {
+            avgWeightKg = 1 / sampling.jumlahIkanPerKg;
+        }
+
+        const biomass = k.jumlahIkan * avgWeightKg;
+
+        // Feed Rate logic (3% default or dynamic)
+        // Use logic from getFeedRecommendation roughly
+        // <10g: 6-8%, <30g: 4-5%, <100g: 3-4%, >100g: 2-3%
+        let feedRate = 0.03; // Default 3%
+        const weightGrams = avgWeightKg * 1000;
+
+        if (weightGrams < 10) feedRate = 0.06;
+        else if (weightGrams < 50) feedRate = 0.04;
+        else if (weightGrams < 200) feedRate = 0.03;
+        else feedRate = 0.02;
+
+        const dailyTarget = biomass * feedRate; // kg
+
+        // 2. Calculate Actual (Today)
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayFeed = pakan
+            .filter(p => p.kolamId === kolamId && p.tanggal === todayStr)
+            .reduce((sum, p) => sum + p.jumlahKg, 0);
+
+        const remaining = Math.max(0, dailyTarget - todayFeed);
+        const progress = dailyTarget > 0 ? (todayFeed / dailyTarget) * 100 : 0;
+
+        let status: 'cukup' | 'kurang' | 'berlebih' = 'kurang';
+        if (progress >= 100) status = 'cukup';
+        if (progress > 110) status = 'berlebih';
+
+        // 3. Schedule Logic (Morning 50% / Evening 50%)
+        // If remaining > 0, split it? Or just static target split?
+        // Let's do static target split for display "Target Pagi/Sore"
+        const morningTarget = dailyTarget * 0.5;
+        const eveningTarget = dailyTarget * 0.5;
+
+        // Next Schedule Logic
+        const now = new Date();
+        const hour = now.getHours(); // 0-23
+
+        let isNextMorning = false;
+        let isNextEvening = false;
+        let nextLabel = '';
+
+        if (progress >= 100) {
+            // If target reached, stop feeding
+            nextLabel = 'Besok';
+        } else {
+            if (hour < 5) {
+                isNextMorning = true;
+                nextLabel = 'Pagi Ini (05:00)';
+            } else if (hour < 17) {
+                isNextEvening = true;
+                nextLabel = 'Sore Ini (17:00)';
+            } else {
+                // After 17:00, next is tomorrow
+                // But wait, if they haven't fed evening yet?
+                // Assuming they might still feed late? 
+                // Let's say if it's 8 PM, it's effectively "Besok" unless they are late.
+                // But for standard schedule, it loops to tomorrow morning.
+                isNextMorning = true; // For next day actually
+                nextLabel = 'Besok Pagi (05:00)';
+            }
+        }
+
+        return {
+            target: dailyTarget,
+            actual: todayFeed,
+            remaining,
+            progress,
+            status,
+            schedule: {
+                morning: { time: '05:00', amount: morningTarget, isNext: isNextMorning && nextLabel.includes('Pagi Ini') },
+                evening: { time: '17:00', amount: eveningTarget, isNext: isNextEvening },
+                next: nextLabel
+            }
+        };
+    };
+
     return (
         <AppContext.Provider value={{
             kolam,
@@ -1508,6 +1680,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             predictHarvestDate,
             calculateProjectedProfit,
             detectAppetiteDrop,
+            getDailyFeedStatus,
         }}>
             {children}
         </AppContext.Provider>

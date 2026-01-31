@@ -24,6 +24,7 @@ export default function PakanPage() {
         calculateFCR,
         getStokTersediaByJenis,
         getAllJenisPakan,
+        getDailyFeedStatus,
     } = useApp();
 
 
@@ -172,25 +173,54 @@ export default function PakanPage() {
     // ... (keep existing state and logic)
 
     // Calculate Grid KPIs
-    // Next Feeding Logic
-    const getNextFeeding = () => {
-        const now = new Date();
-        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        const activeSchedules = jadwalPakan.filter(j => j.aktif);
+    // Next Feeding Logic (SMART from all ponds)
+    const getNextSmartFeeding = () => {
+        const candidates = kolam.map(k => {
+            const status = getDailyFeedStatus(k.id);
+            // Parse time from schedule
+            const nextLabel = status.schedule.next;
+            let time = '23:59';
+            let amount = 0;
+            let dateSort = '9999-99-99'; // YYYY-MM-DD
 
-        // Find next schedule today
-        let next = activeSchedules.find(j => j.waktu > currentTime);
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const todayStr = new Date().toISOString().split('T')[0];
+            const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-        // If no more today, get earliest tomorrow
-        if (!next && activeSchedules.length > 0) {
-            next = activeSchedules.sort((a, b) => a.waktu.localeCompare(b.waktu))[0];
-        }
+            if (nextLabel.includes('Pagi Ini')) {
+                time = status.schedule.morning.time;
+                amount = status.schedule.morning.amount;
+                dateSort = todayStr + ' ' + time;
+            } else if (nextLabel.includes('Sore Ini')) {
+                time = status.schedule.evening.time;
+                amount = status.schedule.evening.amount;
+                dateSort = todayStr + ' ' + time;
+            } else if (nextLabel.includes('Besok')) {
+                time = status.schedule.morning.time;
+                amount = status.schedule.morning.amount;
+                dateSort = tomorrowStr + ' ' + time;
+            }
 
-        return next;
+            return {
+                kolamId: k.id,
+                kolamName: k.nama,
+                time,
+                amount,
+                label: nextLabel,
+                dateSort,
+                jenisPakan: status.schedule.next // Just use label or derive feed type? 
+                // Ideally detailed feed type, but generic for now is OK or derive from status
+            };
+        });
+
+        // specific filtering: ignore "Besok" if others are "Hari Ini"?
+        // Just sort by dateSort
+        candidates.sort((a, b) => a.dateSort.localeCompare(b.dateSort));
+        return candidates.length > 0 ? candidates[0] : null;
     };
 
-    const nextFeeding = getNextFeeding();
-    const nextKolam = nextFeeding ? kolam.find(k => k.id === nextFeeding.kolamId) : null;
+    const nextSmart = getNextSmartFeeding();
 
     // Calculate Grid KPIs
     const totalStokKg = allJenisPakan.reduce((sum, jenis) => sum + getStokTersediaByJenis(jenis), 0);
@@ -260,17 +290,17 @@ export default function PakanPage() {
                         </div>
                     </div>
 
-                    {/* 3. Jadwal Berikutnya */}
+                    {/* 3. Jadwal Berikutnya (SMART) */}
                     <div className="stat-card p-6 bg-white border border-slate-100 group relative overflow-hidden">
                         <div className="flex items-start justify-between z-10 relative">
                             <div>
                                 <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Jadwal Berikutnya</p>
-                                {nextFeeding ? (
+                                {nextSmart ? (
                                     <div className="mt-1">
                                         <div className="flex items-baseline gap-2">
-                                            <p className="text-2xl font-bold text-teal-600">{nextFeeding.waktu}</p>
+                                            <p className="text-2xl font-bold text-teal-600">{nextSmart.time}</p>
                                             <span className="text-sm font-medium text-slate-700 truncate max-w-[120px]">
-                                                {nextKolam?.nama}
+                                                {nextSmart.kolamName}
                                             </span>
                                         </div>
                                     </div>
@@ -285,7 +315,7 @@ export default function PakanPage() {
                             </div>
                         </div>
                         <div className="mt-4 text-xs text-slate-500">
-                            {nextFeeding ? `${nextFeeding.jumlahKg} kg • ${nextFeeding.jenisPakan}` : 'Tidak ada jadwal tersisa hari ini'}
+                            {nextSmart ? `${nextSmart.amount.toFixed(1)} kg • ${nextSmart.label}` : 'Tidak ada jadwal tersisa'}
                         </div>
                     </div>
                 </div>
@@ -297,54 +327,81 @@ export default function PakanPage() {
                     <div className="lg:col-span-2 space-y-6">
 
                         {/* Section: Jadwal Rutin */}
+                        {/* Section: Smart Feed Schedule */}
                         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                 <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                                    <ClockIcon /> Rutinitas Pemberian Pakan
+                                    <ClockIcon /> Target & Jadwal Pakan
                                 </h3>
-                                <button onClick={() => setShowJadwalForm(true)} className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                                    + Atur Jadwal
-                                </button>
+                                <div className="text-xs text-slate-500 font-medium bg-slate-100 px-2 py-1 rounded-lg">
+                                    {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+                                </div>
                             </div>
-                            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {sortedJadwal.length === 0 ? (
-                                    <div className="col-span-full py-8 text-center text-slate-400 italic">
-                                        Belum ada jadwal rutin.
-                                    </div>
-                                ) : (
-                                    sortedJadwal.map(jadwal => {
-                                        const k = kolam.find(item => item.id === jadwal.kolamId);
-                                        return (
-                                            <div key={jadwal.id} className={`flex items-start gap-4 p-4 rounded-xl border transition-all ${jadwal.aktif ? 'bg-white border-slate-200 hover:border-teal-300 hover:shadow-sm' : 'bg-slate-50 border-slate-100 opacity-60'}`}>
-                                                <div className={`mt-1 font-bold text-lg ${jadwal.aktif ? 'text-teal-600' : 'text-slate-400'}`}>
-                                                    {jadwal.waktu}
+                            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+                                {kolam.map(k => {
+                                    const status = getDailyFeedStatus(k.id);
+                                    const isCukup = status.status === 'cukup';
+                                    const isBerlebih = status.status === 'berlebih';
+
+                                    // Determine amount to show for "Next Schedule"
+                                    let nextAmount = 0;
+                                    if (status.schedule.next.includes('Pagi')) nextAmount = status.schedule.morning.amount;
+                                    else if (status.schedule.next.includes('Sore')) nextAmount = status.schedule.evening.amount;
+                                    else if (status.schedule.next.includes('Besok')) nextAmount = status.schedule.morning.amount; // Loop to morning
+
+                                    return (
+                                        <div key={k.id} className="p-4 rounded-xl border border-slate-100 bg-white hover:shadow-md transition-all space-y-3 relative overflow-hidden group">
+                                            {/* Header */}
+                                            <div className="flex justify-between items-start">
+                                                <div>
+                                                    <h4 className="font-bold text-slate-800">{k.nama}</h4>
+                                                    <p className="text-xs text-slate-500">{k.jumlahIkan.toLocaleString('id-ID')} ekor</p>
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="font-semibold text-slate-900 truncate">{k?.nama}</h4>
-                                                    <p className="text-sm text-slate-500 truncate">{jadwal.jumlahKg} kg • {jadwal.jenisPakan}</p>
-                                                    {jadwal.keterangan && <p className="text-xs text-slate-400 mt-1 italic">&quot;{jadwal.keterangan}&quot;</p>}
+                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-full ${isBerlebih ? 'bg-red-100 text-red-700' :
+                                                    isCukup ? 'bg-emerald-100 text-emerald-700' :
+                                                        'bg-amber-100 text-amber-700'
+                                                    }`}>
+                                                    {isBerlebih ? 'Stop' : isCukup ? 'Tercapai' : 'Proses'}
+                                                </span>
+                                            </div>
+
+                                            {/* Progress */}
+                                            <div className="space-y-1">
+                                                <div className="flex justify-between text-xs">
+                                                    <span className="text-slate-500">Harian</span>
+                                                    <span className="font-medium text-slate-900">{status.progress.toFixed(0)}%</span>
                                                 </div>
-                                                <div className="flex flex-col gap-2">
-                                                    <label className="relative inline-flex items-center cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="sr-only peer"
-                                                            checked={jadwal.aktif}
-                                                            onChange={() => toggleJadwalAktif(jadwal.id, jadwal.aktif)}
-                                                        />
-                                                        <div className="w-7 h-4 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-teal-500"></div>
-                                                    </label>
-                                                    <button
-                                                        onClick={() => setDeleteModal({ type: 'jadwal', id: jadwal.id })}
-                                                        className="text-slate-300 hover:text-red-500 transition-colors p-1"
-                                                    >
-                                                        <TrashIcon />
-                                                    </button>
+                                                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-500 ${isBerlebih ? 'bg-red-500' : isCukup ? 'bg-emerald-500' : 'bg-amber-500'
+                                                            }`}
+                                                        style={{ width: `${Math.min(status.progress, 100)}%` }}
+                                                    ></div>
+                                                </div>
+                                                <div className="flex justify-between text-[10px] text-slate-400">
+                                                    <span>{status.actual.toFixed(1)} kg</span>
+                                                    <span>Target: {status.target.toFixed(1)} kg</span>
                                                 </div>
                                             </div>
-                                        );
-                                    })
-                                )}
+
+                                            {/* Next Schedule */}
+                                            <div className={`pt-3 border-t border-slate-50 mt-2 ${isCukup ? 'opacity-50' : ''}`}>
+                                                <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-1">Jadwal Berikutnya</p>
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <ClockIcon className="w-3.5 h-3.5 text-slate-400" />
+                                                        <span className="text-sm font-bold text-slate-700">{status.schedule.next}</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <span className="block text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
+                                                            {nextAmount.toFixed(1)} kg
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 

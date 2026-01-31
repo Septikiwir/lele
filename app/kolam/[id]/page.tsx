@@ -456,13 +456,6 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                         <p className="text-slate-500 mt-1">Tebar: {kolam.tanggalTebar ? new Date(kolam.tanggalTebar).toLocaleDateString('id-ID') : '-'} • {kolam.panjang}m × {kolam.lebar}m × {kolam.kedalaman}m</p>
                     </div>
                     <div className="flex gap-2 items-center">
-                        <button
-                            onClick={() => setIsHistoryOpen(true)}
-                            className="btn btn-outline flex items-center gap-2"
-                        >
-                            <HistoryIcon />
-                            Riwayat Siklus
-                        </button>
                         <span className={`badge ${displayStatus === 'aman' ? 'badge-success' : displayStatus === 'waspada' ? 'badge-warning' : 'badge-danger'}`}>
                             {statusLabels[displayStatus]}
                         </span>

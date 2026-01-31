@@ -27,7 +27,7 @@ export default function HarvestForecastWidget() {
                     </div>
                     <div>
                         <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider">Estimasi Panen</h3>
-                        <p className="text-xs text-slate-400 mt-1">Target: 200g/ekor</p>
+                        <p className="text-xs text-slate-400 mt-1">Target: 150g/ekor</p>
                     </div>
                 </div>
             </div>
@@ -43,31 +43,51 @@ export default function HarvestForecastWidget() {
 
                         return (
                             <Link href={`/kolam/${p.id}`} key={p.id} className="block group">
-                                <div className={`p-3 rounded-xl border transition-all flex items-center justify-between
+                                <div className={`p-3 rounded-xl border transition-all
                                     ${isReady
                                         ? 'bg-emerald-50 border-emerald-100 hover:border-emerald-300'
                                         : 'bg-white border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30'
                                     }`}>
-                                    <div>
-                                        <p className="text-sm font-bold text-slate-700 group-hover:text-indigo-700 transition-colors">
-                                            {p.nama}
-                                        </p>
-                                        <p className="text-xs text-slate-500">
-                                            Bobot skrg: <span className="font-medium text-slate-700">{(p.currentWeight * 1000).toFixed(0)}g</span>
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        {isReady ? (
-                                            <span className="inline-flex items-center px-2 py-1 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold">
-                                                SIAP PANEN
-                                            </span>
-                                        ) : (
-                                            <div className="flex flex-col items-end">
-                                                <span className="text-sm text-slate-900" style={{ fontWeight: 'normal', fontFamily: 'inherit' }}>
-                                                    {p.daysRemaining} Hari
+
+                                    <div className="w-full">
+                                        {/* Row 1: Header (Name --- Date • Days) */}
+                                        <div className="flex justify-between items-end mb-2">
+                                            <p className="text-sm font-bold text-slate-700 group-hover:text-indigo-700 transition-colors truncate">
+                                                {p.nama}
+                                            </p>
+
+                                            {!isReady ? (
+                                                <div className="text-right whitespace-nowrap">
+                                                    <span className="text-[10px] text-slate-400 mr-1.5">
+                                                        {new Date(p.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                    </span>
+                                                    <span className="text-xs font-medium text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded">
+                                                        {p.daysRemaining} Hari
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-700 text-[10px] font-bold">
+                                                    SIAP PANEN
                                                 </span>
-                                                <span className="text-[10px] text-slate-400" style={{ fontWeight: 'normal', fontFamily: 'inherit' }}>
-                                                    {new Date(p.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                            )}
+                                        </div>
+
+                                        {/* Row 2: Progress Bar (Full Width) */}
+                                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full transition-all duration-500 ${isReady ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+                                                style={{ width: `${Math.min((p.currentWeight / 0.15) * 100, 100)}%` }}
+                                            ></div>
+                                        </div>
+
+                                        {/* Row 3: Weight Context (Current --- Target) */}
+                                        {!isReady && (
+                                            <div className="flex justify-between items-center mt-1">
+                                                <span className="text-[10px] font-medium text-slate-700">
+                                                    {(p.currentWeight * 1000).toFixed(0)}g
+                                                </span>
+                                                <span className="text-[10px] text-slate-400">
+                                                    Target: 150g
                                                 </span>
                                             </div>
                                         )}
