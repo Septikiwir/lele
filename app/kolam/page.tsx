@@ -29,12 +29,12 @@ export default function KolamPage() {
         kolam, deleteKolam, calculateKepadatan, getUnifiedStatus,
         getLatestSampling, getFeedRecommendation,
         addPakan, addRiwayatPanen, addPenjualan, pembeli, getAllJenisPakan, tebarBibit,
-        hargaPasarPerKg, getCycleHistory
+        hargaPasarPerKg, getCycleHistory, riwayatPanen
     } = useApp();
     const { showToast } = useToast();
     const [deleteModal, setDeleteModal] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [activeTab, setActiveTab] = useState<'status' | 'riwayat'>('status');
+    const [activeTab, setActiveTab] = useState<'status' | 'riwayat' | 'panen'>('status');
 
     // Cycle History Pagination & Modal State
     const [currentPage, setCurrentPage] = useState(1);
@@ -197,6 +197,15 @@ export default function KolamPage() {
                             }`}
                     >
                         Riwayat Siklus
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('panen')}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'panen'
+                            ? 'bg-white text-slate-800 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                    >
+                        Riwayat Panen
                     </button>
                 </div>
 
@@ -451,7 +460,7 @@ export default function KolamPage() {
                                 <tbody>
                                     {getCycleHistoryForTable().length === 0 ? (
                                         <tr>
-                                            <td colSpan={9} className="text-center py-8 text-slate-400">
+                                            <td colSpan={10} className="text-center py-8 text-slate-400">
                                                 Belum ada riwayat siklus yang selesai.
                                             </td>
                                         </tr>
@@ -541,6 +550,69 @@ export default function KolamPage() {
                                 </div>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* Harvest History Tab Content */}
+                {activeTab === 'panen' && (
+                    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                        <div className="overflow-x-auto">
+                            <table className="table w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Kolam</th>
+                                        <th>Tipe</th>
+                                        <th className="text-right">Berat (Kg)</th>
+                                        <th className="text-right">Jumlah (Ekor)</th>
+                                        <th className="text-right">Harga/Kg</th>
+                                        <th className="text-right">Total Pendapatan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {riwayatPanen.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={7} className="text-center py-8 text-slate-400">
+                                                Belum ada data panen.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        [...riwayatPanen].sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()).map((p) => {
+                                            const kolamName = kolam.find(k => k.id === p.kolamId)?.nama || 'Unknown';
+                                            const totalPendapatan = p.beratTotalKg * p.hargaPerKg;
+                                            return (
+                                                <tr key={p.id} className="hover:bg-slate-50">
+                                                    <td className="text-slate-500">
+                                                        {new Date(p.tanggal).toLocaleDateString('id-ID', {
+                                                            day: 'numeric',
+                                                            month: 'long',
+                                                            year: 'numeric'
+                                                        })}
+                                                        <div className="text-[10px] text-slate-400">
+                                                            {new Date(p.tanggal).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                                        </div>
+                                                    </td>
+                                                    <td className="font-medium text-slate-900">{kolamName}</td>
+                                                    <td>
+                                                        <span className={`badge badge-sm ${p.tipe === 'TOTAL' ? 'badge-primary' : 'badge-ghost'}`}>
+                                                            {p.tipe}
+                                                        </span>
+                                                    </td>
+                                                    <td className="text-right text-slate-700">{p.beratTotalKg.toLocaleString('id-ID')}</td>
+                                                    <td className="text-right text-slate-700">{p.jumlahEkor.toLocaleString('id-ID')}</td>
+                                                    <td className="text-right text-slate-700">Rp{p.hargaPerKg.toLocaleString('id-ID')}</td>
+                                                    <td className="text-right">
+                                                        <span className="font-medium text-green-600">
+                                                            Rp{totalPendapatan.toLocaleString('id-ID')}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </div>

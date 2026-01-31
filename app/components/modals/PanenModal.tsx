@@ -72,11 +72,17 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
             }
         }
 
+        // Combine selected date with CURRENT time
+        const now = new Date();
+        const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS
+        const combinedDate = new Date(`${panenForm.tanggal}T${currentTime}`);
+        const isoString = combinedDate.toISOString();
+
         setIsSubmitting(true);
         try {
             await addRiwayatPanen({
                 kolamId: panenForm.kolamId,
-                tanggal: panenForm.tanggal,
+                tanggal: isoString,
                 beratTotalKg: Number(panenForm.beratTotalKg),
                 jumlahEkor: Number(panenForm.jumlahEkor),
                 hargaPerKg: Number(panenForm.hargaPerKg),
@@ -88,7 +94,7 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
                 await addPenjualan({
                     kolamId: panenForm.kolamId,
                     pembeliId: panenForm.pembeliId,
-                    tanggal: panenForm.tanggal,
+                    tanggal: isoString,
                     beratKg: Number(panenForm.beratTotalKg),
                     hargaPerKg: Number(panenForm.hargaPerKg),
                     jumlahIkan: Number(panenForm.jumlahEkor),
@@ -132,9 +138,9 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
 
     return (
         <>
-            <Modal 
-                isOpen={isOpen} 
-                onClose={onClose} 
+            <Modal
+                isOpen={isOpen}
+                onClose={onClose}
                 title="Catat Panen Ikan"
                 footer={
                     <>
@@ -212,13 +218,13 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
                                 const newTipe = e.target.value as 'PARSIAL' | 'TOTAL';
                                 setPanenForm(prev => {
                                     const updates: any = { ...prev, tipe: newTipe };
-                                    
+
                                     // Auto-fill semua ikan jika TOTAL
                                     if (newTipe === 'TOTAL' && prev.kolamId) {
                                         const selectedKolam = kolam.find(k => k.id === prev.kolamId);
                                         if (selectedKolam) {
                                             updates.jumlahEkor = selectedKolam.jumlahIkan.toString();
-                                            
+
                                             // Calculate berat dari jumlah ekor
                                             const latestSampling = getLatestSampling(selectedKolam.id);
                                             if (latestSampling && latestSampling.jumlahIkanPerKg > 0) {
@@ -239,18 +245,18 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
                     <div className="grid grid-cols-2 gap-4">
                         <div className="form-group">
                             <label className="form-label">Berat Total (Kg)</label>
-                            <input 
-                                type="number" 
-                                step="0.1" 
-                                className="input w-full" 
-                                required 
+                            <input
+                                type="number"
+                                step="0.1"
+                                className="input w-full"
+                                required
                                 placeholder="0"
-                                value={panenForm.beratTotalKg} 
+                                value={panenForm.beratTotalKg}
                                 onChange={e => {
                                     const beratKg = e.target.value;
                                     setPanenForm(prev => {
                                         const updates: any = { ...prev, beratTotalKg: beratKg };
-                                        
+
                                         // Auto-calculate jumlah ekor dari berat jika ada sampling
                                         if (beratKg && prev.kolamId) {
                                             const selectedKolam = kolam.find(k => k.id === prev.kolamId);
@@ -264,21 +270,21 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
                                         }
                                         return updates;
                                     });
-                                }} 
+                                }}
                             />
                         </div>
                         <div className="form-group">
                             <label className="form-label">Jlh Ekor</label>
-                            <input 
-                                type="number" 
-                                className="input w-full" 
+                            <input
+                                type="number"
+                                className="input w-full"
                                 placeholder="0"
-                                value={panenForm.jumlahEkor} 
+                                value={panenForm.jumlahEkor}
                                 onChange={e => {
                                     const jumlahEkor = e.target.value;
                                     setPanenForm(prev => {
                                         const updates: any = { ...prev, jumlahEkor };
-                                        
+
                                         // Auto-calculate berat dari jumlah ekor jika ada sampling
                                         if (jumlahEkor && prev.kolamId) {
                                             const selectedKolam = kolam.find(k => k.id === prev.kolamId);
@@ -292,7 +298,7 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
                                         }
                                         return updates;
                                     });
-                                }} 
+                                }}
                             />
                             {panenForm.kolamId && (() => {
                                 const selectedKolam = kolam.find(k => k.id === panenForm.kolamId);
@@ -330,9 +336,9 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
             </Modal>
 
             {/* Quick Add Buyer Modal */}
-            <Modal 
-                isOpen={isBuyerModalOpen} 
-                onClose={() => setIsBuyerModalOpen(false)} 
+            <Modal
+                isOpen={isBuyerModalOpen}
+                onClose={() => setIsBuyerModalOpen(false)}
                 title="Tambah Pembeli Baru"
                 footer={
                     <>

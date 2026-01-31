@@ -459,7 +459,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 const data = await panenRes.json();
                 setRiwayatPanen(data.map((p: any) => ({
                     ...p,
-                    tanggal: (p.tanggal as string).split('T')[0],
+                    tanggal: p.tanggal, // Keep full ISO string
                     tipe: p.tipe
                 })));
             }
@@ -766,7 +766,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 const created = await res.json();
                 setRiwayatPanen(prev => [...prev, {
                     ...created,
-                    tanggal: created.tanggal.split('T')[0],
+                    tanggal: created.tanggal, // Keep full ISO string
                     tipe: created.tipe
                 }]);
                 // Refresh kolam to get updated fish count
