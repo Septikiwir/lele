@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { useToast } from './ToastContext';
 
 // Types
 export interface Kolam {
@@ -321,7 +322,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const { data: session, status } = useSession();
     const isAuthenticated = status === 'authenticated';
 
-    // State
+    const { showToast } = useToast();
     const [activeFarmId, setActiveFarmId] = useState<string | null>(null);
     const [kolam, setKolam] = useState<Kolam[]>([]);
     const [pakan, setPakan] = useState<DataPakan[]>([]);
@@ -337,6 +338,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [hargaPasarPerKg, setHargaPasarPerKg] = useState(35000); // Default Rp 35.000/kg
+
+    // Optimistic Update Helpers
+    const pendingRequestIds = React.useRef<Record<string, number>>({});
 
     // Fetch active farm
     const fetchFarm = useCallback(async () => {
@@ -535,14 +539,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const updateKolam = async (id: string, updates: Partial<Kolam>) => {
         if (!activeFarmId) return;
 
-        // Map position to DB fields
+        // 1. Store previous state for revert
+        const previousKolam = [...kolam];
+
+        // Optimistic Update: Increment request version for this id
+        const requestId = (pendingRequestIds.current[id] || 0) + 1;
+        pendingRequestIds.current[id] = requestId;
+
+        // 2. Optimistic Update
+        setKolam(prev => prev.map(k => {
+            if (k.id === id) {
+                const updated = { ...k, ...updates };
+                // Ensure position is correctly merged if it exists in updates
+                if (updates.position) {
+                    updated.position = { ...k.position, ...updates.position };
+                }
+                return updated;
+            }
+            return k;
+        }));
+
+        // Map position to DB fields for API
         const dbUpdates: Record<string, unknown> = { ...updates };
         if (updates.position) {
-            dbUpdates.positionX = updates.position.x;
-            dbUpdates.positionY = updates.position.y;
-            dbUpdates.positionW = updates.position.w;
-            dbUpdates.positionH = updates.position.h;
-            dbUpdates.color = updates.position.color;
+            if (updates.position.x !== undefined) dbUpdates.positionX = updates.position.x;
+            if (updates.position.y !== undefined) dbUpdates.positionY = updates.position.y;
+            if (updates.position.w !== undefined) dbUpdates.positionW = updates.position.w;
+            if (updates.position.h !== undefined) dbUpdates.positionH = updates.position.h;
+            if (updates.position.color !== undefined) dbUpdates.color = updates.position.color;
             delete dbUpdates.position;
         }
 
@@ -556,12 +580,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dbUpdates)
             });
-            if (res.ok) {
+
+            if (!res.ok) {
+                throw new Error('Failed to update kolam on server');
+            }
+
+            // Sync only if this is still the LATEST request
+            if (pendingRequestIds.current[id] === requestId) {
                 const updated = await res.json();
                 setKolam(prev => prev.map(k => k.id === id ? mapKolam(updated) : k));
             }
         } catch (error) {
             console.error('Failed to update kolam:', error);
+            // Revert only if this is still the LATEST request
+            if (pendingRequestIds.current[id] === requestId) {
+                setKolam(previousKolam);
+                showToast('Gagal memperbarui data kolam. Perubahan dibatalkan.', 'error');
+            }
         }
     };
 

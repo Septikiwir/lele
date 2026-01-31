@@ -73,16 +73,16 @@ export default function KualitasAirPage() {
     const [showForm, setShowForm] = useState(false);
     const [showRekomendasi, setShowRekomendasi] = useState<string[] | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
+
     // Pagination state
     const [limitKondisiAir, setLimitKondisiAir] = useState(10);
-    
+
     // Filtered and sorted data
     const filteredKondisiAir = kondisiAir
         .slice()
         .sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime())
         .slice(0, limitKondisiAir);
-    
+
     const [formData, setFormData] = useState({
         kolamId: '',
         tanggal: new Date().toISOString().split('T')[0],
@@ -135,12 +135,12 @@ export default function KualitasAirPage() {
         <DashboardLayout>
             <div className="flex flex-col gap-6 sm:gap-8">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-900">Monitoring Kualitas Air</h1>
-                        <p className="text-slate-500 mt-1">Catat kondisi air dan dapatkan rekomendasi tindakan</p>
+                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Monitoring Kualitas Air</h1>
+                        <p className="text-slate-500 text-sm">Catat kondisi air dan dapatkan rekomendasi tindakan secara real-time.</p>
                     </div>
-                    <button onClick={() => setShowForm(true)} className="btn btn-primary">
+                    <button onClick={() => setShowForm(true)} className="btn btn-primary text-sm px-4 py-2">
                         <PlusIcon />
                         Input Kondisi Air
                     </button>
@@ -172,130 +172,139 @@ export default function KualitasAirPage() {
                 )}
 
                 {/* Summary Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     {kolam.map(k => {
                         const latestKondisi = kondisiAir.find(ka => ka.kolamId === k.id);
                         const warnaStatus = latestKondisi
                             ? warnaOptions.find(w => w.value === latestKondisi.warna)?.status || 'good'
                             : 'unknown';
 
-                        const statusBadge = warnaStatus === 'good' ? 'badge-success' :
-                            warnaStatus === 'warning' ? 'badge-warning' :
-                                warnaStatus === 'bad' ? 'badge-danger' : 'badge-neutral';
+                        const statusBadge = warnaStatus === 'good' ? 'bg-emerald-100 text-emerald-700' :
+                            warnaStatus === 'warning' ? 'bg-amber-100 text-amber-700' :
+                                warnaStatus === 'bad' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-700';
 
                         return (
-                            <div key={k.id} className="card p-4">
-                                <h3 className="font-semibold text-slate-900 mb-2 border-b border-slate-100 pb-2">{k.nama}</h3>
-                            {latestKondisi ? (
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between">
-                                        <span className={`badge badge-sm ${statusBadge}`}>
+                            <div key={k.id} className="card p-5 group hover:shadow-md transition-all border border-slate-100 bg-white">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="font-bold text-slate-900 text-lg">{k.nama}</h3>
+                                    {latestKondisi && (
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${statusBadge}`}>
                                             {latestKondisi.warna}
                                         </span>
-                                        <span className="text-xs text-slate-400">{latestKondisi.tanggal}</span>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2 text-sm">
-                                        <div className="bg-slate-50 p-2 rounded">
-                                            <p className="text-xs text-slate-500">pH</p>
-                                            <p className="font-bold text-slate-700">{latestKondisi.ph || '-'}</p>
-                                        </div>
-                                        <div className="bg-slate-50 p-2 rounded">
-                                            <p className="text-xs text-slate-500">Suhu</p>
-                                            <p className="font-bold text-slate-700">{latestKondisi.suhu ? `${latestKondisi.suhu}°C` : '-'}</p>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
-                            ) : (
-                                <div className="py-4 text-center !border-dashed !border-slate-300 !bg-slate-50 rounded-lg border-2">
-                                    <p className="text-sm text-slate-400 italic">Belum ada data</p>
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-
-            {/* Histori */}
-            <div className="table-wrapper">
-                <div className="px-6 py-4 border-b border-slate-200 bg-white">
-                    <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <span>💧</span>
-                        <span>Histori Kondisi Air</span>
-                    </h2>
+                                {latestKondisi ? (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between text-xs text-slate-400">
+                                            <span>Update Terakhir</span>
+                                            <span className="font-medium text-slate-500">{new Date(latestKondisi.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">pH</p>
+                                                <p className="text-xl font-bold text-slate-900 mt-0.5">{latestKondisi.ph || '-'}</p>
+                                            </div>
+                                            <div className="bg-slate-50/80 p-3 rounded-xl border border-slate-100">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Suhu</p>
+                                                <p className="text-xl font-bold text-slate-900 mt-0.5">{latestKondisi.suhu ? `${latestKondisi.suhu}°` : '-'}<span className="text-xs font-medium text-slate-400 ml-0.5">C</span></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="py-8 flex flex-col items-center justify-center border-2 border-dashed border-slate-100 rounded-xl bg-slate-50/30">
+                                        <div className="text-2xl mb-2 opacity-30">💧</div>
+                                        <p className="text-xs text-slate-400 font-medium">Belum ada data</p>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
-                {kondisiAir.length === 0 ? (
-                    <div className="p-6">
-                        <EmptyState
-                            title="Belum Ada Data Kondisi Air"
-                            description="Mulai catat kondisi air untuk mendapatkan rekomendasi."
-                            icon="💧"
-                        />
-                    </div>
-                ) : (
-                    <>
-                    <table className="table table-compact">
-                        <thead>
-                            <tr>
-                                <th>Tanggal</th>
-                                <th>Kolam</th>
-                                <th>Warna</th>
-                                <th>Bau</th>
-                                <th className="text-right">Ketinggian</th>
-                                <th className="text-right">pH</th>
-                                <th className="text-right">Suhu</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                                {filteredKondisiAir.map(ka => {
-                                    const k = kolam.find(kol => kol.id === ka.kolamId);
-                                    const warnaStatus = warnaOptions.find(w => w.value === ka.warna)?.status || 'good';
 
-                                    return (
-                                        <tr key={ka.id}>
-                                            <td className="text-small">{ka.tanggal}</td>
-                                            <td className="text-strong">{k?.nama || 'Unknown'}</td>
-                                            <td>
-                                                <span className={`badge ${warnaStatus === 'good' ? 'badge-success' :
-                                                    warnaStatus === 'warning' ? 'badge-warning' : 'badge-danger'
-                                                    }`}>{ka.warna}</span>
-                                            </td>
-                                            <td className="text-small">{ka.bau}</td>
-                                            <td className="text-right text-small">{ka.ketinggian} m</td>
-                                            <td className="text-right text-small">{ka.ph || '-'}</td>
-                                            <td className="text-right text-small">{ka.suhu ? `${ka.suhu}°C` : '-'}</td>
-                                        </tr>
-                                    );
-                                })}
-                        </tbody>
-                    </table>
-                    <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <p className="text-sm text-slate-500">
-                            Menampilkan {Math.min(limitKondisiAir, filteredKondisiAir.length)} dari {kondisiAir.length} data
-                        </p>
-                        <div className="flex items-center gap-2">
-                            <label className="text-sm text-slate-600">Tampilkan:</label>
-                            <select 
-                                value={limitKondisiAir} 
-                                onChange={(e) => setLimitKondisiAir(Number(e.target.value))} 
-                                className="input py-1 px-2 text-sm"
-                            >
-                                <option value={10}>10</option>
-                                <option value={25}>25</option>
-                                <option value={50}>50</option>
-                                <option value={100}>100</option>
-                                <option value={9999}>Semua</option>
-                            </select>
-                        </div>
+                {/* Histori */}
+                <div className="table-wrapper">
+                    <div className="px-6 py-4 border-b border-slate-200 bg-white">
+                        <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <span>💧</span>
+                            <span>Histori Kondisi Air</span>
+                        </h2>
                     </div>
-                    </>
-                )}
-            </div>
+                    {kondisiAir.length === 0 ? (
+                        <div className="p-6">
+                            <EmptyState
+                                title="Belum Ada Data Kondisi Air"
+                                description="Mulai catat kondisi air untuk mendapatkan rekomendasi."
+                                icon="💧"
+                            />
+                        </div>
+                    ) : (
+                        <>
+                            <table className="table table-compact">
+                                <thead>
+                                    <tr className="border-b border-slate-100">
+                                        <th className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Tanggal</th>
+                                        <th className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Kolam</th>
+                                        <th className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Warna</th>
+                                        <th className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Bau</th>
+                                        <th className="text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Ketinggian</th>
+                                        <th className="text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">pH</th>
+                                        <th className="text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4 border-r-0">Suhu</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {filteredKondisiAir.map(ka => {
+                                        const k = kolam.find(kol => kol.id === ka.kolamId);
+                                        const warnaStatus = warnaOptions.find(w => w.value === ka.warna)?.status || 'good';
+
+                                        const badgeStyles = warnaStatus === 'good' ? 'bg-emerald-50 text-emerald-600' :
+                                            warnaStatus === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600';
+
+                                        return (
+                                            <tr key={ka.id} className="hover:bg-slate-50/50 transition-colors">
+                                                <td className="px-6 py-4 text-sm text-slate-500">{new Date(ka.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                                                <td className="px-6 py-4 text-sm font-semibold text-slate-700">{k?.nama || 'Unknown'}</td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeStyles}`}>
+                                                        {ka.warna}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-slate-600">{ka.bau}</td>
+                                                <td className="px-6 py-4 text-right text-sm font-medium text-slate-700">{ka.ketinggian}m</td>
+                                                <td className="px-6 py-4 text-right text-sm font-bold text-slate-900">{ka.ph || '-'}</td>
+                                                <td className="px-6 py-4 text-right text-sm font-bold text-slate-900">{ka.suhu ? `${ka.suhu}°C` : '-'}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                            <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <p className="text-sm text-slate-500">
+                                    Menampilkan {Math.min(limitKondisiAir, filteredKondisiAir.length)} dari {kondisiAir.length} data
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <label className="text-sm text-slate-600">Tampilkan:</label>
+                                    <select
+                                        value={limitKondisiAir}
+                                        onChange={(e) => setLimitKondisiAir(Number(e.target.value))}
+                                        className="input py-1 px-2 text-sm"
+                                    >
+                                        <option value={10}>10</option>
+                                        <option value={25}>25</option>
+                                        <option value={50}>50</option>
+                                        <option value={100}>100</option>
+                                        <option value={9999}>Semua</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Form Modal */}
-            <Modal 
-                isOpen={showForm} 
-                onClose={() => setShowForm(false)} 
+            <Modal
+                isOpen={showForm}
+                onClose={() => setShowForm(false)}
                 title="Input Kondisi Air"
                 footer={
                     <>

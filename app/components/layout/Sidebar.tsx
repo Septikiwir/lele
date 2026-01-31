@@ -102,15 +102,13 @@ const navigationGroups = [
       { name: 'Kolam', href: '/kolam', icon: KolamIcon },
       { name: 'Denah Tambak', href: '/denah', icon: MapIcon },
       { name: 'Pakan & FCR', href: '/pakan', icon: PakanIcon },
-      { name: 'Kualitas Air', href: '/kualitas-air', icon: AirIcon },
-      { name: 'Prediksi Panen', href: '/panen', icon: PanenIcon }
+      { name: 'Kualitas Air', href: '/kualitas-air', icon: AirIcon }
     ]
   },
   {
     title: 'Keuangan',
     items: [
-      { name: 'Keuangan', href: '/keuangan', icon: WalletIcon },
-      { name: 'Laporan', href: '/laporan', icon: LaporanIcon }
+      { name: 'Keuangan', href: '/keuangan', icon: WalletIcon }
     ]
   }
 ];
@@ -153,7 +151,7 @@ export default function Sidebar({ isCollapsed = false, toggleCollapse, onPanenCl
 
           {/* 3. CENTER FAB (Input Panen) */}
           <div className="relative -top-5">
-            <button 
+            <button
               onClick={onPanenClick}
               className="flex items-center justify-center w-14 h-14 rounded-full bg-teal-600 text-white shadow-lg shadow-teal-500/40 hover:scale-105 transition-transform"
             >

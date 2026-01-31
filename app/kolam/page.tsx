@@ -167,10 +167,10 @@ export default function KolamPage() {
         <DashboardLayout>
             <div className="flex flex-col gap-6 sm:gap-8">
                 {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
                     <div>
-                        <h1 className="text-3xl font-bold text-slate-900">Manajemen Kolam</h1>
-                        <p className="text-slate-500 mt-1">Kelola semua kolam peternakan Anda</p>
+                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Manajemen Kolam</h1>
+                        <p className="text-slate-500 text-sm">Kelola semua kolam peternakan Anda.</p>
                     </div>
                     <Link href="/kolam/tambah" className="btn btn-primary">
                         <PlusIcon />
