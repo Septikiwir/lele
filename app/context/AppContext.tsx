@@ -380,9 +380,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             console.error('Failed to fetch farms:', error);
             // If offline or timeout, try to use last known farm from localStorage
-            const lastFarmId = localStorage.getItem('last_farm_id');
-            if (lastFarmId) {
-                setActiveFarmId(lastFarmId);
+            if (typeof window !== 'undefined') {
+                const lastFarmId = localStorage.getItem('last_farm_id');
+                if (lastFarmId) {
+                    setActiveFarmId(lastFarmId);
+                }
             }
         }
     }, [isAuthenticated]);

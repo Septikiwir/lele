@@ -33,13 +33,6 @@ export default function LoginPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-
-        // Check if offline
-        if (!navigator.onLine) {
-            setError('Tidak dapat login saat offline. Silakan hubungkan ke internet.');
-            return;
-        }
-
         setLoading(true);
 
         try {
@@ -51,12 +44,15 @@ export default function LoginPage() {
 
             if (result?.error) {
                 setError('Email atau password salah');
-            } else {
+            } else if (result?.ok) {
                 router.push('/dashboard');
                 router.refresh();
+            } else {
+                setError('Terjadi kesalahan saat login');
             }
-        } catch {
-            setError('Terjadi kesalahan saat login');
+        } catch (err) {
+            console.error('Login error:', err);
+            setError('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
         } finally {
             setLoading(false);
         }
@@ -136,7 +132,7 @@ export default function LoginPage() {
 
                         <button
                             type="submit"
-                            disabled={loading || !isOnline}
+                            disabled={loading}
                             className="w-full py-3 px-4 bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-cyan-700 focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? (
@@ -147,8 +143,6 @@ export default function LoginPage() {
                                     </svg>
                                     Memproses...
                                 </span>
-                            ) : !isOnline ? (
-                                'Login Memerlukan Internet'
                             ) : (
                                 'Masuk'
                             )}
