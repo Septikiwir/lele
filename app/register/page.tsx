@@ -61,7 +61,9 @@ export default function RegisterPage() {
                 <div className="text-center mb-6 sm:mb-8">
                     <div className="inline-flex items-center gap-3 mb-2">
                         <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
-                            <span className="text-2xl">🐟</span>
+import { Fish } from 'lucide-react';
+
+                            <Fish className="w-6 h-6 text-white" />
                         </div>
                         <h1 className="text-3xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
                             LeleFarm

@@ -4,7 +4,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useApp, KategoriPengeluaran } from '../context/AppContext';
-import { DownloadIcon, KolamIcon, FishIcon, CalendarIcon, WalletIcon, TrendingUpIcon } from '../components/ui/Icons';
+import { Download, Box, Fish, Calendar, Wallet, TrendingUp, Banknote, Container, Pill, Zap, User, Package } from 'lucide-react';
 import EmptyState from '../components/ui/EmptyState';
 
 const statusLabels = {
@@ -209,7 +209,7 @@ export default function LaporanPage() {
                         <option value="bulan">30 Hari Terakhir</option>
                     </select>
                     <button onClick={exportCSV} className="btn btn-primary">
-                        <DownloadIcon />
+                        <Download className="w-4 h-4" />
                         Export CSV
                     </button>
                 </div>
@@ -224,7 +224,7 @@ export default function LaporanPage() {
                             <p className="stat-value">{totals.kolam}</p>
                         </div>
                         <div className="icon-box icon-box-lg icon-box-primary">
-                            <KolamIcon />
+                            <Box className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
@@ -236,7 +236,7 @@ export default function LaporanPage() {
                             <p className="stat-value">{totals.ikan.toLocaleString('id-ID')}</p>
                         </div>
                         <div className="icon-box icon-box-lg icon-box-info">
-                            <FishIcon />
+                            <Fish className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
@@ -248,7 +248,7 @@ export default function LaporanPage() {
                             <p className="stat-value">{totals.pakan}<span className="text-sm font-normal text-slate-400"> kg</span></p>
                         </div>
                         <div className="icon-box icon-box-lg icon-box-warning">
-                            <CalendarIcon />
+                            <Calendar className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
@@ -262,7 +262,7 @@ export default function LaporanPage() {
                             </p>
                         </div>
                         <div className="icon-box icon-box-lg icon-box-success">
-                            <WalletIcon />
+                            <Wallet className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
@@ -276,7 +276,7 @@ export default function LaporanPage() {
                             </p>
                         </div>
                         <div className="icon-box icon-box-lg icon-box-danger">
-                            <WalletIcon />
+                            <Wallet className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
@@ -290,7 +290,7 @@ export default function LaporanPage() {
                             </p>
                         </div>
                         <div className={`icon-box icon-box-lg ${totals.profit >= 0 ? 'icon-box-primary' : 'icon-box-danger'}`}>
-                            <TrendingUpIcon />
+                            <TrendingUp className="w-6 h-6" />
                         </div>
                     </div>
                 </div>
@@ -299,34 +299,34 @@ export default function LaporanPage() {
             {/* Modal Breakdown */}
             <div className="card p-6 mb-6 sm:mb-8">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold text-slate-900">💰 Rincian Modal / Pengeluaran</h2>
+                    <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2"><Banknote className="w-5 h-5 text-slate-700" /> Rincian Modal / Pengeluaran</h2>
                     <Link href="/pengeluaran" className="text-sm text-teal-600 hover:text-teal-700">
                         Kelola Pengeluaran →
                     </Link>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
                     <div className="card p-4 border-l-4 border-l-teal-500">
-                        <p className="text-xs text-teal-600 font-medium">🐟 Bibit</p>
+                        <p className="text-xs text-teal-600 font-medium flex items-center gap-1"><Fish className="w-3 h-3" /> Bibit</p>
                         <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.BIBIT.toLocaleString('id-ID')}</p>
                     </div>
                     <div className="card p-4 border-l-4 border-l-amber-500">
-                        <p className="text-xs text-amber-600 font-medium">🍚 Pakan</p>
+                        <p className="text-xs text-amber-600 font-medium flex items-center gap-1"><Container className="w-3 h-3" /> Pakan</p>
                         <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.PAKAN.toLocaleString('id-ID')}</p>
                     </div>
                     <div className="card p-4 border-l-4 border-l-purple-500">
-                        <p className="text-xs text-purple-600 font-medium">💊 Obat</p>
+                        <p className="text-xs text-purple-600 font-medium flex items-center gap-1"><Pill className="w-3 h-3" /> Obat</p>
                         <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.OBAT.toLocaleString('id-ID')}</p>
                     </div>
                     <div className="card p-4 border-l-4 border-l-yellow-500">
-                        <p className="text-xs text-yellow-600 font-medium">⚡ Listrik</p>
+                        <p className="text-xs text-yellow-600 font-medium flex items-center gap-1"><Zap className="w-3 h-3" /> Listrik</p>
                         <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.LISTRIK.toLocaleString('id-ID')}</p>
                     </div>
                     <div className="card p-4 border-l-4 border-l-green-500">
-                        <p className="text-xs text-green-600 font-medium">👷 Tenaga Kerja</p>
+                        <p className="text-xs text-green-600 font-medium flex items-center gap-1"><User className="w-3 h-3" /> Tenaga Kerja</p>
                         <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.TENAGA_KERJA.toLocaleString('id-ID')}</p>
                     </div>
                     <div className="card p-4 border-l-4 border-l-slate-400">
-                        <p className="text-xs text-slate-600 font-medium">📦 Lainnya</p>
+                        <p className="text-xs text-slate-600 font-medium flex items-center gap-1"><Package className="w-3 h-3" /> Lainnya</p>
                         <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.LAINNYA.toLocaleString('id-ID')}</p>
                     </div>
                 </div>

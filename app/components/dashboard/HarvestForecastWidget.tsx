@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useApp } from '../../context/AppContext';
-import { ArrowRightIcon, CalendarIcon } from '../ui/Icons';
+import { ArrowRight, Calendar } from 'lucide-react';
 
 export default function HarvestForecastWidget() {
     const { kolam, predictHarvestDate } = useApp();
@@ -23,7 +23,7 @@ export default function HarvestForecastWidget() {
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                        <CalendarIcon />
+                        <Calendar className="w-5 h-5" />
                     </div>
                     <div>
                         <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider">Estimasi Panen</h3>
@@ -101,7 +101,7 @@ export default function HarvestForecastWidget() {
 
             <div className="mt-4 pt-3 border-t border-slate-50 text-center">
                 <Link href="/kolam" className="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center justify-center gap-1">
-                    LIHAT SEMUA KOLAM <ArrowRightIcon className="w-3 h-3" />
+                    LIHAT SEMUA KOLAM <ArrowRight className="w-3 h-3" />
                 </Link>
             </div>
         </div>

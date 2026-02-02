@@ -4,7 +4,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
 
-import { PlusIcon, LoadingSpinner } from '../components/ui/Icons';
+import { Plus, Loader2 } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import EmptyState from '../components/ui/EmptyState';
 
@@ -28,41 +28,41 @@ const getRekomendasi = (warna: string, bau: string, ph?: number, suhu?: number):
 
     // Warna
     if (['Keruh', 'Hitam'].includes(warna)) {
-        rekom.push('🔴 Segera ganti air sebagian (30-50%)');
-        rekom.push('⚠️ Kurangi pemberian pakan');
+        rekom.push('KRITIS: Segera ganti air sebagian (30-50%)');
+        rekom.push('Kurangi pemberian pakan');
     } else if (['Hijau pekat', 'Coklat'].includes(warna)) {
-        rekom.push('🟡 Ganti air sebagian (20-30%) dalam 1-2 hari');
+        rekom.push('Ganti air sebagian (20-30%) dalam 1-2 hari');
     }
 
     // Bau
     if (bau === 'Busuk') {
-        rekom.push('🔴 DARURAT: Ganti air 50% segera!');
-        rekom.push('⚠️ Puasa pakan 1-2 hari');
-        rekom.push('💊 Pertimbangkan probiotik air');
+        rekom.push('DARURAT: Ganti air 50% segera!');
+        rekom.push('Puasa pakan 1-2 hari');
+        rekom.push('Pertimbangkan probiotik air');
     } else if (bau === 'Amis') {
-        rekom.push('🟡 Perbaiki aerasi atau sirkulasi air');
+        rekom.push('Perbaiki aerasi atau sirkulasi air');
     }
 
     // pH
     if (ph !== undefined) {
         if (ph < 6.5) {
-            rekom.push('🔴 pH terlalu asam. Tambahkan kapur/dolomit');
+            rekom.push('pH terlalu asam. Tambahkan kapur/dolomit');
         } else if (ph > 8.5) {
-            rekom.push('🔴 pH terlalu basa. Ganti air sebagian');
+            rekom.push('pH terlalu basa. Ganti air sebagian');
         }
     }
 
     // Suhu
     if (suhu !== undefined) {
         if (suhu < 25) {
-            rekom.push('⚠️ Suhu terlalu rendah. Kurangi pemberian pakan');
+            rekom.push('Suhu terlalu rendah. Kurangi pemberian pakan');
         } else if (suhu > 32) {
-            rekom.push('⚠️ Suhu terlalu tinggi. Tambah aerasi');
+            rekom.push('Suhu terlalu tinggi. Tambah aerasi');
         }
     }
 
     if (rekom.length === 0) {
-        rekom.push('✅ Kondisi air baik. Lanjutkan perawatan rutin.');
+        rekom.push('✓ Kondisi air baik. Lanjutkan perawatan rutin.');
     }
 
     return rekom;
@@ -141,7 +141,7 @@ export default function KualitasAirPage() {
                         <p className="text-slate-500 text-sm">Catat kondisi air dan dapatkan rekomendasi tindakan secara real-time.</p>
                     </div>
                     <button onClick={() => setShowForm(true)} className="btn btn-primary text-sm px-4 py-2">
-                        <PlusIcon />
+                        <Plus className="w-4 h-4" />
                         Input Kondisi Air
                     </button>
                 </div>
@@ -310,7 +310,7 @@ export default function KualitasAirPage() {
                     <>
                         <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary">Batal</button>
                         <button type="submit" form="kualitas-air-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan & Lihat Rekomendasi'}
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan & Lihat Rekomendasi'}
                         </button>
                     </>
                 }

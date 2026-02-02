@@ -6,7 +6,7 @@ import { useApp, Kolam, TipePembeli } from '../context/AppContext';
 import { useToast } from '../context/ToastContext'; // Import Toast
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 import Modal from '../components/ui/Modal';
-import { PlusIcon, LoadingSpinner } from '../components/ui/Icons';
+import { Plus, Loader2, Fish, ShoppingCart } from 'lucide-react';
 import EmptyState from '../components/ui/EmptyState';
 import PanenModal from '../components/modals/PanenModal';
 
@@ -358,8 +358,8 @@ export default function ProduksiPage() {
                                     <div className="p-5 border-b border-slate-50 bg-white z-10 relative">
                                         <div className="flex justify-between items-start mb-2">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xl">
-                                                    🐟
+                                                <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                                                    <Fish className="w-5 h-5" />
                                                 </div>
                                                 <div>
                                                     <h3 className="font-bold text-slate-900">{k.nama}</h3>
@@ -443,7 +443,7 @@ export default function ProduksiPage() {
                                                 setIsPanenModalOpen(true);
                                             }}
                                         >
-                                            🌾 Panen
+                                            <HarvestIcon className="w-4 h-4" /> Panen
                                         </button>
                                         {/* View Details used to be implicit by clicking, now explicit button helps affordance */}
                                     </div>
@@ -462,8 +462,8 @@ export default function ProduksiPage() {
                         {emptyPonds.map(k => (
                             <div key={k.id} className="card p-5 border border-dashed border-slate-300 hover:border-blue-400 transition-colors bg-slate-50">
                                 <div className="flex items-center gap-3 mb-4 opacity-70">
-                                    <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center grayscale">
-                                        🐟
+                                    <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
+                                        <FishIcon className="w-5 h-5 text-slate-400" />
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-slate-700">{k.nama}</h3>
@@ -497,7 +497,7 @@ export default function ProduksiPage() {
                             <EmptyState
                                 title="Belum Ada Data Panen"
                                 description="Belum ada riwayat panen yang tercatat."
-                                icon="🌾"
+                                icon={<HarvestIcon className="w-12 h-12 text-slate-300" />}
                             />
                         </div>
                     ) : (
@@ -565,7 +565,7 @@ export default function ProduksiPage() {
                     <>
                         <button type="button" onClick={() => setIsTebarModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="form-tebar" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Mulai Tebar'}
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Mulai Tebar'}
                         </button>
                     </>
                 }

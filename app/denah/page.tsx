@@ -3,6 +3,7 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
 import React, { useState } from 'react';
 import { useApp, Kolam } from '../context/AppContext';
+import { Fish } from 'lucide-react';
 
 export default function DenahPage() {
     const { kolam, updateKolam } = useApp();
@@ -285,10 +286,10 @@ export default function DenahPage() {
                                         </span>
                                         {(k.position?.h || k.panjang || 2) > 1 && (k.position?.w || k.lebar || 2) > 1 && (
                                             <span
-                                                className="text-white/90 select-none pointer-events-none mt-0.5"
+                                                className="text-white/90 select-none pointer-events-none mt-0.5 flex items-center gap-1"
                                                 style={{ fontSize: Math.max(6, cellSize * 0.25) }}
                                             >
-                                                {k.jumlahIkan} 🐟
+                                                {k.jumlahIkan} <Fish className="w-3 h-3" />
                                             </span>
                                         )}
                                     </div>

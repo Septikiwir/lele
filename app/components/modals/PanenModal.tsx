@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
-import { PlusIcon, LoadingSpinner } from '../ui/Icons';
+import { Plus, Loader2 } from 'lucide-react';
 import { useApp, TipePembeli, Kolam } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
@@ -148,7 +148,7 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
                         <button type="submit" form="form-panen" className="btn bg-emerald-600 text-white hover:bg-emerald-700 border-transparent disabled:opacity-50 disabled:cursor-not-allowed" disabled={isSubmitting}>
                             {isSubmitting ? (
                                 <span className="flex items-center gap-2">
-                                    <LoadingSpinner className="w-5 h-5" />
+                                    <Loader2 className="w-5 h-5 animate-spin" />
                                     Menyimpan...
                                 </span>
                             ) : 'Simpan Panen'}
@@ -203,7 +203,7 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
                                 className="btn btn-secondary px-3"
                                 title="Tambah Pembeli Baru"
                             >
-                                <PlusIcon />
+                                <Plus className="w-4 h-4" />
                             </button>
                         </div>
                         <p className="text-xs text-slate-400 mt-1">Data akan otomatis masuk ke menu Penjualan.</p>

@@ -6,12 +6,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useApp } from '../../../context/AppContext';
 import { notFound } from 'next/navigation';
+import { Fish, ArrowLeft } from 'lucide-react';
 
-const ArrowLeftIcon = () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-    </svg>
-);
 
 export default function EditKolamPage({ params }: { params: Promise<{ id: string }> }) {
     const resolvedParams = use(params);
@@ -82,7 +78,7 @@ export default function EditKolamPage({ params }: { params: Promise<{ id: string
             {/* Header */}
             <div className="mb-6 sm:mb-8">
                 <Link href="/kolam" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-4">
-                    <ArrowLeftIcon />
+                    <ArrowLeft className="w-5 h-5" />
                     Kembali ke Daftar Kolam
                 </Link>
                 <h1 className="text-3xl font-bold text-slate-900">Edit Kolam</h1>
@@ -170,7 +166,7 @@ export default function EditKolamPage({ params }: { params: Promise<{ id: string
                         <div className="bg-slate-100 rounded-xl p-4 mb-6 aspect-video flex items-center justify-center">
                             {panjang > 0 && lebar > 0 ? (
                                 <div
-                                    className="bg-gradient-to-br from-cyan-400 to-teal-500 rounded-lg flex items-center justify-center text-white text-4xl shadow-lg"
+                                    className="bg-teal-100 border-2 border-teal-300 rounded-lg flex items-center justify-center text-teal-600 shadow-inner"
                                     style={{
                                         width: `${Math.min(panjang / Math.max(panjang, lebar) * 100, 100)}%`,
                                         height: `${Math.min(lebar / Math.max(panjang, lebar) * 100, 100)}%`,
@@ -178,7 +174,7 @@ export default function EditKolamPage({ params }: { params: Promise<{ id: string
                                         minHeight: '40px',
                                     }}
                                 >
-                                    🐟
+                                    <Fish className="w-6 h-6" />
                                 </div>
                             ) : (
                                 <p className="text-slate-400 text-sm">Masukkan dimensi untuk preview</p>

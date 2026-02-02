@@ -3,7 +3,7 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Link from 'next/link';
 import { useApp } from '../context/AppContext';
-import { KolamIcon, FishIcon, CalendarIcon, PlusIcon, ArrowRightIcon } from '../components/ui/Icons';
+import { Box, Fish, Calendar, Plus, ArrowRight, Container, Banknote } from 'lucide-react';
 
 // Components
 import FeedTrendChart from '../components/dashboard/FeedTrendChart';
@@ -16,6 +16,16 @@ import ProfitabilityWidget from '../components/dashboard/ProfitabilityWidget';
 
 export default function DashboardPage() {
   const { kolam, pakan, pengeluaran } = useApp();
+
+  // Format currency: convert to "jt" if >= 1,000,000, else "k" if >= 1,000
+  const formatCurrency = (value: number) => {
+    if (value >= 1000000) {
+      return (value / 1000000).toFixed(1) + 'jt';
+    } else if (value >= 1000) {
+      return (value / 1000).toFixed(1) + 'k';
+    }
+    return value.toLocaleString('id-ID');
+  };
 
   // Basic Stats
   const totalKolam = kolam.length;
@@ -39,10 +49,10 @@ export default function DashboardPage() {
           </div>
           <div className="flex gap-3">
             <Link href="/pakan" className="btn btn-secondary text-sm">
-              🍚 Input Pakan
+              <Container className="w-4 h-4" /> Input Pakan
             </Link>
             <Link href="/kolam/tambah" className="btn btn-primary text-sm">
-              <PlusIcon /> Tambah Kolam
+              <Plus className="w-4 h-4" /> Tambah Kolam
             </Link>
           </div>
         </div>
@@ -53,68 +63,57 @@ export default function DashboardPage() {
           <AssetValueCard />
 
           {/* 2. Total Modal */}
-          <div className="stat-card p-6 relative overflow-hidden group hover:shadow-md transition-all border border-slate-100 bg-white">
-            <div className="flex items-start justify-between z-10 relative">
-              <div>
-                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Modal</p>
-                <div className="flex items-baseline gap-1 mt-1">
-                  <p className="text-2xl font-bold text-slate-900">Rp{totalModal.toLocaleString('id-ID')}</p>
-                </div>
+          <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
+                <Banknote className="w-6 h-6" />
               </div>
-              <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600 group-hover:bg-red-100 transition-colors">
-                💰
-              </div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Modal</p>
             </div>
-            <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
-              <span>Semua pengeluaran</span>
-              <Link href="/pengeluaran" className="text-red-600 font-medium hover:underline flex items-center gap-1">
-                Detail <ArrowRightIcon />
-              </Link>
-            </div>
+            <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">Rp{formatCurrency(totalModal)}</h5>
+            <p className="mb-3 text-sm text-slate-600">
+              Semua pengeluaran
+            </p>
+            <Link href="/pengeluaran" className="inline-flex font-medium items-center text-blue-600 hover:underline text-sm">
+              Detail
+              <svg className="w-3 h-3 ms-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+            </Link>
           </div>
 
           {/* 3. Biological KPI (Population) */}
-          <div className="stat-card p-6 relative overflow-hidden group hover:shadow-md transition-all border border-slate-100 bg-white">
-            <div className="flex items-start justify-between z-10 relative">
-              <div>
-                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Populasi Ikan</p>
-                <div className="flex items-baseline gap-1 mt-1">
-                  <p className="text-2xl font-bold text-slate-900">{totalIkan.toLocaleString('id-ID')}</p>
-                  <span className="text-xs text-slate-400 font-normal">ekor</span>
-                </div>
+          <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600">
+                <Fish className="w-6 h-6" />
               </div>
-              <div className="w-12 h-12 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600 group-hover:bg-cyan-100 transition-colors">
-                <FishIcon />
-              </div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Populasi</p>
             </div>
-            <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
-              <span><strong>{totalKolam}</strong> Kolam Aktif</span>
-              <Link href="/kolam" className="text-cyan-600 font-medium hover:underline flex items-center gap-1">
-                Detail <ArrowRightIcon />
-              </Link>
-            </div>
+            <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">{totalIkan.toLocaleString('id-ID')} <span className="text-sm font-normal text-slate-500">ekor</span></h5>
+            <p className="mb-3 text-sm text-slate-600">
+              <strong>{totalKolam}</strong> Kolam Aktif
+            </p>
+            <Link href="/kolam" className="inline-flex font-medium items-center text-blue-600 hover:underline text-sm">
+              Detail
+              <svg className="w-3 h-3 ms-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+            </Link>
           </div>
 
           {/* 4. Operational KPI (Feed Today) */}
-          <div className="stat-card p-6 relative overflow-hidden group hover:shadow-md transition-all border border-slate-100 bg-white">
-            <div className="flex items-start justify-between z-10 relative">
-              <div>
-                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Pakan Hari Ini</p>
-                <div className="flex items-baseline gap-1 mt-1">
-                  <p className="text-2xl font-bold text-slate-900">{pakanHariIni.toFixed(1)}</p>
-                  <span className="text-xs text-slate-400 font-normal">kg</span>
-                </div>
+          <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                <Calendar className="w-6 h-6" />
               </div>
-              <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 group-hover:bg-amber-100 transition-colors">
-                <CalendarIcon />
-              </div>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Pakan Hari Ini</p>
             </div>
-            <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
-              <span>Update: Hari ini</span>
-              <Link href="/pakan" className="text-amber-600 font-medium hover:underline flex items-center gap-1">
-                Riwayat <ArrowRightIcon />
-              </Link>
-            </div>
+            <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">{pakanHariIni.toFixed(1)} <span className="text-sm font-normal text-slate-500">kg</span></h5>
+            <p className="mb-3 text-sm text-slate-600">
+              Update: Hari ini
+            </p>
+            <Link href="/pakan" className="inline-flex font-medium items-center text-blue-600 hover:underline text-sm">
+              Riwayat
+              <svg className="w-3 h-3 ms-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+            </Link>
           </div>
         </div>
 

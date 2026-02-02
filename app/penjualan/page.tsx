@@ -5,15 +5,15 @@ import { useState } from 'react';
 import { useApp, TipePembeli } from '../context/AppContext';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 
-import { PlusIcon, TrashIcon, LoadingSpinner } from '../components/ui/Icons';
+import { Plus, Trash2, Loader2, Banknote, ClipboardList, TrendingUp, User, Truck, Store, Utensils, Package } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import EmptyState from '../components/ui/EmptyState';
 
-const tipePembeliOptions: { value: TipePembeli; label: string; emoji: string }[] = [
-    { value: 'TENGKULAK', label: 'Tengkulak', emoji: '🚛' },
-    { value: 'PASAR', label: 'Pasar', emoji: '🏪' },
-    { value: 'RESTORAN', label: 'Restoran', emoji: '🍽️' },
-    { value: 'LAINNYA', label: 'Lainnya', emoji: '📦' },
+const tipePembeliOptions: { value: TipePembeli; label: string; icon: React.ReactNode }[] = [
+    { value: 'TENGKULAK', label: 'Tengkulak', icon: <Truck className="w-4 h-4" /> },
+    { value: 'PASAR', label: 'Pasar', icon: <Store className="w-4 h-4" /> },
+    { value: 'RESTORAN', label: 'Restoran', icon: <Utensils className="w-4 h-4" /> },
+    { value: 'LAINNYA', label: 'Lainnya', icon: <Package className="w-4 h-4" /> },
 ];
 
 const tipePembeliColors: Record<TipePembeli, string> = {
@@ -141,11 +141,11 @@ export default function PenjualanPage() {
                     </div>
                     <div className="flex gap-2">
                         <button onClick={() => setShowPembeliForm(true)} className="btn btn-secondary">
-                            <PlusIcon />
+                            <Plus className="w-4 h-4" />
                             Pembeli
                         </button>
                         <button onClick={() => setShowPenjualanForm(true)} className="btn btn-primary">
-                            <PlusIcon />
+                            <Plus className="w-4 h-4" />
                             Penjualan
                         </button>
                     </div>
@@ -173,15 +173,15 @@ export default function PenjualanPage() {
                                     <h3 className="font-semibold text-slate-900 mb-3">{k.nama}</h3>
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
-                                            <span className="text-slate-500">💰 Pendapatan</span>
+                                            <span className="text-slate-500 flex items-center gap-1"><Banknote className="w-4 h-4 text-emerald-600" /> Pendapatan</span>
                                             <span className="font-medium text-green-600">Rp {pendapatan.toLocaleString('id-ID')}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-slate-500">💸 Pengeluaran</span>
+                                            <span className="text-slate-500 flex items-center gap-1"><Banknote className="w-4 h-4 text-red-600" /> Pengeluaran</span>
                                             <span className="font-medium text-red-600">Rp {pengeluaranTotal.toLocaleString('id-ID')}</span>
                                         </div>
                                         <div className="flex justify-between pt-2 border-t font-semibold">
-                                            <span>{isProfit ? '📈 Profit' : '📉 Rugi'}</span>
+                                            <span className="flex items-center gap-1">{isProfit ? <TrendingUp className="w-4 h-4" /> : <TrendingUp className="w-4 h-4 rotate-180" />} {isProfit ? 'Profit' : 'Rugi'}</span>
                                             <span className={isProfit ? 'text-green-600' : 'text-red-600'}>
                                                 Rp {Math.abs(profit).toLocaleString('id-ID')}
                                             </span>
@@ -197,7 +197,7 @@ export default function PenjualanPage() {
                 <div className="table-wrapper">
                     <div className="px-6 py-4 border-b border-slate-200 bg-white">
                         <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                            <span>📋</span>
+                            <ClipboardList className="w-5 h-5" />
                             <span>Data Pembeli</span>
                         </h2>
                     </div>
@@ -206,7 +206,7 @@ export default function PenjualanPage() {
                             <EmptyState
                                 title="Belum Ada Pembeli"
                                 description="Belum ada data pembeli yang tercatat"
-                                icon="👤"
+                                icon={<User className="w-12 h-12 text-slate-300" />}
                             />
                         </div>
                     ) : (
@@ -227,8 +227,8 @@ export default function PenjualanPage() {
                                         <tr key={p.id}>
                                             <td className="text-strong">{p.nama}</td>
                                             <td>
-                                                <span className={`badge ${tipePembeliColors[p.tipe]}`}>
-                                                    {tipe?.emoji} {tipe?.label}
+                                                <span className={`badge ${tipePembeliColors[p.tipe]} flex items-center gap-1.5`}>
+                                                    {tipe?.icon} {tipe?.label}
                                                 </span>
                                             </td>
                                             <td className="text-muted">{p.kontak || '-'}</td>
@@ -238,7 +238,7 @@ export default function PenjualanPage() {
                                                     onClick={() => setDeleteModal({ type: 'pembeli', id: p.id })}
                                                     className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
                                                 >
-                                                    <TrashIcon />
+                                                    <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </td>
                                         </tr>
@@ -310,7 +310,7 @@ export default function PenjualanPage() {
                                                 onClick={() => setDeleteModal({ type: 'penjualan', id: p.id })}
                                                 className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
                                             >
-                                                <TrashIcon />
+                                                <Trash2 className="w-4 h-4" />
                                             </button>
                                         </td>
                                     </tr>
@@ -331,7 +331,7 @@ export default function PenjualanPage() {
                     <>
                         <button type="button" onClick={() => setShowPenjualanForm(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="form-penjualan" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
                         </button>
                     </>
                 }
@@ -446,7 +446,7 @@ export default function PenjualanPage() {
                     <>
                         <button type="button" onClick={() => setShowPembeliForm(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="form-pembeli" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
                         </button>
                     </>
                 }
@@ -477,7 +477,7 @@ export default function PenjualanPage() {
                                         : 'border-slate-200 hover:border-slate-300'
                                         }`}
                                 >
-                                    <div className="text-xl mb-1">{t.emoji}</div>
+                                    <div className="mb-1 flex items-center justify-center">{t.icon}</div>
                                     <div className="text-xs font-medium">{t.label}</div>
                                 </button>
                             ))}

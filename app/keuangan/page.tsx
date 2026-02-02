@@ -5,16 +5,16 @@ import { useState } from 'react';
 import { useApp, TipePembeli, KategoriPengeluaran } from '../context/AppContext';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 
-import { PlusIcon, TrashIcon, LoadingSpinner } from '../components/ui/Icons';
+import { Plus, Trash2, Loader2, Banknote, Fish, Container, Pill, Zap, Users, Package, TrendingUp, Truck, Store, Utensils } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import EmptyState from '../components/ui/EmptyState';
 import PanenModal from '../components/modals/PanenModal';
 
-const tipePembeliOptions: { value: TipePembeli; label: string; emoji: string }[] = [
-    { value: 'TENGKULAK', label: 'Tengkulak', emoji: '🚛' },
-    { value: 'PASAR', label: 'Pasar', emoji: '🏪' },
-    { value: 'RESTORAN', label: 'Restoran', emoji: '🍽️' },
-    { value: 'LAINNYA', label: 'Lainnya', emoji: '📦' },
+const tipePembeliOptions: { value: TipePembeli; label: string; icon: React.ReactNode }[] = [
+    { value: 'TENGKULAK', label: 'Tengkulak', icon: <Truck className="w-4 h-4" /> },
+    { value: 'PASAR', label: 'Pasar', icon: <Store className="w-4 h-4" /> },
+    { value: 'RESTORAN', label: 'Restoran', icon: <Utensils className="w-4 h-4" /> },
+    { value: 'LAINNYA', label: 'Lainnya', icon: <Package className="w-4 h-4" /> },
 ];
 
 const tipePembeliColors: Record<TipePembeli, string> = {
@@ -24,13 +24,13 @@ const tipePembeliColors: Record<TipePembeli, string> = {
     LAINNYA: 'badge-neutral',
 };
 
-const kategoriOptions: { value: KategoriPengeluaran; label: string; emoji: string }[] = [
-    { value: 'BIBIT', label: 'Bibit / Benih', emoji: '🐟' },
-    { value: 'PAKAN', label: 'Pakan', emoji: '🍚' },
-    { value: 'OBAT', label: 'Obat & Probiotik', emoji: '💊' },
-    { value: 'LISTRIK', label: 'Listrik', emoji: '⚡' },
-    { value: 'TENAGA_KERJA', label: 'Tenaga Kerja', emoji: '👷' },
-    { value: 'LAINNYA', label: 'Lainnya', emoji: '📦' },
+const kategoriOptions: { value: KategoriPengeluaran; label: string; icon: React.ReactNode }[] = [
+    { value: 'BIBIT', label: 'Bibit / Benih', icon: <Fish className="w-4 h-4" /> },
+    { value: 'PAKAN', label: 'Pakan', icon: <Container className="w-4 h-4" /> },
+    { value: 'OBAT', label: 'Obat & Probiotik', icon: <Pill className="w-4 h-4" /> },
+    { value: 'LISTRIK', label: 'Listrik', icon: <Zap className="w-4 h-4" /> },
+    { value: 'TENAGA_KERJA', label: 'Tenaga Kerja', icon: <Users className="w-4 h-4" /> },
+    { value: 'LAINNYA', label: 'Lainnya', icon: <Package className="w-4 h-4" /> },
 ];
 
 const kategoriColors: Record<KategoriPengeluaran, string> = {
@@ -211,6 +211,16 @@ export default function KeuanganPage() {
 
     const netProfit = totalPendapatan - grandTotalPengeluaran;
 
+    // Format currency: convert to "jt" if >= 1,000,000, else "k" if >= 1,000
+    const formatCurrency = (value: number) => {
+        if (value >= 1000000) {
+            return (value / 1000000).toFixed(1) + 'jt';
+        } else if (value >= 1000) {
+            return (value / 1000).toFixed(1) + 'k';
+        }
+        return value.toLocaleString('id-ID');
+    };
+
     const filteredPenjualan = (filterKolamPenjualan
         ? penjualan.filter(p => p.kolamId === filterKolamPenjualan)
         : penjualan)
@@ -265,79 +275,67 @@ export default function KeuanganPage() {
                             onClick={() => setShowPembeliForm(true)}
                             className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 font-medium text-sm hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-2"
                         >
-                            <PlusIcon /> Pembeli
+                            <Plus className="w-4 h-4" /> Pembeli
                         </button>
                         <button
                             onClick={() => setShowPengeluaranForm(true)}
                             className="px-4 py-2 bg-white border border-red-100 rounded-lg text-red-600 font-medium text-sm hover:bg-red-50 hover:border-red-200 transition-all flex items-center gap-2"
                         >
-                            <PlusIcon /> Pengeluaran
+                            <Plus className="w-4 h-4" /> Pengeluaran
                         </button>
                         <button
                             onClick={() => setShowPenjualanForm(true)}
                             className="px-4 py-2 bg-teal-600 text-white rounded-lg font-medium text-sm hover:bg-teal-700 shadow-sm shadow-teal-200 transition-all flex items-center gap-2"
                         >
-                            <PlusIcon /> Penjualan
+                            <Plus className="w-4 h-4" /> Penjualan
                         </button>
                     </div>
                 </div>
 
                 {/* KPI Cards Row */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-                    {/* 1. Net Profit */}
-                    <div className="stat-card p-4 md:p-6 bg-white border border-slate-100 rounded-2xl group relative overflow-hidden hover:shadow-md transition-all">
-                        <div className="flex items-start justify-between z-10 relative">
-                            <div>
-                                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Net Profit</p>
-                                <div className="flex items-baseline gap-1 mt-1">
-                                    <p className={`text-2xl font-bold ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                        Rp {Math.abs(netProfit).toLocaleString('id-ID')}
-                                    </p>
-                                </div>
+                    {/* 1. Pendapatan Bersih */}
+                    <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${netProfit >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                                <Banknote className="w-6 h-6" />
                             </div>
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${netProfit >= 0 ? 'bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100' : 'bg-red-50 text-red-600 group-hover:bg-red-100'}`}>
-                                <span className="text-xl">💰</span>
-                            </div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Pendapatan Bersih</p>
                         </div>
-                        <div className="mt-4 text-xs text-slate-500">
+                        <h5 className={`mb-2 text-2xl font-semibold tracking-tight ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                            {netProfit >= 0 ? '+' : '-'}Rp {formatCurrency(Math.abs(netProfit))}
+                        </h5>
+                        <p className="mb-3 text-sm text-slate-600">
                             {netProfit >= 0 ? 'Profit bersih saat ini' : 'Defisit (Pengeluaran > Pendapatan)'}
-                        </div>
+                        </p>
                     </div>
 
                     {/* 2. Total Pendapatan */}
-                    <div className="stat-card p-4 md:p-6 bg-white border border-slate-100 rounded-2xl group relative overflow-hidden hover:shadow-md transition-all">
-                        <div className="flex items-start justify-between z-10 relative">
-                            <div>
-                                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Pendapatan</p>
-                                <div className="flex items-baseline gap-1 mt-1">
-                                    <p className="text-2xl font-bold text-slate-900">Rp {totalPendapatan.toLocaleString('id-ID')}</p>
-                                </div>
+                    <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                <TrendingUp className="w-6 h-6" />
                             </div>
-                            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-100 transition-colors">
-                                <span className="text-xl">📈</span>
-                            </div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Pendapatan</p>
                         </div>
-                        <div className="mt-4 text-xs text-slate-500">
+                        <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">Rp {formatCurrency(totalPendapatan)}</h5>
+                        <p className="mb-3 text-sm text-slate-600">
                             {totalBerat.toLocaleString('id-ID')} kg ikan terjual
-                        </div>
+                        </p>
                     </div>
 
                     {/* 3. Total Pengeluaran */}
-                    <div className="stat-card p-4 md:p-6 bg-white border border-slate-100 rounded-2xl group relative overflow-hidden hover:shadow-md transition-all">
-                        <div className="flex items-start justify-between z-10 relative">
-                            <div>
-                                <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Pengeluaran</p>
-                                <div className="flex items-baseline gap-1 mt-1">
-                                    <p className="text-2xl font-bold text-slate-900">Rp {grandTotalPengeluaran.toLocaleString('id-ID')}</p>
-                                </div>
+                    <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
+                                <Banknote className="w-6 h-6" />
                             </div>
-                            <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 group-hover:bg-orange-100 transition-colors">
-                                <span className="text-xl">💸</span>
-                            </div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Pengeluaran</p>
                         </div>
-                        <div className="mt-4 text-xs text-slate-500">
+                        <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">Rp {formatCurrency(grandTotalPengeluaran)}</h5>
+                        <p className="mb-3 text-sm text-slate-600">
                             Termasuk biaya operasional & umum
-                        </div>
+                        </p>
                     </div>
                 </div>
 
@@ -470,7 +468,7 @@ export default function KeuanganPage() {
                                                             </td>
                                                             <td className="text-right">
                                                                 <button onClick={() => setDeleteModal({ type: 'penjualan', id: p.id })} className="text-slate-300 hover:text-red-500 transition-colors">
-                                                                    <TrashIcon />
+                                                                    <Trash2 className="w-4 h-4" />
                                                                 </button>
                                                             </td>
                                                         </tr>
@@ -509,8 +507,8 @@ export default function KeuanganPage() {
                                                         <tr key={p.id}>
                                                             <td className="text-slate-500">{p.tanggal}</td>
                                                             <td>
-                                                                <span className={`badge ${kategoriColors[p.kategori]}`}>
-                                                                    {cat?.emoji} {cat?.label}
+                                                                <span className={`badge ${kategoriColors[p.kategori]} flex items-center gap-1.5`}>
+                                                                    {cat?.icon} {cat?.label}
                                                                 </span>
                                                             </td>
                                                             <td className="text-slate-600 max-w-xs truncate">
@@ -522,7 +520,7 @@ export default function KeuanganPage() {
                                                             </td>
                                                             <td className="text-right">
                                                                 <button onClick={() => setDeleteModal({ type: 'pengeluaran', id: p.id })} className="text-slate-300 hover:text-red-500 transition-colors">
-                                                                    <TrashIcon />
+                                                                    <Trash2 className="w-4 h-4" />
                                                                 </button>
                                                             </td>
                                                         </tr>
@@ -568,8 +566,8 @@ export default function KeuanganPage() {
                                         <div key={k.value} className={`p-3 rounded-xl border transition-all bg-white border-slate-100 ${theme.bg} ${theme.border}`}>
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${theme.iconBg}`}>
-                                                        {k.emoji}
+                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${theme.iconBg}`}>
+                                                        {k.icon}
                                                     </div>
                                                     <div>
                                                         <h4 className="text-sm font-semibold text-slate-800">{k.label}</h4>
@@ -611,14 +609,14 @@ export default function KeuanganPage() {
                                                 <div>
                                                     <h4 className="font-medium text-slate-900 text-sm">{p.nama}</h4>
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
-                                                            {tipe?.emoji} {tipe?.label}
+                                                        <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                            {tipe?.icon} {tipe?.label}
                                                         </span>
                                                         {p.kontak && <span className="text-xs text-slate-400">• {p.kontak}</span>}
                                                     </div>
                                                 </div>
                                                 <button onClick={() => setDeleteModal({ type: 'pembeli', id: p.id })} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all px-2">
-                                                    <TrashIcon />
+                                                    <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         );
@@ -647,7 +645,7 @@ export default function KeuanganPage() {
                     <>
                         <button type="button" onClick={() => setShowPembeliForm(false)} className="btn btn-secondary">Batal</button>
                         <button type="submit" form="form-pembeli" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
                         </button>
                     </>
                 }
@@ -678,7 +676,7 @@ export default function KeuanganPage() {
                                         : 'border-slate-200 hover:border-slate-300'
                                         }`}
                                 >
-                                    <div className="text-xl mb-1">{t.emoji}</div>
+                                    <div className="mb-1 flex items-center justify-center">{t.icon}</div>
                                     <div className="text-xs font-medium">{t.label}</div>
                                 </button>
                             ))}
@@ -718,7 +716,7 @@ export default function KeuanganPage() {
                     <>
                         <button type="button" onClick={() => setShowPengeluaranForm(false)} className="btn btn-secondary">Batal</button>
                         <button type="submit" form="pengeluaran-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
                         </button>
                     </>
                 }
@@ -763,7 +761,7 @@ export default function KeuanganPage() {
                                         : 'border-slate-200 hover:border-slate-300'
                                         }`}
                                 >
-                                    <div className="text-xl mb-1">{k.emoji}</div>
+                                    <div className="mb-1 flex items-center justify-center">{k.icon}</div>
                                     <div className="text-xs font-medium">{k.label}</div>
                                 </button>
                             ))}

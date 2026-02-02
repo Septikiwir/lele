@@ -3,10 +3,10 @@
 import DashboardLayout from '../components/layout/DashboardLayout';
 import { useState } from 'react';
 import {
-    PlusIcon, EditIcon, TrashIcon, EyeIcon, WarningIcon,
-    ClockIcon, CheckIcon, ArrowRightIcon, KolamIcon, FishIcon,
-    FCRIcon, CalendarIcon, DownloadIcon, WalletIcon, TrendingUpIcon, SearchIcon
-} from '../components/ui/Icons';
+    Plus, Edit, Trash2, Eye, AlertTriangle,
+    Clock, Check, ArrowRight, Box, Fish,
+    Scale, Calendar, Download, Wallet, TrendingUp, Search
+} from 'lucide-react';
 
 type ModalType = 'small' | 'medium' | 'large' | 'confirmation' | 'form' | 'info' | 'danger' | null;
 
@@ -312,7 +312,7 @@ export default function DesignSystemPage() {
                         <h2 className="text-xl font-bold text-slate-900 mb-4">Button Variants</h2>
                         <div className="flex flex-wrap gap-4">
                             <button className="btn btn-primary">
-                                <PlusIcon /> Primary
+                                <Plus className="w-5 h-5" /> Primary
                             </button>
                             <button className="btn btn-secondary">
                                 Secondary
@@ -321,7 +321,7 @@ export default function DesignSystemPage() {
                                 🌾 Success
                             </button>
                             <button className="btn btn-danger">
-                                <TrashIcon /> Danger
+                                <Trash2 className="w-5 h-5" /> Danger
                             </button>
                             <button className="btn btn-ghost">
                                 Ghost
@@ -355,16 +355,16 @@ export default function DesignSystemPage() {
                         <h2 className="text-xl font-bold text-slate-900 mb-4">Button with Icon</h2>
                         <div className="flex flex-wrap gap-4">
                             <button className="btn btn-primary">
-                                <PlusIcon /> Tambah Kolam
+                                <Plus className="w-5 h-5" /> Tambah Kolam
                             </button>
                             <button className="btn btn-secondary">
-                                <DownloadIcon /> Export
+                                <Download className="w-5 h-5" /> Export
                             </button>
                             <button className="btn btn-ghost px-3">
-                                <EditIcon />
+                                <Edit className="w-5 h-5" />
                             </button>
                             <button className="btn btn-ghost px-3">
-                                <TrashIcon />
+                                <Trash2 className="w-5 h-5" />
                             </button>
                         </div>
                     </section>
@@ -373,10 +373,10 @@ export default function DesignSystemPage() {
                         <h2 className="text-xl font-bold text-slate-900 mb-4">Link Buttons</h2>
                         <div className="flex flex-wrap items-center gap-6">
                             <a className="text-teal-600 font-medium hover:underline flex items-center gap-1 text-sm">
-                                Detail <ArrowRightIcon />
+                                Detail <ArrowRight className="w-4 h-4" />
                             </a>
                             <a className="text-indigo-600 font-bold hover:text-indigo-700 flex items-center gap-1 text-xs uppercase tracking-wider">
-                                LIHAT SEMUA <ArrowRightIcon className="w-3 h-3" />
+                                LIHAT SEMUA <ArrowRight className="w-3 h-3" />
                             </a>
                         </div>
                     </section>
@@ -526,13 +526,13 @@ export default function DesignSystemPage() {
                                         </div>
                                     </div>
                                     <div className="w-12 h-12 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600 group-hover:bg-cyan-100 transition-colors">
-                                        <FishIcon />
+                                        <Fish className="w-6 h-6" />
                                     </div>
                                 </div>
                                 <div className="mt-4 flex items-center justify-between text-xs text-slate-500">
                                     <span><strong>5</strong> Kolam Aktif</span>
                                     <a className="text-cyan-600 font-medium hover:underline flex items-center gap-1">
-                                        Detail <ArrowRightIcon />
+                                        Detail <ArrowRight className="w-4 h-4" />
                                     </a>
                                 </div>
                             </div>
@@ -547,7 +547,7 @@ export default function DesignSystemPage() {
                                         </div>
                                     </div>
                                     <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600 group-hover:bg-amber-100 transition-colors">
-                                        <CalendarIcon />
+                                        <Calendar className="w-6 h-6" />
                                     </div>
                                 </div>
                             </div>
@@ -735,49 +735,49 @@ export default function DesignSystemPage() {
                         <div className="grid grid-cols-4 md:grid-cols-8 gap-6">
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                                    <PlusIcon />
+                                    <Plus className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Plus</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                                    <EditIcon />
+                                    <Edit className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Edit</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                                    <TrashIcon />
+                                    <Trash2 className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Trash</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                                    <EyeIcon />
+                                    <Eye className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Eye</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                                    <SearchIcon />
+                                    <Search className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Search</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                                    <DownloadIcon />
+                                    <Download className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Download</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                                    <CheckIcon />
+                                    <Check className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Check</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                                    <ArrowRightIcon />
+                                    <ArrowRight className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Arrow</span>
                             </div>
@@ -789,49 +789,49 @@ export default function DesignSystemPage() {
                         <div className="grid grid-cols-4 md:grid-cols-8 gap-6">
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-                                    <KolamIcon />
+                                    <Box className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Kolam</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600">
-                                    <FishIcon />
+                                    <Fish className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Fish</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-                                    <CalendarIcon />
+                                    <Calendar className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Calendar</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                                    <WalletIcon />
+                                    <Wallet className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Wallet</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                                    <FCRIcon />
+                                    <Scale className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Chart</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center text-green-600">
-                                    <TrendingUpIcon />
+                                    <TrendingUp className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Trending</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
-                                    <ClockIcon />
+                                    <Clock className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Clock</span>
                             </div>
                             <div className="flex flex-col items-center gap-2">
                                 <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-                                    <WarningIcon className="w-6 h-6" />
+                                    <AlertTriangle className="w-6 h-6" />
                                 </div>
                                 <span className="text-xs text-slate-500">Warning</span>
                             </div>
@@ -1303,7 +1303,7 @@ export default function DesignSystemPage() {
                                     </div>
                                 </div>
                                 <div className="flex items-center">
-                                    <ArrowRightIcon className="w-5 h-5 text-slate-400" />
+                                    <ArrowRight className="w-5 h-5 text-slate-400" />
                                 </div>
                             </div>
                             <div className="list-item list-item-warning">
@@ -1610,7 +1610,7 @@ export default function DesignSystemPage() {
                                         <p className="text-xs text-slate-500">Sisa <span className="font-bold text-red-600">5.2 kg</span></p>
                                     </div>
                                 </div>
-                                <ArrowRightIcon className="text-slate-300 w-4 h-4 group-hover:text-red-400 group-hover:translate-x-1 transition-all" />
+                                <ArrowRight className="text-slate-300 w-4 h-4 group-hover:text-red-400 group-hover:translate-x-1 transition-all" />
                             </div>
                             <div className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200 hover:border-amber-300 hover:bg-amber-50/50 transition-all group cursor-pointer">
                                 <div className="flex items-center gap-3">
@@ -1727,7 +1727,7 @@ export default function DesignSystemPage() {
                             <h3 className="empty-state-title">Belum Ada Data</h3>
                             <p className="empty-state-description">Belum ada kolam yang terdaftar. Tambah kolam baru untuk memulai.</p>
                             <button className="btn btn-primary">
-                                <PlusIcon /> Tambah Kolam
+                                <Plus className="w-5 h-5" /> Tambah Kolam
                             </button>
                         </div>
                     </section>

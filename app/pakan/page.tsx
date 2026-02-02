@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useApp, JadwalPakan } from '../context/AppContext';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 
-import { PlusIcon, TrashIcon, WarningIcon, ClockIcon, LoadingSpinner, CalendarIcon, ArrowRightIcon } from '../components/ui/Icons';
+import { Plus, Trash2, AlertTriangle, Clock, Loader2, Calendar, ArrowRight, Container, Package } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import EmptyState from '../components/ui/EmptyState';
 
@@ -242,10 +242,10 @@ export default function PakanPage() {
                     </div>
                     <div className="flex gap-3">
                         <button onClick={() => setShowStokForm(true)} className="btn btn-secondary text-sm flex items-center gap-2">
-                            <span>📦</span> Tambah Stok
+                            <Package className="w-4 h-4" /> Tambah Stok
                         </button>
                         <button onClick={() => setShowForm(true)} className="btn btn-primary text-sm flex items-center gap-2 shadow-lg shadow-primary-500/20">
-                            <PlusIcon className="w-5 h-5" /> Catat Pakan
+                            <Plus className="w-5 h-5" /> Catat Pakan
                         </button>
                     </div>
                 </div>
@@ -266,7 +266,7 @@ export default function PakanPage() {
                                 </p>
                             </div>
                             <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform">
-                                <span className="text-2xl">📦</span>
+                                <Package className="w-6 h-6" />
                             </div>
                         </div>
                         {/* Decorative background element */}
@@ -287,7 +287,7 @@ export default function PakanPage() {
                                 </p>
                             </div>
                             <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
-                                <CalendarIcon className="w-6 h-6" />
+                                <Calendar className="w-6 h-6" />
                             </div>
                         </div>
                         <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-blue-50 rounded-full opacity-0 group-hover:opacity-50 transition-opacity blur-2xl"></div>
@@ -320,7 +320,7 @@ export default function PakanPage() {
                                 </div>
                             </div>
                             <div className="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center text-teal-600 group-hover:scale-110 transition-transform">
-                                <ClockIcon className="w-6 h-6" />
+                                <Clock className="w-6 h-6" />
                             </div>
                         </div>
                         <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-teal-50 rounded-full opacity-0 group-hover:opacity-50 transition-opacity blur-2xl"></div>
@@ -337,7 +337,7 @@ export default function PakanPage() {
                         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                                 <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                                    <ClockIcon className="w-5 h-5 text-slate-400" />
+                                    <Clock className="w-5 h-5 text-slate-400" />
                                     <span>Target & Jadwal Pakan</span>
                                 </h3>
                                 <div className="text-[10px] uppercase font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full tracking-wider">
@@ -396,7 +396,7 @@ export default function PakanPage() {
                                                 <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-2">Jadwal Berikutnya</p>
                                                 <div className="flex justify-between items-center bg-slate-50 p-2 rounded-lg">
                                                     <div className="flex items-center gap-2">
-                                                        <ClockIcon className="w-4 h-4 text-slate-400" />
+                                                        <Clock className="w-4 h-4 text-slate-400" />
                                                         <span className="text-sm font-bold text-slate-700">{status.schedule.next}</span>
                                                     </div>
                                                     <div className="text-right">
@@ -433,7 +433,7 @@ export default function PakanPage() {
                                             <tr>
                                                 <td colSpan={5} className="text-center text-slate-400 py-12">
                                                     <div className="flex flex-col items-center gap-2">
-                                                        <span className="text-3xl opacity-50">🍚</span>
+                                                        <Container className="w-12 h-12 opacity-50" />
                                                         <span className="text-sm">Belum ada data riwayat.</span>
                                                     </div>
                                                 </td>
@@ -567,7 +567,7 @@ export default function PakanPage() {
                                     }}
                                     className="text-xs text-slate-500 hover:text-primary-600 font-bold uppercase tracking-widest flex items-center justify-center gap-2 w-full transition-colors"
                                 >
-                                    Lihat Riwayat Masuk <ArrowRightIcon className="w-3 h-3" />
+                                    Lihat Riwayat Masuk <ArrowRight className="w-3 h-3" />
                                 </button>
                             </div>
                         </div>
@@ -584,7 +584,7 @@ export default function PakanPage() {
                     <>
                         <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary">Batal</button>
                         <button type="submit" form="pakan-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
                         </button>
                     </>
                 }
@@ -657,7 +657,7 @@ export default function PakanPage() {
                     <>
                         <button type="button" onClick={() => setShowStokForm(false)} className="btn btn-secondary">Batal</button>
                         <button type="submit" form="stok-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan Stok'}
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan Stok'}
                         </button>
                     </>
                 }
@@ -742,7 +742,7 @@ export default function PakanPage() {
                     <>
                         <button type="button" onClick={() => setShowJadwalForm(false)} className="btn btn-secondary">Batal</button>
                         <button type="submit" form="jadwal-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan Jadwal'}
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan Jadwal'}
                         </button>
                     </>
                 }
@@ -823,7 +823,7 @@ export default function PakanPage() {
             >
                 <div className="text-center">
                     <div className="icon-box icon-box-lg icon-box-danger mx-auto mb-4">
-                        <WarningIcon className="w-10 h-10" />
+                        <AlertTriangle className="w-10 h-10" />
                     </div>
                     <p className="text-slate-600 mb-6">Data yang dihapus tidak dapat dikembalikan.</p>
                     <div className="flex gap-3">

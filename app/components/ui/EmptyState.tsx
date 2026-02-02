@@ -1,10 +1,11 @@
 import Link from 'next/link';
-import { PlusIcon } from './Icons';
+import { Plus } from 'lucide-react';
+import { ReactNode } from 'react';
 
 interface EmptyStateProps {
     title: string;
     description: string;
-    icon?: string;
+    icon?: string | ReactNode;
     action?: {
         label: string;
         href?: string;
@@ -24,12 +25,12 @@ export default function EmptyState({ title, description, icon = '📂', action }
                 <>
                     {action.href ? (
                         <Link href={action.href} className="btn btn-primary">
-                            <PlusIcon />
+                            <Plus className="w-4 h-4" />
                             {action.label}
                         </Link>
                     ) : (
                         <button onClick={action.onClick} className="btn btn-primary">
-                            <PlusIcon />
+                            <Plus className="w-4 h-4" />
                             {action.label}
                         </button>
                     )}

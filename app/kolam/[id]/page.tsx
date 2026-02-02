@@ -6,32 +6,9 @@ import Link from 'next/link';
 import { useApp } from '../../context/AppContext';
 import { notFound } from 'next/navigation';
 import Modal from '../../components/ui/Modal';
-import { EditIcon, LoadingSpinner } from '../../components/ui/Icons';
+import { Edit, Loader2, Fish, ArrowLeft, Bookmark, X, Clock } from 'lucide-react';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 
-const ArrowLeftIcon = () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-    </svg>
-);
-
-const PinIcon = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-    </svg>
-);
-
-const CloseIcon = () => (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-    </svg>
-);
-
-const HistoryIcon = () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-);
 
 interface GridCell {
     row: number;
@@ -282,7 +259,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
             <DashboardLayout>
                 <div className="mb-6 sm:mb-8">
                     <Link href="/kolam" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-4">
-                        <ArrowLeftIcon />
+                        <ArrowLeft className="w-5 h-5" />
                         Kembali ke Daftar Kolam
                     </Link>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -447,7 +424,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
             {/* Header */}
             <div className="mb-6 sm:mb-8">
                 <Link href="/kolam" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-4">
-                    <ArrowLeftIcon />
+                    <ArrowLeft className="w-5 h-5" />
                     Kembali ke Daftar Kolam
                 </Link>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
@@ -482,7 +459,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                         className="absolute top-2 right-2 p-1 text-slate-400 hover:text-teal-600 opacity-0 group-hover:opacity-100 transition-opacity"
                         title="Edit Jumlah Ikan"
                     >
-                        <EditIcon />
+                        <Edit className="w-5 h-5" />
                     </button>
                     <p className="stat-label">Jumlah Ikan</p>
                     <p className="stat-value">{kolam.jumlahIkan.toLocaleString('id-ID')}</p>
@@ -511,7 +488,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                         className="absolute top-2 right-2 p-1 text-indigo-400 hover:text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"
                         title="Input Sampling (Ukuran Ikan)"
                     >
-                        <EditIcon />
+                        <Edit className="w-5 h-5" />
                     </button>
                     <p className="stat-label text-indigo-600">Sampling Terakhir</p>
                     <p className="stat-value text-indigo-900 flex flex-col">
@@ -583,7 +560,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
 
                                 {/* Pond Info */}
                                 <div className="relative z-10 text-center text-white">
-                                    <div className="text-4xl mb-2">🐟</div>
+                                    <div className="mb-2"><Fish className="w-12 h-12 text-white mx-auto" /></div>
                                     <h3 className="text-2xl font-bold drop-shadow-md">{kolam.nama}</h3>
                                     <p className="text-white/90 text-lg font-medium mt-1">
                                         {kolam.jumlahIkan.toLocaleString('id-ID')} ekor
@@ -596,9 +573,9 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                                 </div>
 
                                 {/* Fish Icons Animation */}
-                                <div className="absolute bottom-4 left-4 text-2xl opacity-60 animate-bounce" style={{ animationDelay: '0.2s' }}>🐟</div>
-                                <div className="absolute bottom-8 right-6 text-xl opacity-50 animate-bounce" style={{ animationDelay: '0.4s' }}>🐟</div>
-                                <div className="absolute top-6 right-8 text-lg opacity-40 animate-bounce" style={{ animationDelay: '0.6s' }}>🐟</div>
+                                <div className="absolute bottom-4 left-4 opacity-60 animate-bounce" style={{ animationDelay: '0.2s' }}><Fish className="w-6 h-6 text-white" /></div>
+                                <div className="absolute bottom-8 right-6 opacity-50 animate-bounce" style={{ animationDelay: '0.4s' }}><Fish className="w-5 h-5 text-white" /></div>
+                                <div className="absolute top-6 right-8 opacity-40 animate-bounce" style={{ animationDelay: '0.6s' }}><Fish className="w-4 h-4 text-white" /></div>
                             </div>
 
                             {/* Dimension Labels */}
@@ -687,7 +664,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                     {pinnedCells.length > 0 && (
                         <div className="card p-4">
                             <h3 className="font-semibold text-slate-900 mb-3 flex items-center gap-2">
-                                <PinIcon /> Pinned ({pinnedCells.length}/3)
+                                <Bookmark className="w-4 h-4" /> Pinned ({pinnedCells.length}/3)
                             </h3>
                             <div className="space-y-3">
                                 {pinnedCells.map((cell, idx) => (
@@ -702,7 +679,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                                             onClick={() => removePinnedCell(cell)}
                                             className="p-1 hover:bg-slate-200 rounded"
                                         >
-                                            <CloseIcon />
+                                            <X className="w-4 h-4" />
                                         </button>
                                     </div>
                                 ))}
@@ -833,7 +810,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                             className="btn btn-primary flex-1"
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5 mx-auto" /> : 'Simpan Perubahan'}
+                            {isSubmitting ? <Loader2 className="w-5 h-5 mx-auto animate-spin" /> : 'Simpan Perubahan'}
                         </button>
                     </div>
                 </form>
@@ -943,7 +920,7 @@ export default function KolamDetailPage({ params }: { params: Promise<{ id: stri
                             className="btn btn-primary flex-1 bg-indigo-600 hover:bg-indigo-700 border-indigo-600"
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5 mx-auto" /> : 'Simpan Sampling'}
+                            {isSubmitting ? <Loader2 className="w-5 h-5 mx-auto animate-spin" /> : 'Simpan Sampling'}
                         </button>
                     </div>
                 </form>

@@ -5,17 +5,17 @@ import { useState } from 'react';
 import { useApp, KategoriPengeluaran } from '../context/AppContext';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 
-import { PlusIcon, TrashIcon, LoadingSpinner } from '../components/ui/Icons';
+import { Plus, Trash2, Loader2, Banknote, Container, Fish, Pill, Zap, Users, Package } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import EmptyState from '../components/ui/EmptyState';
 
-const kategoriOptions: { value: KategoriPengeluaran; label: string; emoji: string }[] = [
-    { value: 'BIBIT', label: 'Bibit / Benih', emoji: '🐟' },
-    { value: 'PAKAN', label: 'Pakan', emoji: '🍚' },
-    { value: 'OBAT', label: 'Obat & Probiotik', emoji: '💊' },
-    { value: 'LISTRIK', label: 'Listrik', emoji: '⚡' },
-    { value: 'TENAGA_KERJA', label: 'Tenaga Kerja', emoji: '👷' },
-    { value: 'LAINNYA', label: 'Lainnya', emoji: '📦' },
+const kategoriOptions: { value: KategoriPengeluaran; label: string; icon: React.ReactNode }[] = [
+    { value: 'BIBIT', label: 'Bibit / Benih', icon: <Fish className="w-4 h-4" /> },
+    { value: 'PAKAN', label: 'Pakan', icon: <Container className="w-4 h-4" /> },
+    { value: 'OBAT', label: 'Obat & Probiotik', icon: <Pill className="w-4 h-4" /> },
+    { value: 'LISTRIK', label: 'Listrik', icon: <Zap className="w-4 h-4" /> },
+    { value: 'TENAGA_KERJA', label: 'Tenaga Kerja', icon: <Users className="w-4 h-4" /> },
+    { value: 'LAINNYA', label: 'Lainnya', icon: <Package className="w-4 h-4" /> },
 ];
 
 const kategoriColors: Record<KategoriPengeluaran, string> = {
@@ -134,7 +134,7 @@ export default function PengeluaranPage() {
                         <p className="text-slate-500 mt-1">Catat semua biaya operasional peternakan</p>
                     </div>
                     <button onClick={() => setShowForm(true)} className="btn btn-primary">
-                        <PlusIcon />
+                        <Plus className="w-4 h-4" />
                         Tambah Pengeluaran
                     </button>
                 </div>
@@ -160,7 +160,7 @@ export default function PengeluaranPage() {
                             const color = colorClasses[idx % colorClasses.length];
                             return (
                                 <div key={k.value} className={`${color.card} rounded-xl p-4`}>
-                                    <p className={`text-[11px] font-bold ${color.label} uppercase tracking-wider mb-2`}>{k.emoji} {k.label}</p>
+                                    <p className={`text-[11px] font-bold ${color.label} uppercase tracking-wider mb-2 flex items-center gap-1`}>{k.icon} {k.label}</p>
                                     <p className={`text-base font-semibold ${color.value}`}>Rp {k.total.toLocaleString('id-ID')}</p>
                                 </div>
                             );
@@ -183,7 +183,7 @@ export default function PengeluaranPage() {
                                             if (catTotal === 0) return null;
                                             return (
                                                 <div key={cat.value} className="flex justify-between">
-                                                    <span className="text-slate-500">{cat.emoji} {cat.label}</span>
+                                                    <span className="text-slate-500 flex items-center gap-1">{cat.icon} {cat.label}</span>
                                                     <span className="font-medium">Rp {catTotal.toLocaleString('id-ID')}</span>
                                                 </div>
                                             );
@@ -213,7 +213,7 @@ export default function PengeluaranPage() {
                                     if (catTotal === 0) return null;
                                     return (
                                         <div key={cat.value} className="flex justify-between">
-                                            <span className="text-slate-500">{cat.emoji} {cat.label}</span>
+                                            <span className="text-slate-500 flex items-center gap-1">{cat.icon} {cat.label}</span>
                                             <span className="font-medium">Rp {catTotal.toLocaleString('id-ID')}</span>
                                         </div>
                                     );
@@ -252,7 +252,7 @@ export default function PengeluaranPage() {
                         <EmptyState
                             title="Belum Ada Pengeluaran"
                             description="Belum ada data pengeluaran yang tercatat."
-                            icon="💰"
+                            icon={<Banknote className="w-12 h-12 text-slate-300" />}
                         />
                     </div>
                 ) : (
@@ -276,8 +276,8 @@ export default function PengeluaranPage() {
                                         <td className="text-small">{p.tanggal}</td>
                                         <td className="text-strong">{k?.nama || 'Umum (Farm Level)'}</td>
                                         <td>
-                                            <span className={`badge ${kategoriColors[p.kategori]}`}>
-                                                {cat?.emoji} {cat?.label}
+                                            <span className={`badge ${kategoriColors[p.kategori]} flex items-center gap-1`}>
+                                                {cat?.icon} {cat?.label}
                                             </span>
                                         </td>
                                         <td className="text-muted text-small">{p.keterangan}</td>
@@ -310,7 +310,7 @@ export default function PengeluaranPage() {
                     <>
                         <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="form-pengeluaran" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
                         </button>
                     </>
                 }
@@ -355,7 +355,7 @@ export default function PengeluaranPage() {
                                         : 'border-slate-200 hover:border-slate-300'
                                         }`}
                                 >
-                                    <div className="text-xl mb-1">{k.emoji}</div>
+                                    <div className="mb-1 flex items-center justify-center">{k.icon}</div>
                                     <div className="text-xs font-medium">{k.label}</div>
                                 </button>
                             ))}

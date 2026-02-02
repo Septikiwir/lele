@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useApp } from '../../context/AppContext';
-import { WarningIcon, ArrowRightIcon } from '../ui/Icons';
+import { AlertTriangle, ArrowRight, Package, Container } from 'lucide-react';
 import EmptyState from '../ui/EmptyState';
 
 export default function FeedStockList() {
@@ -20,14 +20,14 @@ export default function FeedStockList() {
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                        📦 Stok Pakan
+                        <Package className="w-5 h-5" /> Stok Pakan
                     </h3>
                     <p className="text-xs text-slate-400 mt-1">
                         Total {stockItems.length} jenis pakan terdaftar
                     </p>
                 </div>
                 <Link href="/pakan" className="text-teal-600 hover:text-teal-700 text-xs font-bold uppercase tracking-wider flex items-center gap-1">
-                    Kelola <ArrowRightIcon className="w-4 h-4" />
+                    Kelola <ArrowRight className="w-4 h-4" />
                 </Link>
             </div>
 
@@ -35,7 +35,7 @@ export default function FeedStockList() {
                 <EmptyState
                     title="Belum Ada Stok"
                     description="Belum ada data stok pakan yang tercatat"
-                    icon="📦"
+                    icon={<Package className="w-12 h-12 text-slate-300" />}
                 />
             ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -61,11 +61,11 @@ export default function FeedStockList() {
                         return (
                             <div key={s.jenis} className={`p-4 rounded-xl border transition-all group hover:-translate-y-1 ${tileClass}`}>
                                 <div className="flex items-start justify-between mb-3">
-                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg shadow-sm ${iconClass}`}>
-                                        🍚
+                                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shadow-sm ${iconClass}`}>
+                                        <Container className="w-5 h-5" />
                                     </div>
                                     {(isLow || isEmpty) && (
-                                        <WarningIcon className={isEmpty ? "text-red-500 w-4 h-4" : "text-amber-500 w-4 h-4"} />
+                                        <AlertTriangle className={isEmpty ? "text-red-500 w-4 h-4" : "text-amber-500 w-4 h-4"} />
                                     )}
                                 </div>
                                 <div>

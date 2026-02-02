@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useApp } from '../context/AppContext';
 import { useState } from 'react';
 
-import { PlusIcon, EditIcon, TrashIcon, EyeIcon, LoadingSpinner, ChevronLeftIcon, ChevronRightIcon, XIcon, CalendarIcon, DollarSignIcon, ScaleIcon, KolamIcon, FishIcon } from '../components/ui/Icons';
+import { Plus, Edit, Trash2, Eye, Loader2, ChevronLeft, ChevronRight, X, Calendar, DollarSign, Scale, Box, Fish, Container, Banknote, ShoppingCart, ClipboardList, AlertTriangle } from 'lucide-react';
 import EmptyState from '../components/ui/EmptyState';
 import Modal from '../components/ui/Modal'; import PanenModal from '../components/modals/PanenModal'; import { useToast } from '../context/ToastContext'; // Import Toast
 import { TipePembeli, CycleSummary } from '../context/AppContext';
@@ -167,6 +167,16 @@ export default function KolamPage() {
     const kolamAktif = kolam.filter(k => k.jumlahIkan > 0).length;
     const totalIkan = kolam.reduce((sum, k) => sum + k.jumlahIkan, 0);
 
+    // Format currency: convert to "jt" if >= 1,000,000, else "k" if >= 1,000
+    const formatCurrency = (value: number) => {
+        if (value >= 1000000) {
+            return (value / 1000000).toFixed(1) + 'jt';
+        } else if (value >= 1000) {
+            return (value / 1000).toFixed(1) + 'k';
+        }
+        return value.toLocaleString('id-ID');
+    };
+
     // Calculate Total Estimasi Aset
     const totalEstimasiAset = kolam.reduce((sum, k) => {
         if (k.jumlahIkan === 0) return sum;
@@ -199,64 +209,88 @@ export default function KolamPage() {
                     </div>
                     <div className="flex gap-3">
                         <Link href="/pakan" className="btn btn-secondary text-sm">
-                            🍚 Input Pakan
+                            <Container className="w-4 h-4" /> Input Pakan
                         </Link>
                         <Link href="/kolam/tambah" className="btn btn-primary text-sm">
-                            <PlusIcon /> Tambah Kolam
+                            <Plus className="w-4 h-4" /> Tambah Kolam
                         </Link>
                     </div>
                 </div>
 
                 {/* Summary KPIs */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     {/* Total Kolam */}
-                    <div className="stat-card p-6 bg-white border border-slate-100 hover:shadow-md transition-all group">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Total Kolam</p>
-                                <p className="text-2xl font-bold text-slate-900">{totalKolam}</p>
-                                <p className="text-xs text-slate-500 mt-1">
-                                    <span className="text-emerald-600 font-semibold">{kolamAktif}</span> Aktif <span className="text-slate-300 mx-1">•</span> <span className="text-slate-400">{totalKolam - kolamAktif}</span> Kosong
-                                </p>
+                    <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                <Box className="w-6 h-6" />
                             </div>
-                            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-100 transition-colors">
-                                <KolamIcon />
-                            </div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Kolam</p>
                         </div>
+                        <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">{totalKolam}</h5>
+                        <p className="mb-3 text-sm text-slate-600">
+                            <span className="text-emerald-600 font-semibold">{kolamAktif}</span> Aktif <span className="text-slate-300 mx-1">•</span> <span className="text-slate-400">{totalKolam - kolamAktif}</span> Kosong
+                        </p>
+                        <Link href="/kolam" className="inline-flex font-medium items-center text-blue-600 hover:underline text-sm">
+                            Lihat Detail
+                            <svg className="w-3 h-3 ms-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                        </Link>
                     </div>
 
                     {/* Total Populasi */}
-                    <div className="stat-card p-6 bg-white border border-slate-100 hover:shadow-md transition-all group">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Populasi Ikan</p>
-                                <p className="text-2xl font-bold text-slate-900">{totalIkan.toLocaleString('id-ID')}</p>
-                                <p className="text-xs text-slate-500 mt-1">
-                                    Total ekor di seluruh kolam
-                                </p>
+                    <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600">
+                                <Fish className="w-6 h-6" />
                             </div>
-                            <div className="w-12 h-12 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600 group-hover:bg-cyan-100 transition-colors">
-                                <FishIcon />
-                            </div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Populasi</p>
                         </div>
+                        <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">{totalIkan.toLocaleString('id-ID')} <span className="text-sm font-normal text-slate-500">ekor</span></h5>
+                        <p className="mb-3 text-sm text-slate-600">
+                            Tersebar di {kolamAktif} kolam aktif
+                        </p>
+                        <Link href="/kolam" className="inline-flex font-medium items-center text-blue-600 hover:underline text-sm">
+                            Detail
+                            <svg className="w-3 h-3 ms-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                        </Link>
                     </div>
 
                     {/* Estimasi Aset */}
-                    <div className="stat-card p-6 bg-white border border-slate-100 hover:shadow-md transition-all group">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Estimasi Nilai Aset</p>
-                                <p className="text-2xl font-bold text-slate-900">Rp{totalEstimasiAset.toLocaleString('id-ID')}</p>
-                                <p className="text-xs text-slate-500 mt-1">
-                                    Berdasarkan berat estimasi & harga pasar
-                                </p>
+                    <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                <Banknote className="w-6 h-6" />
                             </div>
-                            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-100 transition-colors">
-                                💰
-                            </div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Estimasi Aset</p>
                         </div>
+                        <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">Rp {formatCurrency(totalEstimasiAset)}</h5>
+                        <p className="mb-3 text-sm text-slate-600">
+                            Berdasarkan berat estimasi & harga pasar saat ini
+                        </p>
+                        <Link href="/keuangan" className="inline-flex font-medium items-center text-blue-600 hover:underline text-sm">
+                            Lihat Rincian
+                            <svg className="w-3 h-3 ms-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                        </Link>
                     </div>
-                </div>
+
+                    {/* Pakan Hari Ini */}
+                    <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
+                                <Container className="w-6 h-6" />
+                            </div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Pakan Hari Ini</p>
+                        </div>
+                        <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">0.0 <span className="text-sm font-normal text-slate-500">kg</span></h5>
+                        <p className="mb-3 text-sm text-slate-600">
+                            Total pakan yang diberikan hari ini
+                        </p>
+                        <Link href="/pakan" className="inline-flex font-medium items-center text-blue-600 hover:underline text-sm">
+                            Input Pakan
+                            <svg className="w-3 h-3 ms-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                        </Link>
+                    </div>
+                    </div>
 
                 {/* Tab Navigation */}
                 <div className="flex space-x-1 bg-slate-100 p-1 rounded-xl w-fit">
@@ -296,7 +330,7 @@ export default function KolamPage() {
                             <EmptyState
                                 title="Belum Ada Kolam"
                                 description="Mulai dengan menambahkan kolam pertama Anda"
-                                icon="🐟"
+                                icon={<Fish className="w-12 h-12 text-slate-300" />}
                                 action={{ label: "Tambah Kolam Baru", href: "/kolam/tambah" }}
                             />
                         ) : (
@@ -316,8 +350,8 @@ export default function KolamPage() {
                                             {kolam.filter(k => k.jumlahIkan === 0).map(k => (
                                                 <div key={k.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all group">
                                                     <div className="flex items-center gap-4 mb-5">
-                                                        <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-teal-50 transition-colors">
-                                                            🐟
+                                                        <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-teal-600 group-hover:bg-teal-50 transition-colors">
+                                                            <Fish className="w-6 h-6" />
                                                         </div>
                                                         <div>
                                                             <h4 className="font-bold text-slate-900">{k.nama}</h4>
@@ -330,7 +364,7 @@ export default function KolamPage() {
                                                         onClick={() => handleOpenTebar(k.id)}
                                                         className="btn btn-primary w-full shadow-sm active:scale-[0.98] py-2.5 text-sm"
                                                     >
-                                                        <PlusIcon className="w-4 h-4" /> Mulai Siklus
+                                                        <Plus className="w-4 h-4" /> Mulai Siklus
                                                     </button>
                                                 </div>
                                             ))}
@@ -389,8 +423,8 @@ export default function KolamPage() {
                                                         {/* Header */}
                                                         <div className="flex items-center justify-between mb-6">
                                                             <div className="flex items-center gap-3">
-                                                                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-2xl">
-                                                                    🐟
+                                                                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+                                                                    <Fish className="w-6 h-6" />
                                                                 </div>
                                                                 <div>
                                                                     <h3 className="font-bold text-lg text-slate-900">{k.nama}</h3>
@@ -410,26 +444,26 @@ export default function KolamPage() {
                                                         <div className="grid grid-cols-2 gap-3 mb-6">
                                                             {/* Populasi */}
                                                             <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Populasi</p>
-                                                                <p className="text-lg font-bold text-slate-900">{k.jumlahIkan.toLocaleString('id-ID')}<span className="text-[10px] font-normal text-slate-400 ml-1">ekor</span></p>
+                                                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Populasi</p>
+                                                                <p className="text-xl font-bold text-slate-900">{k.jumlahIkan.toLocaleString('id-ID')}<span className="text-xs font-normal text-slate-400 ml-1">ekor</span></p>
                                                             </div>
 
                                                             {/* Estimasi Aset */}
                                                             <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nilai Aset</p>
-                                                                <p className="text-lg font-bold text-slate-900">Rp{(estimasiAset / 1000).toFixed(0)}k</p>
+                                                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Nilai Aset</p>
+                                                                <p className="text-xl font-bold text-slate-900">Rp{formatCurrency(estimasiAset)}</p>
                                                             </div>
 
                                                             {/* Dimensi */}
                                                             <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Dimensi</p>
-                                                                <p className="text-sm font-bold text-slate-900">{k.panjang}x{k.lebar}x{k.kedalaman}<span className="text-[10px] font-normal text-slate-400 ml-1">m</span></p>
+                                                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Dimensi</p>
+                                                                <p className="text-base font-bold text-slate-900">{k.panjang}x{k.lebar}x{k.kedalaman}<span className="text-xs font-normal text-slate-400 ml-1">m</span></p>
                                                             </div>
 
                                                             {/* Volume */}
                                                             <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Volume</p>
-                                                                <p className="text-sm font-bold text-slate-900">{volume.toFixed(1)}<span className="text-[10px] font-normal text-slate-400 ml-1">m³</span></p>
+                                                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Volume</p>
+                                                                <p className="text-base font-bold text-slate-900">{volume.toFixed(1)}<span className="text-xs font-normal text-slate-400 ml-1">m³</span></p>
                                                             </div>
 
                                                             {/* Feed Rec Box */}
@@ -437,11 +471,11 @@ export default function KolamPage() {
                                                                 <div className="col-span-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-100">
                                                                     <div className="flex items-center justify-between">
                                                                         <div>
-                                                                            <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-1">Rekomendasi Pakan</p>
+                                                                            <p className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-1">Rekomendasi Pakan</p>
                                                                             <p className="text-sm font-bold text-amber-900">{feedRec.amount} kg/hari <span className="text-xs font-normal text-amber-700 ml-1">({feedRec.type})</span></p>
                                                                         </div>
                                                                         <div className="bg-white/80 rounded-lg px-2 py-1">
-                                                                            <p className="text-[10px] text-amber-600 font-bold uppercase">{feedRec.ratePercent}</p>
+                                                                            <p className="text-xs text-amber-600 font-bold uppercase">{feedRec.ratePercent}</p>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -455,7 +489,7 @@ export default function KolamPage() {
                                                                     onClick={() => handleOpenFeed(k.id)}
                                                                     className="btn btn-primary text-sm py-2.5"
                                                                 >
-                                                                    🍚 Pakan
+                                                                    <Container className="w-4 h-4" /> Pakan
                                                                 </button>
                                                                 <button
                                                                     onClick={() => {
@@ -464,7 +498,7 @@ export default function KolamPage() {
                                                                     }}
                                                                     className="btn btn-success text-sm py-2.5 text-white"
                                                                 >
-                                                                    🌾 Panen
+                                                                    <ShoppingCart className="w-4 h-4" /> Panen
                                                                 </button>
                                                             </div>
                                                             <div className="flex gap-2 mt-2 pt-4 border-t border-slate-50">
@@ -472,21 +506,21 @@ export default function KolamPage() {
                                                                     href={`/kolam/${k.id}`}
                                                                     className="flex-1 btn btn-secondary text-xs uppercase font-bold tracking-wider py-2"
                                                                 >
-                                                                    <EyeIcon className="w-4 h-4" /> Detail
+                                                                    <Eye className="w-4 h-4" /> Detail
                                                                 </Link>
                                                                 <Link
                                                                     href={`/kolam/${k.id}/edit`}
                                                                     className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
                                                                     title="Edit Kolam"
                                                                 >
-                                                                    <EditIcon className="w-5 h-5" />
+                                                                    <Edit className="w-5 h-5" />
                                                                 </Link>
                                                                 <button
                                                                     onClick={() => setDeleteModal(k.id)}
                                                                     className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                                                     title="Hapus Kolam"
                                                                 >
-                                                                    <TrashIcon className="w-5 h-5" />
+                                                                    <Trash2 className="w-5 h-5" />
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -525,7 +559,7 @@ export default function KolamPage() {
                                         <tr>
                                             <td colSpan={10} className="px-6 py-12 text-center text-slate-400">
                                                 <div className="flex flex-col items-center gap-2">
-                                                    <span className="text-3xl">📋</span>
+                                                    <ClipboardList className="w-12 h-12" />
                                                     <p className="text-sm">Belum ada riwayat siklus yang selesai.</p>
                                                 </div>
                                             </td>
@@ -594,7 +628,7 @@ export default function KolamPage() {
                                                             className="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors group-hover:scale-110"
                                                             title="Lihat Detail Siklus"
                                                         >
-                                                            <EyeIcon className="w-4 h-4" />
+                                                            <Eye className="w-4 h-4" />
                                                         </button>
                                                     </td>
                                                 </tr>
@@ -617,14 +651,14 @@ export default function KolamPage() {
                                         disabled={currentPage === 1}
                                         className="p-1 rounded hover:bg-slate-200 disabled:opacity-50 disabled:hover:bg-transparent"
                                     >
-                                        <ChevronLeftIcon className="w-5 h-5 text-slate-600" />
+                                        <ChevronLeft className="w-5 h-5 text-slate-600" />
                                     </button>
                                     <button
                                         onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                         disabled={currentPage === totalPages}
                                         className="p-1 rounded hover:bg-slate-200 disabled:opacity-50 disabled:hover:bg-transparent"
                                     >
-                                        <ChevronRightIcon className="w-5 h-5 text-slate-600" />
+                                        <ChevronRight className="w-5 h-5 text-slate-600" />
                                     </button>
                                 </div>
                             </div>
@@ -653,7 +687,7 @@ export default function KolamPage() {
                                         <tr>
                                             <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
                                                 <div className="flex flex-col items-center gap-2">
-                                                    <span className="text-3xl">🌾</span>
+                                                    <ShoppingCart className="w-12 h-12" />
                                                     <p className="text-sm">Belum ada data panen.</p>
                                                 </div>
                                             </td>
@@ -720,8 +754,8 @@ export default function KolamPage() {
                         {/* Header Summary */}
                         <div className="p-5 bg-slate-50 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border border-slate-100">
                             <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center text-3xl shadow-sm border border-slate-100">
-                                    🐟
+                                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-slate-100">
+                                    <Fish className="w-8 h-8 text-blue-600" />
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-bold text-slate-900 leading-tight">
@@ -729,7 +763,7 @@ export default function KolamPage() {
                                     </h3>
                                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-slate-500 mt-1 uppercase tracking-wider">
                                         <span className="flex items-center gap-1.5">
-                                            <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
+                                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
                                             {new Date(selectedCycle.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                                             <span className="text-slate-300">→</span>
                                             {selectedCycle.isActive
@@ -755,7 +789,7 @@ export default function KolamPage() {
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             <div className="p-4 border border-slate-100 rounded-2xl bg-white shadow-sm hover:border-teal-100 transition-colors">
                                 <div className="flex items-center gap-2 text-slate-400 mb-2">
-                                    <ScaleIcon className="w-4 h-4" />
+                                    <Scale className="w-4 h-4" />
                                     <span className="text-[10px] font-bold uppercase tracking-widest">FCR</span>
                                 </div>
                                 <p className={`text-xl font-bold ${selectedCycle.fcr <= 1.2 ? 'text-emerald-600' : selectedCycle.fcr <= 1.5 ? 'text-amber-600' : 'text-red-500'}`}>
@@ -861,7 +895,7 @@ export default function KolamPage() {
             <Modal isOpen={!!deleteModal} onClose={() => setDeleteModal(null)} size="sm">
                 <div className="text-center">
                     <div className="icon-box icon-box-lg icon-box-danger mx-auto mb-4">
-                        ⚠️
+                        <AlertTriangle className="w-8 h-8 text-red-600" />
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 mb-2">Hapus Kolam?</h3>
                     <p className="text-slate-500 mb-6">
@@ -890,10 +924,9 @@ export default function KolamPage() {
                 onClose={() => setIsFeedModalOpen(false)}
                 title="Catat Pemberian Pakan"
                 footer={
-                    <>
-                        <button type="button" onClick={() => setIsFeedModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
+                    <>  <button type="button" onClick={() => setIsFeedModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="feed-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
                         </button>
                     </>
                 }
@@ -962,7 +995,7 @@ export default function KolamPage() {
                     <>
                         <button type="button" onClick={() => setIsTebarModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="tebar-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <LoadingSpinner className="w-5 h-5" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
                         </button>
                     </>
                 }

@@ -1,5 +1,6 @@
 'use client';
 import { useApp } from '../../context/AppContext';
+import { FileText, Container, TrendingUp, Users } from 'lucide-react';
 
 export default function ActivityStream() {
     const { getRecentActivities } = useApp();
@@ -7,11 +8,11 @@ export default function ActivityStream() {
 
     const getIcon = (type: string) => {
         switch (type) {
-            case 'PAKAN': return '🍚';
-            case 'PANEN': return '🌾';
+            case 'PAKAN': return <Container className="w-4 h-4" />;
+            case 'PANEN': return <TrendingUp className="w-4 h-4" />;
             case 'KEMATIAN': return '💀';
             case 'TEBAR': return '🌱';
-            default: return '📝';
+            default: return <FileText className="w-4 h-4" />;
         }
     };
 
@@ -28,7 +29,7 @@ export default function ActivityStream() {
     return (
         <div className="stat-card p-6 h-full bg-white border border-slate-100 hover:shadow-md transition-all">
             <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-6 flex items-center gap-2">
-                📋 Aktivitas Terbaru
+                <FileText className="w-5 h-5" /> Aktivitas Terbaru
             </h3>
 
             <div className="space-y-4">

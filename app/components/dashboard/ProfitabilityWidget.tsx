@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useApp } from '../../context/AppContext';
-import { ArrowRightIcon, WalletIcon } from '../ui/Icons';
+import { ArrowRight, Wallet, Container, Fish, Zap, Pill, Users, FileText } from 'lucide-react';
 
 export default function ProfitabilityWidget() {
     const { pengeluaran, pakan } = useApp();
@@ -23,13 +23,13 @@ export default function ProfitabilityWidget() {
     const totalPengeluaran = Object.values(kategoriStats).reduce((a, b) => a + b, 0);
 
     // Kategori Config
-    const kategoriConfig: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-        'PAKAN': { label: 'Pakan', color: 'text-amber-600', bg: 'bg-amber-500', icon: '🍚' },
-        'BIBIT': { label: 'Bibit', color: 'text-cyan-600', bg: 'bg-cyan-500', icon: '🐟' },
-        'LISTRIK': { label: 'Listrik', color: 'text-yellow-600', bg: 'bg-yellow-500', icon: '⚡' },
-        'OBAT': { label: 'Obat/Vitamin', color: 'text-emerald-600', bg: 'bg-emerald-500', icon: '💊' },
-        'GAJI': { label: 'Gaji', color: 'text-purple-600', bg: 'bg-purple-500', icon: '👥' },
-        'LAINNYA': { label: 'Lainnya', color: 'text-slate-600', bg: 'bg-slate-500', icon: '📝' },
+    const kategoriConfig: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
+        'PAKAN': { label: 'Pakan', color: 'text-amber-600', bg: 'bg-amber-500', icon: <Container className="w-5 h-5" /> },
+        'BIBIT': { label: 'Bibit', color: 'text-cyan-600', bg: 'bg-cyan-500', icon: <Fish className="w-5 h-5" /> },
+        'LISTRIK': { label: 'Listrik', color: 'text-yellow-600', bg: 'bg-yellow-500', icon: <Zap className="w-5 h-5" /> },
+        'OBAT': { label: 'Obat/Vitamin', color: 'text-emerald-600', bg: 'bg-emerald-500', icon: <Pill className="w-5 h-5" /> },
+        'GAJI': { label: 'Gaji', color: 'text-purple-600', bg: 'bg-purple-500', icon: <Users className="w-5 h-5" /> },
+        'LAINNYA': { label: 'Lainnya', color: 'text-slate-600', bg: 'bg-slate-500', icon: <FileText className="w-5 h-5" /> },
     };
 
     const categories = Object.keys(kategoriStats)
@@ -46,7 +46,7 @@ export default function ProfitabilityWidget() {
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
-                        <WalletIcon />
+                        <Wallet className="w-5 h-5" />
                     </div>
                     <div>
                         <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider">Komposisi Pengeluaran</h3>
@@ -90,7 +90,7 @@ export default function ProfitabilityWidget() {
 
             <div className="mt-4 pt-3 border-t border-slate-50 text-center">
                 <Link href="/keuangan" className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center justify-center gap-1">
-                    DETAIL PENGELUARAN <ArrowRightIcon className="w-3 h-3" />
+                    DETAIL PENGELUARAN <ArrowRight className="w-3 h-3" />
                 </Link>
             </div>
         </div>

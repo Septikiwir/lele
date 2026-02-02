@@ -5,12 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { Fish, ArrowLeft } from 'lucide-react';
 
-const ArrowLeftIcon = () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-    </svg>
-);
 
 export default function TambahKolamPage() {
     const router = useRouter();
@@ -69,7 +65,7 @@ export default function TambahKolamPage() {
             {/* Header */}
             <div className="mb-6 sm:mb-8">
                 <Link href="/kolam" className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 mb-4">
-                    <ArrowLeftIcon />
+                    <ArrowLeft className="w-5 h-5" />
                     Kembali ke Daftar Kolam
                 </Link>
                 <h1 className="text-3xl font-bold text-slate-900">Tambah Kolam Baru</h1>
@@ -161,7 +157,7 @@ export default function TambahKolamPage() {
                         <div className="bg-slate-100 rounded-xl p-4 mb-6 aspect-video flex items-center justify-center">
                             {panjang > 0 && lebar > 0 ? (
                                 <div
-                                    className="bg-gradient-to-br from-cyan-400 to-teal-500 rounded-lg flex items-center justify-center text-white text-4xl shadow-lg"
+                                    className="bg-gradient-to-br from-cyan-400 to-teal-500 rounded-lg flex items-center justify-center text-white shadow-lg"
                                     style={{
                                         width: `${Math.min(panjang / Math.max(panjang, lebar) * 100, 100)}%`,
                                         height: `${Math.min(lebar / Math.max(panjang, lebar) * 100, 100)}%`,
@@ -169,7 +165,7 @@ export default function TambahKolamPage() {
                                         minHeight: '40px',
                                     }}
                                 >
-                                    🐟
+                                    <Fish className="w-12 h-12 text-white" />
                                 </div>
                             ) : (
                                 <p className="text-slate-400 text-sm">Masukkan dimensi untuk preview</p>
