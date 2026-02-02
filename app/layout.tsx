@@ -6,6 +6,7 @@ import { AppProvider } from "./context/AppContext";
 import { FarmProvider } from "./context/FarmContext";
 import { AuthProvider } from "./context/AuthContext";
 import NextAuthProvider from "./providers/AuthProvider";
+import ServiceWorkerRegistration from "./components/ServiceWorkerRegistration";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,6 +45,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <ServiceWorkerRegistration />
         <NextAuthProvider>
           <AuthProvider>
             <FarmProvider>
