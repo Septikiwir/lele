@@ -27,13 +27,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
     // Redirect to login if not authenticated (no session AND no cached user)
     useEffect(() => {
-        if (status === 'loading') return; // Wait for session to load
+        // If we have cached user, don't wait for online session check
+        if (effectiveUser) return;
         
-        // Allow access if either online session OR cached session exists
+        // Only wait for loading if we're online (otherwise it takes too long)
+        if (status === 'loading' && isOnline) return;
+        
+        // No cached user and (not loading OR offline) - redirect to login
         if (!session && !effectiveUser) {
             router.push('/login');
         }
-    }, [session, effectiveUser, status, router]);
+    }, [session, effectiveUser, status, isOnline, router]);
 
     // Show reconnection toast
     useEffect(() => {
@@ -46,8 +50,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         }
     }, [isOnline, wasOffline]);
 
-    // Show loading while checking authentication
-    if (status === 'loading') {
+    // Show minimal loading only when online and actually loading (not when using cached session)
+    if (status === 'loading' && isOnline && !effectiveUser) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-slate-50">
                 <div className="flex flex-col items-center gap-4">
