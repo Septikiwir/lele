@@ -46,7 +46,7 @@ export default function PakanPage() {
         kolamId: '',
         tanggal: new Date().toISOString().split('T')[0],
         jumlahKg: '',
-        jenisPakan: 'Pelet Hi-Pro',
+        jenisPakan: '',
     });
 
     const [stokFormData, setStokFormData] = useState({
@@ -60,14 +60,14 @@ export default function PakanPage() {
     const [jadwalForm, setJadwalForm] = useState({
         kolamId: '',
         waktu: '07:00',
-        jenisPakan: 'Pelet Hi-Pro',
+        jenisPakan: '',
         jumlahKg: '',
         keterangan: '',
     });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.kolamId || !formData.jumlahKg) return;
+        if (!formData.kolamId || !formData.jumlahKg || !formData.jenisPakan) return;
         if (isSubmitting) return;
 
         setErrorMessage('');
@@ -84,7 +84,7 @@ export default function PakanPage() {
                 kolamId: '',
                 tanggal: new Date().toISOString().split('T')[0],
                 jumlahKg: '',
-                jenisPakan: 'Pelet Hi-Pro',
+                jenisPakan: '',
             });
             setShowForm(false);
         } catch (error) {
@@ -125,7 +125,7 @@ export default function PakanPage() {
 
     const handleJadwalSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!jadwalForm.kolamId || !jadwalForm.waktu || !jadwalForm.jumlahKg) return;
+        if (!jadwalForm.kolamId || !jadwalForm.waktu || !jadwalForm.jumlahKg || !jadwalForm.jenisPakan) return;
         if (isSubmitting) return;
 
         setIsSubmitting(true);
@@ -142,7 +142,7 @@ export default function PakanPage() {
             setJadwalForm({
                 kolamId: '',
                 waktu: '07:00',
-                jenisPakan: 'Pelet Hi-Pro',
+                jenisPakan: '',
                 jumlahKg: '',
                 keterangan: '',
             });
@@ -240,7 +240,7 @@ export default function PakanPage() {
         <DashboardLayout>
             <div className="flex flex-col gap-6">
                 {/* Header & Actions */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Manajemen Pakan</h1>
                         <p className="text-slate-500 text-sm mt-1">Monitor stok, jadwal otomatis, dan riwayat pemberian pakan.</p>
@@ -400,72 +400,85 @@ export default function PakanPage() {
                         </div>
 
                         {/* Section: Riwayat Table */}
-                        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-                            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-transparent">
-                                <h3 className="font-bold text-slate-800 text-lg">Riwayat Terakhir</h3>
+                        <div className="table-container">
+                            <div className="px-6 py-4 border-b border-default flex justify-between items-center bg-neutral-secondary-medium">
+                                <h3 className="font-semibold text-heading text-base">Riwayat Terakhir</h3>
                             </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="bg-slate-50 border-b border-slate-100">
-                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Waktu</th>
-                                            <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Kolam</th>
-                                            <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pakan</th>
-                                            <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Jumlah</th>
-                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">FCR Est.</th>
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" className="p-4">
+                                            <div className="flex items-center">
+                                                <input id="pakan-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                <label htmlFor="pakan-checkbox-header" className="sr-only">Select all</label>
+                                            </div>
+                                        </th>
+                                        <th>Waktu</th>
+                                        <th>Kolam</th>
+                                        <th>Pakan</th>
+                                        <th className="text-right">Jumlah</th>
+                                        <th className="text-right">FCR Est.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {pakan.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={6} className="table-empty">
+                                                <div className="flex flex-col items-center gap-2">
+                                                    <Container className="w-12 h-12 opacity-50" />
+                                                    <span>Belum ada data riwayat.</span>
+                                                </div>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50">
-                                        {pakan.length === 0 ? (
-                                            <tr>
-                                                <td colSpan={5} className="text-center text-slate-400 py-12">
-                                                    <div className="flex flex-col items-center gap-2">
-                                                        <Container className="w-12 h-12 opacity-50" />
-                                                        <span className="text-sm">Belum ada data riwayat.</span>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ) : (
-                                            filteredRiwayatPakan.map(p => {
-                                                const k = kolam.find(item => item.id === p.kolamId);
-                                                const fcr = calculateFCR(p.kolamId);
-                                                return (
-                                                    <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
-                                                        <td className="px-6 py-3">
-                                                            <div className="text-sm font-bold text-slate-700">
-                                                                {new Date(p.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                                                            </div>
-                                                            <div className="text-[10px] text-slate-400 mt-0.5 font-medium">
-                                                                {new Date(p.tanggal).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-3">
-                                                            <span className="text-sm font-bold text-slate-900">{k?.nama}</span>
-                                                        </td>
-                                                        <td className="px-4 py-3">
-                                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-100">
-                                                                {p.jenisPakan}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-4 py-3 text-right">
-                                                            <span className="text-sm font-bold text-slate-900">{p.jumlahKg}</span>
-                                                            <span className="text-xs text-slate-500 ml-1">kg</span>
-                                                        </td>
-                                                        <td className="px-6 py-3 text-right">
-                                                            <span className={`text-xs font-bold px-2 py-0.5 rounded ${fcr > 0 && fcr <= 1.2 ? 'bg-emerald-100 text-emerald-700' : fcr <= 1.5 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
-                                                                {fcr > 0 ? fcr.toFixed(2) : '-'}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div className="px-6 py-4 border-t border-slate-100 flex justify-end items-center bg-slate-50/50">
-                                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                                    <span>Tampilkan</span>
+                                    ) : (
+                                        filteredRiwayatPakan.map(p => {
+                                            const k = kolam.find(item => item.id === p.kolamId);
+                                            const fcr = calculateFCR(p.kolamId);
+                                            return (
+                                                <tr key={p.id}>
+                                                    <td className="w-4 p-4">
+                                                        <div className="flex items-center">
+                                                            <input id={`pakan-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                            <label htmlFor={`pakan-checkbox-${p.id}`} className="sr-only">Checkbox</label>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div className="text-sm font-medium text-heading">
+                                                            {new Date(p.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                        </div>
+                                                        <div className="text-xs text-slate-400 mt-0.5">
+                                                            {new Date(p.tanggal).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span className="text-sm font-medium text-heading">{k?.nama}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-50 text-amber-700 border border-amber-100">
+                                                            {p.jenisPakan}
+                                                        </span>
+                                                    </td>
+                                                    <td className="text-right">
+                                                        <span className="text-sm font-medium text-heading">{p.jumlahKg}</span>
+                                                        <span className="text-xs text-slate-500 ml-1">kg</span>
+                                                    </td>
+                                                    <td className="text-right">
+                                                        <span className={`text-xs font-medium px-2 py-0.5 rounded ${fcr > 0 && fcr <= 1.2 ? 'bg-emerald-100 text-emerald-700' : fcr <= 1.5 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                            {fcr > 0 ? fcr.toFixed(2) : '-'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                            <nav className="table-pagination" aria-label="Table navigation">
+                                <span className="table-pagination-info">
+                                    Menampilkan <span className="font-semibold">{Math.min(limitRiwayatPakan, filteredRiwayatPakan.length)}</span> dari <span className="font-semibold">{pakan.length}</span> data
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <label className="text-sm text-slate-600">Tampilkan:</label>
                                     <select
                                         value={limitRiwayatPakan}
                                         onChange={(e) => setLimitRiwayatPakan(Number(e.target.value))}
@@ -475,9 +488,8 @@ export default function PakanPage() {
                                         <option value={20}>20</option>
                                         <option value={50}>50</option>
                                     </select>
-                                    <span>Baris</span>
                                 </div>
-                            </div>
+                            </nav>
                         </div>
 
                     </div>
@@ -577,7 +589,8 @@ export default function PakanPage() {
                             setErrorMessage('');
                         }} className="btn btn-secondary">Batal</button>
                         <button type="submit" form="pakan-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-4 h-4 me-1.5 -ms-0.5 animate-spin" /> : null}
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
                         </button>
                     </>
                 }
@@ -620,14 +633,12 @@ export default function PakanPage() {
                             value={formData.jenisPakan}
                             onChange={(e) => setFormData({ ...formData, jenisPakan: e.target.value })}
                             className="input"
+                            required
                         >
-                            {allJenisPakan.length > 0 ? (
-                                allJenisPakan.map(jenis => (
-                                    <option key={jenis} value={jenis}>{jenis}</option>
-                                ))
-                            ) : (
-                                <option value="Pelet Hi-Pro">Pelet Hi-Pro</option>
-                            )}
+                            <option value="">-- Pilih Jenis Pakan --</option>
+                            {allJenisPakan.map(jenis => (
+                                <option key={jenis} value={jenis}>{jenis}</option>
+                            ))}
                         </select>
                     </div>
 
@@ -655,7 +666,8 @@ export default function PakanPage() {
                     <>
                         <button type="button" onClick={() => setShowStokForm(false)} className="btn btn-secondary">Batal</button>
                         <button type="submit" form="stok-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan Stok'}
+                            {isSubmitting ? <Loader2 className="w-4 h-4 me-1.5 -ms-0.5 animate-spin" /> : null}
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan Stok'}
                         </button>
                     </>
                 }
@@ -740,7 +752,8 @@ export default function PakanPage() {
                     <>
                         <button type="button" onClick={() => setShowJadwalForm(false)} className="btn btn-secondary">Batal</button>
                         <button type="submit" form="jadwal-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan Jadwal'}
+                            {isSubmitting ? <Loader2 className="w-4 h-4 me-1.5 -ms-0.5 animate-spin" /> : null}
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan Jadwal'}
                         </button>
                     </>
                 }
@@ -779,7 +792,9 @@ export default function PakanPage() {
                                 value={jadwalForm.jenisPakan}
                                 onChange={(e) => setJadwalForm({ ...jadwalForm, jenisPakan: e.target.value })}
                                 className="input"
+                                required
                             >
+                                <option value="">-- Pilih Jenis Pakan --</option>
                                 {allJenisPakan.map(jenis => (
                                     <option key={jenis} value={jenis}>{jenis}</option>
                                 ))}

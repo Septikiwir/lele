@@ -557,89 +557,100 @@ export default function KolamPage() {
 
                 {/* History Tab Content */}
                 {activeTab === 'riwayat' && (
-                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead>
-                                    <tr className="bg-slate-50 border-b border-slate-200">
-                                        <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Kolam</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Siklus</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Periode</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Selesai</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Durasi</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tebar</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Panen</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">FCR</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">SR</th>
-                                        <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Aksi</th>
+                    <div className="table-container">
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col" className="p-4">
+                                        <div className="flex items-center">
+                                            <input id="kolam-siklus-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                            <label htmlFor="kolam-siklus-checkbox-header" className="sr-only">Select all</label>
+                                        </div>
+                                    </th>
+                                    <th>Kolam</th>
+                                    <th className="text-center">Siklus</th>
+                                    <th>Periode</th>
+                                    <th>Selesai</th>
+                                    <th>Durasi</th>
+                                    <th>Tebar</th>
+                                    <th>Panen</th>
+                                    <th className="text-center">FCR</th>
+                                    <th className="text-center">SR</th>
+                                    <th className="text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {getCycleHistoryForTable().length === 0 ? (
+                                    <tr>
+                                        <td colSpan={11} className="table-empty">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <ClipboardList className="w-12 h-12" />
+                                                <p className="text-sm">Belum ada riwayat siklus yang selesai.</p>
+                                            </div>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {getCycleHistoryForTable().length === 0 ? (
-                                        <tr>
-                                            <td colSpan={10} className="px-6 py-12 text-center text-slate-400">
-                                                <div className="flex flex-col items-center gap-2">
-                                                    <ClipboardList className="w-12 h-12" />
-                                                    <p className="text-sm">Belum ada riwayat siklus yang selesai.</p>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        paginatedHistory.map((cycle, idx) => {
-                                            const kolamInfo = kolam.find(k => k.id === cycle.kolamId);
-                                            const updateTime = cycle.lastInputTime ? new Date(cycle.lastInputTime) : new Date(cycle.startDate);
+                                ) : (
+                                    paginatedHistory.map((cycle, idx) => {
+                                        const kolamInfo = kolam.find(k => k.id === cycle.kolamId);
+                                        const updateTime = cycle.lastInputTime ? new Date(cycle.lastInputTime) : new Date(cycle.startDate);
 
-                                            return (
-                                                <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
-                                                    <td className="px-6 py-4">
-                                                        <span className="font-bold text-slate-900 block">{kolamInfo?.nama || 'Unknown'}</span>
-                                                        {cycle.isActive && <span className="mt-1 badge badge-neutral badge-xs uppercase tracking-tighter text-[9px] font-bold">Aktif</span>}
+                                        return (
+                                            <tr key={idx}>
+                                                <td className="w-4 p-4">
+                                                    <div className="flex items-center">
+                                                        <input id={`kolam-siklus-checkbox-${idx}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                        <label htmlFor={`kolam-siklus-checkbox-${idx}`} className="sr-only">Checkbox</label>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span className="font-bold text-heading block">{kolamInfo?.nama || 'Unknown'}</span>
+                                                    {cycle.isActive && <span className="mt-1 badge badge-neutral badge-xs uppercase tracking-tighter text-[9px] font-bold">Aktif</span>}
+                                                </td>
+                                                <td className="text-center">
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">
+                                                        #{cycle.cycleNumber}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div className="text-xs font-semibold text-body">
+                                                        {new Date(cycle.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                        <span className="mx-1 text-slate-300">→</span>
+                                                        {cycle.isActive ? 'Sekarang' : new Date(cycle.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-400 mt-0.5">{new Date(cycle.startDate).getFullYear()}</div>
+                                                </td>
+                                                <td>
+                                                    <div className="text-xs font-medium text-body">
+                                                        {updateTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-400 mt-0.5">
+                                                        {updateTime.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span className="text-xs font-bold text-body">{cycle.totalDays}</span>
+                                                    <span className="text-[10px] text-slate-400 ml-1">hari</span>
+                                                </td>
+                                                <td>
+                                                    <span className="text-xs font-bold text-body">{cycle.initialFish.toLocaleString('id-ID')}</span>
+                                                    <span className="text-[10px] text-slate-400 ml-1 block mt-0.5">ekor</span>
+                                                </td>
+                                                <td className="text-xs">
+                                                    <span className="font-bold text-body">{cycle.finalFish.toLocaleString('id-ID')}</span>
+                                                    <span className="text-[10px] text-slate-400 ml-1">ekor</span>
+                                                    <span className="text-[10px] text-slate-500 block font-medium mt-0.5">{cycle.totalHarvestKg.toFixed(1)} kg</span>
+                                                </td>
+                                                <td className="text-center">
+                                                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${cycle.fcr <= 1.2 ? 'bg-emerald-100 text-emerald-700' : cycle.fcr <= 1.5 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                                                        {cycle.fcr.toFixed(2)}
+                                                    </span>
+                                                </td>
+                                                <td className="text-center">
+                                                    <span className={`text-xs font-bold ${cycle.sr >= 90 ? 'text-emerald-600' : cycle.sr >= 80 ? 'text-amber-600' : 'text-red-600'}`}>
+                                                        {cycle.sr.toFixed(1)}%
+                                                    </span>
                                                     </td>
-                                                    <td className="px-4 py-4 text-center">
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">
-                                                            #{cycle.cycleNumber}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-4">
-                                                        <div className="text-xs font-semibold text-slate-700">
-                                                            {new Date(cycle.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                                                            <span className="mx-1 text-slate-300">→</span>
-                                                            {cycle.isActive ? 'Sekarang' : new Date(cycle.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                                                        </div>
-                                                        <div className="text-[10px] text-slate-400 mt-0.5">{new Date(cycle.startDate).getFullYear()}</div>
-                                                    </td>
-                                                    <td className="px-4 py-4">
-                                                        <div className="text-xs font-medium text-slate-700">
-                                                            {updateTime.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                                                        </div>
-                                                        <div className="text-[10px] text-slate-400 mt-0.5">
-                                                            {updateTime.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-4">
-                                                        <span className="text-xs font-bold text-slate-700">{cycle.totalDays}</span>
-                                                        <span className="text-[10px] text-slate-400 ml-1">hari</span>
-                                                    </td>
-                                                    <td className="px-4 py-4">
-                                                        <span className="text-xs font-bold text-slate-700">{cycle.initialFish.toLocaleString('id-ID')}</span>
-                                                        <span className="text-[10px] text-slate-400 ml-1 block mt-0.5">ekor</span>
-                                                    </td>
-                                                    <td className="px-4 py-4 text-xs">
-                                                        <span className="font-bold text-slate-700">{cycle.finalFish.toLocaleString('id-ID')}</span>
-                                                        <span className="text-[10px] text-slate-400 ml-1">ekor</span>
-                                                        <span className="text-[10px] text-slate-500 block font-medium mt-0.5">{cycle.totalHarvestKg.toFixed(1)} kg</span>
-                                                    </td>
-                                                    <td className="px-4 py-4 text-center">
-                                                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold ${cycle.fcr <= 1.2 ? 'bg-emerald-100 text-emerald-700' : cycle.fcr <= 1.5 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
-                                                            {cycle.fcr.toFixed(2)}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-4 text-center">
-                                                        <span className={`text-xs font-bold ${cycle.sr >= 90 ? 'text-emerald-600' : cycle.sr >= 80 ? 'text-amber-600' : 'text-red-600'}`}>
-                                                            {cycle.sr.toFixed(1)}%
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
+                                                    <td className="text-right">
                                                         <button
                                                             onClick={() => {
                                                                 setSelectedCycle(cycle);
@@ -657,7 +668,6 @@ export default function KolamPage() {
                                     )}
                                 </tbody>
                             </table>
-                        </div>
 
                         {/* Pagination Controls */}
                         {totalPages > 1 && (
@@ -688,76 +698,82 @@ export default function KolamPage() {
 
                 {/* Harvest History Tab Content */}
                 {activeTab === 'panen' && (
-                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left">
-                                <thead>
-                                    <tr className="bg-slate-50 border-b border-slate-200">
-                                        <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tanggal</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Kolam</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Tipe</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Berat</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Jumlah</th>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Harga/Kg</th>
-                                        <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-right">Total Pendapatan</th>
+                    <div className="table-container">
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col" className="p-4">
+                                        <input id="kolam-panen-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                        <label htmlFor="kolam-panen-checkbox-header" className="sr-only">Select all</label>
+                                    </th>
+                                    <th>Tanggal</th>
+                                    <th>Kolam</th>
+                                    <th className="text-center">Tipe</th>
+                                    <th className="text-right">Berat</th>
+                                    <th className="text-right">Jumlah</th>
+                                    <th className="text-right">Harga/Kg</th>
+                                    <th className="text-right">Total Pendapatan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {riwayatPanen.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={8} className="table-empty">
+                                            <div className="flex flex-col items-center gap-2">
+                                                <ShoppingCart className="w-12 h-12" />
+                                                <p className="text-sm">Belum ada data panen.</p>
+                                            </div>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {riwayatPanen.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={7} className="px-6 py-12 text-center text-slate-400">
-                                                <div className="flex flex-col items-center gap-2">
-                                                    <ShoppingCart className="w-12 h-12" />
-                                                    <p className="text-sm">Belum ada data panen.</p>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        [...riwayatPanen].sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()).map((p) => {
-                                            const kolamName = kolam.find(k => k.id === p.kolamId)?.nama || 'Unknown';
-                                            const totalPendapatan = p.beratTotalKg * p.hargaPerKg;
-                                            return (
-                                                <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <div className="text-xs font-bold text-slate-700">
-                                                            {new Date(p.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                                        </div>
-                                                        <div className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-tighter font-medium">
-                                                            {new Date(p.tanggal).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-4 py-4">
-                                                        <span className="text-sm font-bold text-slate-900">{kolamName}</span>
-                                                    </td>
-                                                    <td className="px-4 py-4 text-center">
-                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest ${p.tipe === 'TOTAL' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
-                                                            {p.tipe}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-4 py-4 text-right">
-                                                        <span className="text-xs font-bold text-slate-700">{p.beratTotalKg.toLocaleString('id-ID')}</span>
-                                                        <span className="text-[10px] text-slate-400 ml-1">kg</span>
-                                                    </td>
-                                                    <td className="px-4 py-4 text-right">
-                                                        <span className="text-xs font-bold text-slate-700">{p.jumlahEkor.toLocaleString('id-ID')}</span>
-                                                        <span className="text-[10px] text-slate-400 ml-1">ekor</span>
-                                                    </td>
-                                                    <td className="px-4 py-4 text-right">
-                                                        <span className="text-[10px] text-slate-400 mr-1">Rp</span>
-                                                        <span className="text-xs font-bold text-slate-700">{p.hargaPerKg.toLocaleString('id-ID')}</span>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <span className="text-sm font-bold text-emerald-600">
-                                                            Rp{totalPendapatan.toLocaleString('id-ID')}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                ) : (
+                                    [...riwayatPanen].sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()).map((p) => {
+                                        const kolamName = kolam.find(k => k.id === p.kolamId)?.nama || 'Unknown';
+                                        const totalPendapatan = p.beratTotalKg * p.hargaPerKg;
+                                        return (
+                                            <tr key={p.id}>
+                                                <td className="w-4 p-4">
+                                                    <input id={`kolam-panen-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                    <label htmlFor={`kolam-panen-checkbox-${p.id}`} className="sr-only">Select row</label>
+                                                </td>
+                                                <td>
+                                                    <div className="text-xs font-bold text-body">
+                                                        {new Date(p.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-400 mt-0.5 uppercase tracking-tighter font-medium">
+                                                        {new Date(p.tanggal).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span className="text-sm font-bold text-heading">{kolamName}</span>
+                                                </td>
+                                                <td className="text-center">
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest ${p.tipe === 'TOTAL' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                                                        {p.tipe}
+                                                    </span>
+                                                </td>
+                                                <td className="text-right">
+                                                    <span className="text-xs font-bold text-body">{p.beratTotalKg.toLocaleString('id-ID')}</span>
+                                                    <span className="text-[10px] text-slate-400 ml-1">kg</span>
+                                                </td>
+                                                <td className="text-right">
+                                                    <span className="text-xs font-bold text-body">{p.jumlahEkor.toLocaleString('id-ID')}</span>
+                                                    <span className="text-[10px] text-slate-400 ml-1">ekor</span>
+                                                </td>
+                                                <td className="text-right">
+                                                    <span className="text-[10px] text-slate-400 mr-1">Rp</span>
+                                                    <span className="text-xs font-bold text-body">{p.hargaPerKg.toLocaleString('id-ID')}</span>
+                                                </td>
+                                                <td className="text-right">
+                                                    <span className="text-sm font-bold text-emerald-600">
+                                                        Rp{totalPendapatan.toLocaleString('id-ID')}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
                     </div>
                 )}
             </div>
@@ -946,7 +962,8 @@ export default function KolamPage() {
                 footer={
                     <>  <button type="button" onClick={() => setIsFeedModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="feed-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-4 h-4 me-1.5 -ms-0.5 animate-spin" /> : null}
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
                         </button>
                     </>
                 }
@@ -1015,7 +1032,8 @@ export default function KolamPage() {
                     <>
                         <button type="button" onClick={() => setIsTebarModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="tebar-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-4 h-4 me-1.5 -ms-0.5 animate-spin" /> : null}
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
                         </button>
                     </>
                 }

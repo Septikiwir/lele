@@ -265,7 +265,7 @@ export default function KeuanganPage() {
         <DashboardLayout>
             <div className="flex flex-col gap-8">
                 {/* Header & Actions */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-6">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Keuangan</h1>
                         <p className="text-slate-500 text-sm">Analisis profitabilitas dan arus kas.</p>
@@ -340,12 +340,49 @@ export default function KeuanganPage() {
                 </div>
 
                 {/* Main Content Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="space-y-6">
 
-                    {/* LEFT COLUMN (2/3) - Profit & History */}
-                    <div className="lg:col-span-2 space-y-6">
+                    {/* Section: Expense Composition - Horizontal */}
+                    <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                        <div className="mb-6">
+                            <h3 className="font-semibold text-slate-800">Komposisi Pengeluaran</h3>
+                        </div>
+                        <div className="grid grid-cols-6 gap-4 overflow-x-auto pb-2">
+                            {kategoriTotals.sort((a, b) => b.total - a.total).map((k) => {
+                                const percentage = grandTotalPengeluaran > 0 ? (k.total / grandTotalPengeluaran) * 100 : 0;
+                                const theme = kategoriThemes[k.value];
+                                return (
+                                    <div key={k.value} className={`p-4 rounded-lg border transition-all bg-white border-slate-200 ${theme.bg} ${theme.border}`}>
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${theme.iconBg}`}>
+                                                {k.icon}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="text-sm font-semibold text-slate-800 truncate">{k.label}</h4>
+                                                <span className="text-xs text-slate-500">{percentage.toFixed(1)}%</span>
+                                            </div>
+                                        </div>
+                                        <div className="mb-2">
+                                            <div className="w-full bg-slate-100 rounded-full h-1.5">
+                                                <div
+                                                    className={`h-1.5 rounded-full ${theme.bar}`}
+                                                    style={{ width: `${percentage}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-xs font-medium text-slate-900 block">Rp {k.total.toLocaleString('id-ID')}</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
 
+                    {/* Profit & Buyer Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         {/* Section: Profit Per Kolam */}
+                        <div className="lg:col-span-2">
                         <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
                             <div className="px-4 md:px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                                 <h3 className="font-semibold text-slate-800 flex items-center gap-2">
@@ -389,208 +426,10 @@ export default function KeuanganPage() {
                                 })}
                             </div>
                         </div>
-
-                        {/* Section: Tabbed Transaction History */}
-                        <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                            <div className="px-4 md:px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
-                                <h3 className="font-semibold text-slate-800">Riwayat Transaksi</h3>
-
-                                <div className="flex flex-wrap gap-2">
-                                    <div className="inline-flex bg-white border border-slate-200 rounded-lg p-1">
-                                        <button
-                                            onClick={() => setTransactionTab('penjualan')}
-                                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${transactionTab === 'penjualan'
-                                                ? 'bg-emerald-50 text-emerald-700 shadow-sm'
-                                                : 'text-slate-500 hover:text-slate-800'
-                                                }`}
-                                        >
-                                            Penjualan
-                                        </button>
-                                        <button
-                                            onClick={() => setTransactionTab('pengeluaran')}
-                                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${transactionTab === 'pengeluaran'
-                                                ? 'bg-red-50 text-red-700 shadow-sm'
-                                                : 'text-slate-500 hover:text-slate-800'
-                                                }`}
-                                        >
-                                            Pengeluaran
-                                        </button>
-                                    </div>
-                                    <select
-                                        value={transactionTab === 'penjualan' ? filterKolamPenjualan : filterKolamPengeluaran}
-                                        onChange={(e) => transactionTab === 'penjualan' ? setFilterKolamPenjualan(e.target.value) : setFilterKolamPengeluaran(e.target.value)}
-                                        className="bg-white border border-slate-200 text-xs rounded-lg px-2 py-1 focus:ring-0 focus:border-slate-300"
-                                    >
-                                        <option value="">Semua Kolam</option>
-                                        {transactionTab === 'pengeluaran' && <option value="UMUM">Umum (Farm Level)</option>}
-                                        {kolam.map(k => (
-                                            <option key={k.id} value={k.id}>{k.nama}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            {/* Penjualan Table */}
-                            {transactionTab === 'penjualan' && (
-                                <div className="overflow-x-auto">
-                                    <table className="table">
-                                        <thead>
-                                            <tr>
-                                                <th>Tanggal</th>
-                                                <th>Kolam</th>
-                                                <th>Pembeli</th>
-                                                <th className="text-right">Nilai</th>
-                                                <th className="text-right">Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {filteredPenjualan.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan={5} className="text-center text-slate-400 py-8">
-                                                        Belum ada data penjualan.
-                                                    </td>
-                                                </tr>
-                                            ) : (
-                                                filteredPenjualan.map(p => {
-                                                    const k = kolam.find(kol => kol.id === p.kolamId);
-                                                    const buyer = pembeli.find(b => b.id === p.pembeliId);
-                                                    const total = p.beratKg * p.hargaPerKg;
-                                                    return (
-                                                        <tr key={p.id}>
-                                                            <td className="text-slate-500">{p.tanggal}</td>
-                                                            <td className="font-medium text-slate-900">{k?.nama}</td>
-                                                            <td className="text-slate-600">{buyer?.nama || '-'}</td>
-                                                            <td className="text-right font-medium text-emerald-600">
-                                                                Rp {total.toLocaleString('id-ID')}
-                                                                <div className="text-xs font-normal text-slate-400">
-                                                                    {p.beratKg} kg @ {p.hargaPerKg.toLocaleString('id-ID')}
-                                                                </div>
-                                                            </td>
-                                                            <td className="text-right">
-                                                                <button onClick={() => setDeleteModal({ type: 'penjualan', id: p.id })} className="text-slate-300 hover:text-red-500 transition-colors">
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-
-                            {/* Pengeluaran Table */}
-                            {transactionTab === 'pengeluaran' && (
-                                <div className="overflow-x-auto">
-                                    <table className="table">
-                                        <thead>
-                                            <tr>
-                                                <th>Tanggal</th>
-                                                <th>Kategori</th>
-                                                <th>Detail</th>
-                                                <th className="text-right">Jumlah</th>
-                                                <th className="text-right">Aksi</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {filteredPengeluaran.length === 0 ? (
-                                                <tr>
-                                                    <td colSpan={5} className="text-center text-slate-400 py-8">
-                                                        Belum ada data pengeluaran.
-                                                    </td>
-                                                </tr>
-                                            ) : (
-                                                filteredPengeluaran.map(p => {
-                                                    const cat = kategoriOptions.find(c => c.value === p.kategori);
-                                                    return (
-                                                        <tr key={p.id}>
-                                                            <td className="text-slate-500">{p.tanggal}</td>
-                                                            <td>
-                                                                <span className={`badge ${kategoriColors[p.kategori]} flex items-center gap-1.5`}>
-                                                                    {cat?.icon} {cat?.label}
-                                                                </span>
-                                                            </td>
-                                                            <td className="text-slate-600 max-w-xs truncate">
-                                                                {p.keterangan}
-                                                                {p.kolamId && <span className="ml-1 text-xs text-slate-400">({kolam.find(k => k.id === p.kolamId)?.nama})</span>}
-                                                            </td>
-                                                            <td className="text-right font-medium text-red-600">
-                                                                Rp {p.jumlah.toLocaleString('id-ID')}
-                                                            </td>
-                                                            <td className="text-right">
-                                                                <button onClick={() => setDeleteModal({ type: 'pengeluaran', id: p.id })} className="text-slate-300 hover:text-red-500 transition-colors">
-                                                                    <Trash2 className="w-4 h-4" />
-                                                                </button>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-                            <div className="px-4 md:px-6 py-4 border-t border-slate-200 flex justify-end items-center bg-slate-50/50">
-                                <div className="flex items-center gap-2 text-sm text-slate-500">
-                                    <span>Tampilkan</span>
-                                    <select
-                                        value={transactionTab === 'penjualan' ? limitPenjualan : limitPengeluaran}
-                                        onChange={(e) => transactionTab === 'penjualan' ? setLimitPenjualan(Number(e.target.value)) : setLimitPengeluaran(Number(e.target.value))}
-                                        className="bg-white border border-slate-200 text-xs rounded-lg px-2 py-1 focus:ring-slate-200 focus:border-slate-300 cursor-pointer font-medium outline-none"
-                                    >
-                                        <option value={10}>10</option>
-                                        <option value={20}>20</option>
-                                        <option value={50}>50</option>
-                                    </select>
-                                    <span>Item</span>
-                                </div>
-                            </div>
                         </div>
 
-                    </div>
-
-                    {/* RIGHT COLUMN (1/3) - Categories & Buyers */}
-                    <div className="space-y-6">
-
-                        {/* Section: Expense Breakdown */}
-                        <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
-                            <div className="mb-4">
-                                <h3 className="font-semibold text-slate-800">Komposisi Pengeluaran</h3>
-                            </div>
-                            <div className="space-y-3">
-                                {kategoriTotals.sort((a, b) => b.total - a.total).map((k) => {
-                                    const percentage = grandTotalPengeluaran > 0 ? (k.total / grandTotalPengeluaran) * 100 : 0;
-                                    const theme = kategoriThemes[k.value];
-                                    return (
-                                        <div key={k.value} className={`p-3 rounded-lg border transition-all bg-white border-slate-200 ${theme.bg} ${theme.border}`}>
-                                            <div className="flex items-center justify-between mb-2">
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${theme.iconBg}`}>
-                                                        {k.icon}
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="text-sm font-semibold text-slate-800">{k.label}</h4>
-                                                        <span className="text-xs text-slate-500">{percentage.toFixed(1)}%</span>
-                                                    </div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="text-sm font-medium text-slate-900 block">Rp {k.total.toLocaleString('id-ID')}</span>
-                                                </div>
-                                            </div>
-                                            <div className="w-full bg-slate-100 rounded-full h-1.5">
-                                                <div
-                                                    className={`h-1.5 rounded-full ${theme.bar}`}
-                                                    style={{ width: `${percentage}%` }}
-                                                ></div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* Section: Buyer List */}
+                        {/* RIGHT COLUMN - Buyers */}
+                        <div>
                         <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
                             <div className="px-4 md:px-6 py-4 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
                                 <h3 className="font-semibold text-slate-800">Daftar Pembeli</h3>
@@ -624,12 +463,178 @@ export default function KeuanganPage() {
                                 )}
                             </div>
                         </div>
+                        </div>
+                    </div>
+                    </div>
 
+                    {/* Section: Tabbed Transaction History */}
+                    <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                        <div className="px-4 md:px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
+                            <h3 className="font-semibold text-slate-800">Riwayat Transaksi</h3>
+
+                            <div className="flex flex-wrap gap-2">
+                                <div className="inline-flex bg-white border border-slate-200 rounded-lg p-1">
+                                    <button
+                                        onClick={() => setTransactionTab('penjualan')}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${transactionTab === 'penjualan'
+                                            ? 'bg-emerald-50 text-emerald-700 shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-800'
+                                            }`}
+                                    >
+                                        Penjualan
+                                    </button>
+                                    <button
+                                        onClick={() => setTransactionTab('pengeluaran')}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${transactionTab === 'pengeluaran'
+                                            ? 'bg-red-50 text-red-700 shadow-sm'
+                                            : 'text-slate-500 hover:text-slate-800'
+                                            }`}
+                                    >
+                                        Pengeluaran
+                                    </button>
+                                </div>
+                                <select
+                                    value={transactionTab === 'penjualan' ? filterKolamPenjualan : filterKolamPengeluaran}
+                                    onChange={(e) => transactionTab === 'penjualan' ? setFilterKolamPenjualan(e.target.value) : setFilterKolamPengeluaran(e.target.value)}
+                                    className="bg-white border border-slate-200 text-xs rounded-lg px-2 py-1 focus:ring-0 focus:border-slate-300"
+                                >
+                                    <option value="">Semua Kolam</option>
+                                    {transactionTab === 'pengeluaran' && <option value="UMUM">Umum (Farm Level)</option>}
+                                    {kolam.map(k => (
+                                        <option key={k.id} value={k.id}>{k.nama}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Penjualan Table */}
+                        {transactionTab === 'penjualan' && (
+                            <div className="table-container">
+                                <table className="table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" className="p-4">
+                                                <div className="flex items-center">
+                                                    <input id="keu-penjualan-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                    <label htmlFor="keu-penjualan-checkbox-header" className="sr-only">Select all</label>
+                                                </div>
+                                            </th>
+                                            <th>Tanggal</th>
+                                            <th>Kolam</th>
+                                            <th>Pembeli</th>
+                                            <th className="text-right">Nilai</th>
+                                            <th className="text-right">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredPenjualan.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={6} className="table-empty">
+                                                    Belum ada data penjualan.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filteredPenjualan.map(p => {
+                                                const k = kolam.find(kol => kol.id === p.kolamId);
+                                                const buyer = pembeli.find(b => b.id === p.pembeliId);
+                                                const total = p.beratKg * p.hargaPerKg;
+                                                return (
+                                                    <tr key={p.id}>
+                                                        <td className="w-4 p-4">
+                                                            <div className="flex items-center">
+                                                                <input id={`keu-penjualan-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                                <label htmlFor={`keu-penjualan-checkbox-${p.id}`} className="sr-only">Checkbox</label>
+                                                            </div>
+                                                        </td>
+                                                        <td className="text-body">{p.tanggal}</td>
+                                                        <td className="font-medium text-heading">{k?.nama}</td>
+                                                        <td className="text-body">{buyer?.nama || '-'}</td>
+                                                        <td className="text-right font-medium text-emerald-600">
+                                                            Rp {total.toLocaleString('id-ID')}
+                                                            <div className="text-xs font-normal text-slate-400">
+                                                                {p.beratKg} kg @ {p.hargaPerKg.toLocaleString('id-ID')}
+                                                            </div>
+                                                        </td>
+                                                        <td className="text-right">
+                                                            <button onClick={() => setDeleteModal({ type: 'penjualan', id: p.id })} className="text-slate-300 hover:text-red-500 transition-colors">
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {/* Pengeluaran Table */}
+                        {transactionTab === 'pengeluaran' && (
+                            <div className="table-container">
+                                <table className="table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col" className="p-4">
+                                                <div className="flex items-center">
+                                                    <input id="keu-pengeluaran-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                    <label htmlFor="keu-pengeluaran-checkbox-header" className="sr-only">Select all</label>
+                                                </div>
+                                            </th>
+                                            <th>Tanggal</th>
+                                            <th>Kategori</th>
+                                            <th>Detail</th>
+                                            <th className="text-right">Jumlah</th>
+                                            <th className="text-right">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredPengeluaran.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={6} className="table-empty">
+                                                    Belum ada data pengeluaran.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filteredPengeluaran.map(p => {
+                                                const cat = kategoriOptions.find(c => c.value === p.kategori);
+                                                return (
+                                                    <tr key={p.id}>
+                                                        <td className="w-4 p-4">
+                                                            <div className="flex items-center">
+                                                                <input id={`keu-pengeluaran-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                                <label htmlFor={`keu-pengeluaran-checkbox-${p.id}`} className="sr-only">Checkbox</label>
+                                                            </div>
+                                                        </td>
+                                                        <td className="text-body">{p.tanggal}</td>
+                                                        <td>
+                                                            <span className={`badge ${kategoriColors[p.kategori]} flex items-center gap-1.5`}>
+                                                                {cat?.icon} {cat?.label}
+                                                            </span>
+                                                        </td>
+                                                        <td className="text-body max-w-xs truncate">
+                                                            {p.keterangan}
+                                                            {p.kolamId && <span className="ml-1 text-xs text-slate-400">({kolam.find(k => k.id === p.kolamId)?.nama})</span>}
+                                                        </td>
+                                                        <td className="text-right font-medium text-red-600">
+                                                            Rp {p.jumlah.toLocaleString('id-ID')}
+                                                        </td>
+                                                        <td className="text-right">
+                                                            <button onClick={() => setDeleteModal({ type: 'pengeluaran', id: p.id })} className="text-slate-300 hover:text-red-500 transition-colors">
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 </div>
-            </div>
 
-            {/* Modals */}
             {/* Panen Modal - Reusable Component */}
             <PanenModal
                 isOpen={showPenjualanForm}
@@ -645,7 +650,8 @@ export default function KeuanganPage() {
                     <>
                         <button type="button" onClick={() => setShowPembeliForm(false)} className="btn btn-secondary">Batal</button>
                         <button type="submit" form="form-pembeli" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-4 h-4 me-1.5 -ms-0.5 animate-spin" /> : null}
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
                         </button>
                     </>
                 }
@@ -716,7 +722,8 @@ export default function KeuanganPage() {
                     <>
                         <button type="button" onClick={() => setShowPengeluaranForm(false)} className="btn btn-secondary">Batal</button>
                         <button type="submit" form="pengeluaran-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-4 h-4 me-1.5 -ms-0.5 animate-spin" /> : null}
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
                         </button>
                     </>
                 }

@@ -194,7 +194,7 @@ export default function PenjualanPage() {
                 </div>
 
                 {/* Data Pembeli */}
-                <div className="table-wrapper">
+                <div className="table-container">
                     <div className="px-6 py-4 border-b border-slate-200 bg-white">
                         <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                             <ClipboardList className="w-5 h-5" />
@@ -213,6 +213,12 @@ export default function PenjualanPage() {
                         <table className="table">
                             <thead>
                                 <tr>
+                                    <th scope="col" className="p-4">
+                                        <div className="flex items-center">
+                                            <input id="penjualan-pembeli-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                            <label htmlFor="penjualan-pembeli-checkbox-header" className="sr-only">Select all</label>
+                                        </div>
+                                    </th>
                                     <th>Nama</th>
                                     <th>Tipe</th>
                                     <th>Kontak</th>
@@ -225,15 +231,21 @@ export default function PenjualanPage() {
                                     const tipe = tipePembeliOptions.find(t => t.value === p.tipe);
                                     return (
                                         <tr key={p.id}>
-                                            <td className="text-strong">{p.nama}</td>
+                                            <td className="w-4 p-4">
+                                                <div className="flex items-center">
+                                                    <input id={`penjualan-pembeli-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                    <label htmlFor={`penjualan-pembeli-checkbox-${p.id}`} className="sr-only">Checkbox</label>
+                                                </div>
+                                            </td>
+                                            <td className="text-heading font-medium">{p.nama}</td>
                                             <td>
                                                 <span className={`badge ${tipePembeliColors[p.tipe]} flex items-center gap-1.5`}>
                                                     {tipe?.icon} {tipe?.label}
                                                 </span>
                                             </td>
-                                            <td className="text-muted">{p.kontak || '-'}</td>
-                                            <td className="text-muted">{p.alamat || '-'}</td>
-                                            <td className="action-cell">
+                                            <td className="text-body">{p.kontak || '-'}</td>
+                                            <td className="text-body">{p.alamat || '-'}</td>
+                                            <td className="text-right">
                                                 <button
                                                     onClick={() => setDeleteModal({ type: 'pembeli', id: p.id })}
                                                     className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
@@ -250,7 +262,7 @@ export default function PenjualanPage() {
                 </div>
 
             {/* Riwayat Penjualan */}
-            <div className="table-wrapper">
+            <div className="table-container">
                 <div className="px-6 py-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         <span>📊</span>
@@ -276,9 +288,15 @@ export default function PenjualanPage() {
                         />
                     </div>
                 ) : (
-                    <table className="table table-compact">
+                    <table className="table">
                         <thead>
                             <tr>
+                                <th scope="col" className="p-4">
+                                    <div className="flex items-center">
+                                        <input id="penjualan-riwayat-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                        <label htmlFor="penjualan-riwayat-checkbox-header" className="sr-only">Select all</label>
+                                    </div>
+                                </th>
                                 <th>Tanggal</th>
                                 <th>Kolam</th>
                                 <th>Pembeli</th>
@@ -296,16 +314,22 @@ export default function PenjualanPage() {
                                 const total = p.beratKg * p.hargaPerKg;
                                 return (
                                     <tr key={p.id}>
-                                        <td className="text-small">{p.tanggal}</td>
-                                        <td className="text-strong">{k?.nama || 'Unknown'}</td>
-                                        <td className="text-muted">{buyer?.nama || 'Unknown'}</td>
-                                        <td className="text-right text-small">{p.beratKg}</td>
-                                        <td className="text-right text-small">Rp {p.hargaPerKg.toLocaleString('id-ID')}</td>
-                                        <td className="text-right text-strong text-green-600">
+                                        <td className="w-4 p-4">
+                                            <div className="flex items-center">
+                                                <input id={`penjualan-riwayat-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                <label htmlFor={`penjualan-riwayat-checkbox-${p.id}`} className="sr-only">Checkbox</label>
+                                            </div>
+                                        </td>
+                                        <td className="text-sm text-body">{p.tanggal}</td>
+                                        <td className="font-medium text-heading">{k?.nama || 'Unknown'}</td>
+                                        <td className="text-body">{buyer?.nama || 'Unknown'}</td>
+                                        <td className="text-right text-sm text-body">{p.beratKg}</td>
+                                        <td className="text-right text-sm text-body">Rp {p.hargaPerKg.toLocaleString('id-ID')}</td>
+                                        <td className="text-right font-medium text-green-600">
                                             Rp {total.toLocaleString('id-ID')}
                                         </td>
-                                        <td className="text-muted text-small">{p.keterangan || '-'}</td>
-                                        <td className="action-cell">
+                                        <td className="text-body text-sm">{p.keterangan || '-'}</td>
+                                        <td className="text-right">
                                             <button
                                                 onClick={() => setDeleteModal({ type: 'penjualan', id: p.id })}
                                                 className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
@@ -331,7 +355,8 @@ export default function PenjualanPage() {
                     <>
                         <button type="button" onClick={() => setShowPenjualanForm(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="form-penjualan" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-4 h-4 me-1.5 -ms-0.5 animate-spin" /> : null}
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
                         </button>
                     </>
                 }
@@ -446,7 +471,8 @@ export default function PenjualanPage() {
                     <>
                         <button type="button" onClick={() => setShowPembeliForm(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="form-pembeli" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-4 h-4 me-1.5 -ms-0.5 animate-spin" /> : null}
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
                         </button>
                     </>
                 }

@@ -186,7 +186,7 @@ export default function DenahPage() {
         <DashboardLayout>
             <div className="flex flex-col gap-6 sm:gap-8">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 border-b border-slate-100 pb-6">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Denah Lokasi Tambak</h1>
                         <p className="text-slate-500 text-sm">Visualisasi posisi dan status kolam secara real-time.</p>

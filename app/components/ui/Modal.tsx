@@ -1,3 +1,5 @@
+import { X } from 'lucide-react';
+
 interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -28,8 +30,9 @@ export default function Modal({
                     <div className="modal-header">
                         <h3 className="modal-title">{title}</h3>
                         {showCloseButton && (
-                            <button className="modal-close" onClick={onClose}>
-                                ✕
+                            <button className="modal-close" onClick={onClose} type="button">
+                                <X className="w-5 h-5" />
+                                <span className="sr-only">Close modal</span>
                             </button>
                         )}
                     </div>

@@ -162,22 +162,23 @@ async function main() {
     }
 
     // Check and create JadwalPakan
-    const existingJadwal = await prisma.jadwalPakan.findFirst({ where: { kolamId: kolam.id } })
-    if (!existingJadwal) {
-        await prisma.jadwalPakan.create({
-            data: {
-                kolamId: kolam.id,
-                waktu: '07:00',
-                jenisPakan: 'Pelet Hi-Pro',
-                jumlahKg: 5,
-                keterangan: 'Pakan pagi',
-                aktif: true
-            }
-        })
-        console.log(`⏰ Created jadwal pakan`)
-    } else {
-        console.log(`⏰ Jadwal pakan exists`)
-    }
+    // Disabled: User harus membuat jadwal pakan sendiri
+    // const existingJadwal = await prisma.jadwalPakan.findFirst({ where: { kolamId: kolam.id } })
+    // if (!existingJadwal) {
+    //     await prisma.jadwalPakan.create({
+    //         data: {
+    //             kolamId: kolam.id,
+    //             waktu: '07:00',
+    //             jenisPakan: 'Pelet Hi-Pro',
+    //             jumlahKg: 5,
+    //             keterangan: 'Pakan pagi',
+    //             aktif: true
+    //         }
+    //     })
+    //     console.log(`⏰ Created jadwal pakan`)
+    // } else {
+    //     console.log(`⏰ Jadwal pakan exists`)
+    // }
 
     // Check and create RiwayatPanen
     const existingPanen = await prisma.riwayatPanen.findFirst({ where: { kolamId: kolam.id } })

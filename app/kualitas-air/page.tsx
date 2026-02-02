@@ -135,7 +135,7 @@ export default function KualitasAirPage() {
         <DashboardLayout>
             <div className="flex flex-col gap-6 sm:gap-8">
                 {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 border-b border-slate-100 pb-6">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Monitoring Kualitas Air</h1>
                         <p className="text-slate-500 text-sm">Catat kondisi air dan dapatkan rekomendasi tindakan secara real-time.</p>
@@ -238,20 +238,26 @@ export default function KualitasAirPage() {
                             />
                         </div>
                     ) : (
-                        <>
-                            <table className="table table-compact">
+                        <div className="table-container">
+                            <table className="table">
                                 <thead>
-                                    <tr className="border-b border-slate-100">
-                                        <th className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Tanggal</th>
-                                        <th className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Kolam</th>
-                                        <th className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Warna</th>
-                                        <th className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Bau</th>
-                                        <th className="text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">Ketinggian</th>
-                                        <th className="text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4">pH</th>
-                                        <th className="text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest px-6 py-4 border-r-0">Suhu</th>
+                                    <tr>
+                                        <th scope="col" className="p-4">
+                                            <div className="flex items-center">
+                                                <input id="air-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                <label htmlFor="air-checkbox-header" className="sr-only">Select all</label>
+                                            </div>
+                                        </th>
+                                        <th>Tanggal</th>
+                                        <th>Kolam</th>
+                                        <th>Warna</th>
+                                        <th>Bau</th>
+                                        <th className="text-right">Ketinggian</th>
+                                        <th className="text-right">pH</th>
+                                        <th className="text-right">Suhu</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-50">
+                                <tbody>
                                     {filteredKondisiAir.map(ka => {
                                         const k = kolam.find(kol => kol.id === ka.kolamId);
                                         const warnaStatus = warnaOptions.find(w => w.value === ka.warna)?.status || 'good';
@@ -260,27 +266,33 @@ export default function KualitasAirPage() {
                                             warnaStatus === 'warning' ? 'bg-amber-50 text-amber-600' : 'bg-red-50 text-red-600';
 
                                         return (
-                                            <tr key={ka.id} className="hover:bg-slate-50/50 transition-colors">
-                                                <td className="px-6 py-4 text-sm text-slate-500">{new Date(ka.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
-                                                <td className="px-6 py-4 text-sm font-semibold text-slate-700">{k?.nama || 'Unknown'}</td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeStyles}`}>
+                                            <tr key={ka.id}>
+                                                <td className="w-4 p-4">
+                                                    <div className="flex items-center">
+                                                        <input id={`air-checkbox-${ka.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                        <label htmlFor={`air-checkbox-${ka.id}`} className="sr-only">Checkbox</label>
+                                                    </div>
+                                                </td>
+                                                <td className="text-sm text-body">{new Date(ka.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+                                                <td className="text-sm font-medium text-heading">{k?.nama || 'Unknown'}</td>
+                                                <td>
+                                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${badgeStyles}`}>
                                                         {ka.warna}
                                                     </span>
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-slate-600">{ka.bau}</td>
-                                                <td className="px-6 py-4 text-right text-sm font-medium text-slate-700">{ka.ketinggian}m</td>
-                                                <td className="px-6 py-4 text-right text-sm font-bold text-slate-900">{ka.ph || '-'}</td>
-                                                <td className="px-6 py-4 text-right text-sm font-bold text-slate-900">{ka.suhu ? `${ka.suhu}°C` : '-'}</td>
+                                                <td className="text-sm text-body">{ka.bau}</td>
+                                                <td className="text-right text-sm font-medium text-heading">{ka.ketinggian}m</td>
+                                                <td className="text-right text-sm font-medium text-heading">{ka.ph || '-'}</td>
+                                                <td className="text-right text-sm font-medium text-heading">{ka.suhu ? `${ka.suhu}°C` : '-'}</td>
                                             </tr>
                                         );
                                     })}
                                 </tbody>
                             </table>
-                            <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <p className="text-sm text-slate-500">
-                                    Menampilkan {Math.min(limitKondisiAir, filteredKondisiAir.length)} dari {kondisiAir.length} data
-                                </p>
+                            <nav className="table-pagination" aria-label="Table navigation">
+                                <span className="table-pagination-info">
+                                    Menampilkan <span className="font-semibold">{Math.min(limitKondisiAir, filteredKondisiAir.length)}</span> dari <span className="font-semibold">{kondisiAir.length}</span> data
+                                </span>
                                 <div className="flex items-center gap-2">
                                     <label className="text-sm text-slate-600">Tampilkan:</label>
                                     <select
@@ -295,8 +307,8 @@ export default function KualitasAirPage() {
                                         <option value={9999}>Semua</option>
                                     </select>
                                 </div>
-                            </div>
-                        </>
+                            </nav>
+                        </div>
                     )}
                 </div>
             </div>
@@ -310,7 +322,8 @@ export default function KualitasAirPage() {
                     <>
                         <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary">Batal</button>
                         <button type="submit" form="kualitas-air-form" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan & Lihat Rekomendasi'}
+                            {isSubmitting ? <Loader2 className="w-4 h-4 me-1.5 -ms-0.5 animate-spin" /> : null}
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan & Lihat Rekomendasi'}
                         </button>
                     </>
                 }

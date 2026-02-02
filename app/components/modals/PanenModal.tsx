@@ -48,7 +48,7 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
     const [isBuyerModalOpen, setIsBuyerModalOpen] = useState(false);
     const [buyerForm, setBuyerForm] = useState({
         nama: '',
-        tipe: 'TENGKULAK' as TipePembeli,
+        tipe: '' as TipePembeli,
         kontak: '',
         alamat: ''
     });
@@ -129,7 +129,7 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
                 setPanenForm({ ...panenForm, pembeliId: newBuyer.id });
             }
             setIsBuyerModalOpen(false);
-            setBuyerForm({ nama: '', tipe: 'TENGKULAK', kontak: '', alamat: '' });
+            setBuyerForm({ nama: '', tipe: '' as TipePembeli, kontak: '', alamat: '' });
             showToast('Pembeli berhasil ditambahkan', 'success');
         } catch (error) {
             showToast('Gagal menambahkan pembeli', 'error');
@@ -148,7 +148,8 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
                         <button type="submit" form="form-panen" className="btn bg-emerald-600 text-white hover:bg-emerald-700 border-transparent disabled:opacity-50 disabled:cursor-not-allowed" disabled={isSubmitting}>
                             {isSubmitting ? (
                                 <span className="flex items-center gap-2">
-                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <Loader2 className="w-4 h-4 me-1.5 -ms-0.5 animate-spin" />
+                                    Memproses...
                                     Menyimpan...
                                 </span>
                             ) : 'Simpan Panen'}
@@ -355,6 +356,7 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
                             value={buyerForm.nama}
                             onChange={(e) => setBuyerForm({ ...buyerForm, nama: e.target.value })}
                             className="input w-full"
+                            placeholder="Contoh: Pak Joko"
                             required
                         />
                     </div>
@@ -364,7 +366,9 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
                             value={buyerForm.tipe}
                             onChange={(e) => setBuyerForm({ ...buyerForm, tipe: e.target.value as TipePembeli })}
                             className="input w-full"
+                            required
                         >
+                            <option value="">-- Pilih Tipe Pembeli --</option>
                             <option value="TENGKULAK">Tengkulak</option>
                             <option value="PASAR">Pasar</option>
                             <option value="RESTORAN">Restoran</option>
@@ -387,6 +391,7 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
                             value={buyerForm.alamat}
                             onChange={(e) => setBuyerForm({ ...buyerForm, alamat: e.target.value })}
                             className="input w-full"
+                            placeholder="Contoh: Jl. Merdeka No. 123, Kota A"
                             rows={2}
                         />
                     </div>

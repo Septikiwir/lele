@@ -230,7 +230,7 @@ export default function PengeluaranPage() {
                 </div>
 
                 {/* Riwayat Pengeluaran */}
-                <div className="table-wrapper">
+                <div className="table-container">
                 <div className="px-6 py-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         <span>📊</span>
@@ -256,9 +256,15 @@ export default function PengeluaranPage() {
                         />
                     </div>
                 ) : (
-                    <table className="table table-compact">
+                    <table className="table">
                         <thead>
                             <tr>
+                                <th scope="col" className="p-4">
+                                    <div className="flex items-center">
+                                        <input id="pengeluaran-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                        <label htmlFor="pengeluaran-checkbox-header" className="sr-only">Select all</label>
+                                    </div>
+                                </th>
                                 <th>Tanggal</th>
                                 <th>Kolam</th>
                                 <th>Kategori</th>
@@ -273,18 +279,24 @@ export default function PengeluaranPage() {
                                 const cat = kategoriOptions.find(c => c.value === p.kategori);
                                 return (
                                     <tr key={p.id}>
-                                        <td className="text-small">{p.tanggal}</td>
-                                        <td className="text-strong">{k?.nama || 'Umum (Farm Level)'}</td>
+                                        <td className="w-4 p-4">
+                                            <div className="flex items-center">
+                                                <input id={`pengeluaran-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                <label htmlFor={`pengeluaran-checkbox-${p.id}`} className="sr-only">Checkbox</label>
+                                            </div>
+                                        </td>
+                                        <td className="text-sm text-body">{p.tanggal}</td>
+                                        <td className="font-medium text-heading">{k?.nama || 'Umum (Farm Level)'}</td>
                                         <td>
                                             <span className={`badge ${kategoriColors[p.kategori]} flex items-center gap-1`}>
                                                 {cat?.icon} {cat?.label}
                                             </span>
                                         </td>
-                                        <td className="text-muted text-small">{p.keterangan}</td>
-                                        <td className="text-right text-strong text-red-600">
+                                        <td className="text-body text-sm">{p.keterangan}</td>
+                                        <td className="text-right font-medium text-red-600">
                                             Rp {p.jumlah.toLocaleString('id-ID')}
                                         </td>
-                                        <td className="action-cell">
+                                        <td className="text-right">
                                             <button
                                                 onClick={() => setDeleteModal(p.id)}
                                                 className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
@@ -310,7 +322,8 @@ export default function PengeluaranPage() {
                     <>
                         <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="form-pengeluaran" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
+                            {isSubmitting ? <Loader2 className="w-4 h-4 me-1.5 -ms-0.5 animate-spin" /> : null}
+                            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
                         </button>
                     </>
                 }

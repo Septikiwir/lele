@@ -495,7 +495,7 @@ export default function ProduksiPage() {
             {/* --- DETAILS SECTION --- */}
             <section>
                 {/* Harvest History Table */}
-                <div className="table-wrapper">
+                <div className="table-container">
                     <div className="px-6 py-4 border-b border-slate-200 bg-white">
                         <h3 className="text-lg font-bold text-slate-900">Daftar Panen Terakhir</h3>
                     </div>
@@ -509,9 +509,15 @@ export default function ProduksiPage() {
                         </div>
                     ) : (
                         <>
-                        <table className="table table-compact">
+                        <table className="table">
                             <thead>
                                 <tr>
+                                    <th scope="col" className="p-4">
+                                        <div className="flex items-center">
+                                            <input id="panen-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                            <label htmlFor="panen-checkbox-header" className="sr-only">Select all</label>
+                                        </div>
+                                    </th>
                                     <th>Tanggal</th>
                                     <th>Kolam</th>
                                     <th>Tipe</th>
@@ -522,25 +528,31 @@ export default function ProduksiPage() {
                             <tbody>
                                 {filteredRiwayatPanen.map(p => (
                                     <tr key={p.id}>
-                                        <td className="text-small">{p.tanggal}</td>
-                                        <td className="text-strong">{p.kolam?.nama || '-'}</td>
+                                        <td className="w-4 p-4">
+                                            <div className="flex items-center">
+                                                <input id={`panen-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                <label htmlFor={`panen-checkbox-${p.id}`} className="sr-only">Checkbox</label>
+                                            </div>
+                                        </td>
+                                        <td className="text-sm text-body">{p.tanggal}</td>
+                                        <td className="font-medium text-heading">{p.kolam?.nama || '-'}</td>
                                         <td>
                                             <span className={`badge ${p.tipe === 'TOTAL' ? 'bg-red-100 text-red-600' : 'bg-teal-100 text-teal-600'}`}>
                                                 {p.tipe}
                                             </span>
                                         </td>
-                                        <td className="text-right text-muted">{p.beratTotalKg}</td>
-                                        <td className="text-right text-strong text-emerald-600">
+                                        <td className="text-right text-body">{p.beratTotalKg}</td>
+                                        <td className="text-right font-medium text-emerald-600">
                                             Rp {(p.beratTotalKg * p.hargaPerKg).toLocaleString('id-ID')}
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <p className="text-sm text-slate-500">
-                                Menampilkan {Math.min(limitRiwayatPanen, filteredRiwayatPanen.length)} dari {riwayatPanen.length} data
-                            </p>
+                        <nav className="table-pagination" aria-label="Table navigation">
+                            <span className="table-pagination-info">
+                                Menampilkan <span className="font-semibold">{Math.min(limitRiwayatPanen, filteredRiwayatPanen.length)}</span> dari <span className="font-semibold">{riwayatPanen.length}</span> data
+                            </span>
                             <div className="flex items-center gap-2">
                                 <label className="text-sm text-slate-600">Tampilkan:</label>
                                 <select 
@@ -555,7 +567,7 @@ export default function ProduksiPage() {
                                     <option value={9999}>Semua</option>
                                 </select>
                             </div>
-                        </div>
+                        </nav>
                         </>
                     )}
                 </div>
@@ -572,7 +584,8 @@ export default function ProduksiPage() {
                     <>
                         <button type="button" onClick={() => setIsTebarModalOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
                         <button type="submit" form="form-tebar" className="btn btn-primary" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Mulai Tebar'}
+                            {isSubmitting ? <Loader2 className="w-4 h-4 me-1.5 -ms-0.5 animate-spin" /> : null}
+                            {isSubmitting ? 'Memproses...' : 'Mulai Tebar'}
                         </button>
                     </>
                 }
