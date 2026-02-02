@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Fish } from 'lucide-react';
+import { Fish, WifiOff } from 'lucide-react';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -12,10 +12,34 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isOnline, setIsOnline] = useState(true);
+
+    useEffect(() => {
+        // Check online status
+        setIsOnline(navigator.onLine);
+
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+
+        // Check if offline
+        if (!navigator.onLine) {
+            setError('Tidak dapat login saat offline. Silakan hubungkan ke internet.');
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -41,6 +65,19 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-teal-50 to-cyan-100 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
+                {/* Offline Warning */}
+                {!isOnline && (
+                    <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg flex items-center gap-3">
+                        <WifiOff className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                        <div>
+                            <p className="text-sm font-medium text-orange-900">Anda Sedang Offline</p>
+                            <p className="text-xs text-orange-700 mt-1">
+                                Login memerlukan koneksi internet. Jika sudah login sebelumnya, data Anda tersimpan.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Logo */}
                 <div className="text-center mb-6 sm:mb-8">
                     <div className="inline-flex items-center gap-3 mb-2">
@@ -99,7 +136,7 @@ export default function LoginPage() {
 
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || !isOnline}
                             className="w-full py-3 px-4 bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-semibold rounded-xl hover:from-teal-600 hover:to-cyan-700 focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? (
@@ -110,6 +147,8 @@ export default function LoginPage() {
                                     </svg>
                                     Memproses...
                                 </span>
+                            ) : !isOnline ? (
+                                'Login Memerlukan Internet'
                             ) : (
                                 'Masuk'
                             )}

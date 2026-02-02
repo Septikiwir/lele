@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import PanenModal from '../modals/PanenModal';
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext';
 import { useOnline } from '@/lib/use-online';
 import { WifiOff, Wifi, CloudOff } from 'lucide-react';
 
@@ -15,6 +16,7 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const { data: session, status } = useSession();
+    const { user: effectiveUser } = useAuth(); // Use cached user if online session unavailable
     const router = useRouter();
     const { isSidebarCollapsed, toggleSidebar } = useApp();
     const { isOnline, wasOffline } = useOnline();
@@ -23,13 +25,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const [isPanenModalOpen, setIsPanenModalOpen] = useState(false);
     const [showReconnectedToast, setShowReconnectedToast] = useState(false);
 
-    // Redirect to login if not authenticated
+    // Redirect to login if not authenticated (no session AND no cached user)
     useEffect(() => {
         if (status === 'loading') return; // Wait for session to load
-        if (!session) {
+        
+        // Allow access if either online session OR cached session exists
+        if (!session && !effectiveUser) {
             router.push('/login');
         }
-    }, [session, status, router]);
+    }, [session, effectiveUser, status, router]);
 
     // Show reconnection toast
     useEffect(() => {
@@ -54,8 +58,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         );
     }
 
-    // Don't render if not authenticated
-    if (!session) {
+    // Don't render if not authenticated (no online session AND no cached user)
+    if (!session && !effectiveUser) {
         return null;
     }
 
