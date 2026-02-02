@@ -42,15 +42,15 @@ export default function ProfitabilityWidget() {
         .sort((a, b) => b.total - a.total);
 
     return (
-        <div className="stat-card p-6 bg-white border border-slate-100 hover:shadow-md transition-all h-full flex flex-col">
+        <div className="w-full p-6 h-full flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
                         <Wallet className="w-5 h-5" />
                     </div>
                     <div>
-                        <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider">Komposisi Pengeluaran</h3>
-                        <p className="text-xs text-slate-400 mt-1">Breakdown Biaya Operasional</p>
+                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Komposisi Pengeluaran</h3>
+                        <p className="text-sm text-slate-600 mt-1">Breakdown Biaya Operasional</p>
                     </div>
                 </div>
             </div>
@@ -64,15 +64,17 @@ export default function ProfitabilityWidget() {
                     categories.map(cat => (
                         <div key={cat.key} className="p-3 rounded-xl border border-slate-100 bg-white hover:border-slate-200 transition-all">
                             <div className="flex justify-between items-center mb-2">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-lg">{cat.config.icon}</span>
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${cat.config.bg} text-white`}>
+                                        {cat.config.icon}
+                                    </div>
                                     <div>
-                                        <p className="text-sm font-bold text-slate-700">{cat.config.label}</p>
-                                        <p className="text-[10px] text-slate-400">{cat.percentage.toFixed(1)}%</p>
+                                        <p className="text-lg font-semibold text-slate-900">{cat.config.label}</p>
+                                        <p className="text-sm text-slate-400">{cat.percentage.toFixed(1)}%</p>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-sm font-semibold text-slate-900">Rp {cat.total.toLocaleString('id-ID')}</p>
+                                    <p className="text-lg font-semibold text-slate-900">Rp {cat.total.toLocaleString('id-ID')}</p>
                                 </div>
                             </div>
 
@@ -89,8 +91,8 @@ export default function ProfitabilityWidget() {
             </div>
 
             <div className="mt-4 pt-3 border-t border-slate-50 text-center">
-                <Link href="/keuangan" className="text-xs font-bold text-red-600 hover:text-red-700 flex items-center justify-center gap-1">
-                    DETAIL PENGELUARAN <ArrowRight className="w-3 h-3" />
+                <Link href="/keuangan" className="inline-flex font-medium items-center text-red-600 hover:underline text-sm justify-center gap-1">
+                    Detail Pengeluaran <ArrowRight className="w-4 h-4" />
                 </Link>
             </div>
         </div>

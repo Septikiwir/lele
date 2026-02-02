@@ -27,12 +27,12 @@ export default function AlertCenter() {
 
     if (!hasAlerts) {
         return (
-            <div className="stat-card p-6 h-full flex flex-col items-center justify-center text-center bg-white border border-slate-100 hover:shadow-md transition-all">
+            <div className="w-full p-6 h-full flex flex-col items-center justify-center text-center bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                 <div className="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mb-4 text-emerald-600">
                     <Check className="w-10 h-10" />
                 </div>
-                <h3 className="font-bold text-slate-900 text-lg">Semua Aman</h3>
-                <p className="text-slate-500 text-sm max-w-[200px] mt-2">
+                <h3 className="text-2xl font-semibold tracking-tight text-slate-900">Semua Aman</h3>
+                <p className="text-sm text-slate-600 max-w-[200px] mt-2">
                     Stok pakan cukup, nafsu makan stabil, dan kondisi kolam normal.
                 </p>
             </div>
@@ -40,10 +40,12 @@ export default function AlertCenter() {
     }
 
     return (
-        <div className="stat-card h-full p-6 flex flex-col bg-white border border-slate-100 hover:shadow-md transition-all">
+        <div className="w-full p-6 h-full flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-6">
-                <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                    <AlertTriangle className="text-amber-500 w-4 h-4" />
+                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                    <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                        <AlertTriangle className="w-5 h-5" />
+                    </div>
                     Perlu Perhatian
                 </h3>
                 <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-1 rounded-full">
@@ -97,7 +99,7 @@ export default function AlertCenter() {
                 {/* Risky Ponds Section */}
                 {riskyPonds.length > 0 && (
                     <div className="space-y-3 pt-2">
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Kondisi Kolam</p>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Kondisi Kolam</p>
                         {riskyPonds.map(k => {
                             const { status, kepadatanBerat, kepadatanEkor, source } = getUnifiedStatus(k.id);
                             const isRisk = status === 'berisiko';
@@ -109,8 +111,8 @@ export default function AlertCenter() {
                                             <Fish className="w-5 h-5" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-semibold text-slate-900">{k.nama}</p>
-                                            <p className="text-xs text-slate-500">
+                                            <p className="text-lg font-semibold text-slate-900">{k.nama}</p>
+                                            <p className="text-sm text-slate-500">
                                                 {source === 'berat' ? `${kepadatanBerat.toFixed(1)} kg/m³` : `${kepadatanEkor.toFixed(0)} ekor/m³`}
                                             </p>
                                         </div>

@@ -220,7 +220,7 @@ export default function KolamPage() {
                 {/* Summary KPIs */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     {/* Total Kolam */}
-                    <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="w-full p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
                                 <Box className="w-6 h-6" />
@@ -238,7 +238,7 @@ export default function KolamPage() {
                     </div>
 
                     {/* Total Populasi */}
-                    <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="w-full p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-12 h-12 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600">
                                 <Fish className="w-6 h-6" />
@@ -256,7 +256,7 @@ export default function KolamPage() {
                     </div>
 
                     {/* Estimasi Aset */}
-                    <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="w-full p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
                                 <Banknote className="w-6 h-6" />
@@ -274,7 +274,7 @@ export default function KolamPage() {
                     </div>
 
                     {/* Pakan Hari Ini */}
-                    <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="w-full p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
                                 <Container className="w-6 h-6" />
@@ -348,7 +348,7 @@ export default function KolamPage() {
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                                             {kolam.filter(k => k.jumlahIkan === 0).map(k => (
-                                                <div key={k.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all group">
+                                                <div key={k.id} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all duration-200 group">
                                                     <div className="flex items-center gap-4 mb-5">
                                                         <div className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-teal-600 group-hover:bg-teal-50 transition-colors">
                                                             <Fish className="w-6 h-6" />
@@ -419,94 +419,104 @@ export default function KolamPage() {
                                                 const estimasiAset = isEmpty ? 0 : (k.jumlahIkan * currentWeight / 1000) * hargaPasarPerKg;
 
                                                 return (
-                                                    <div key={k.id} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
+                                                    <div key={k.id} className="w-full p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                                                         {/* Header */}
-                                                        <div className="flex items-center justify-between mb-6">
+                                                        <div className="flex items-center justify-between mb-4">
                                                             <div className="flex items-center gap-3">
-                                                                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
-                                                                    <Fish className="w-6 h-6" />
+                                                                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                                                                    <Fish className="w-5 h-5" />
                                                                 </div>
                                                                 <div>
-                                                                    <h3 className="font-bold text-lg text-slate-900">{k.nama}</h3>
+                                                                    <h5 className="text-base md:text-lg font-semibold text-slate-900">{k.nama}</h5>
                                                                     {k.tanggalTebar && (
-                                                                        <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                                                                        <p className="text-sm text-slate-500">
                                                                             Ditebar {new Date(k.tanggalTebar).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
                                                                         </p>
                                                                     )}
                                                                 </div>
                                                             </div>
-                                                            <span className={`badge ${badgeClass} border-none font-bold uppercase tracking-widest text-[10px]`}>
+                                                            <span className={`badge ${badgeClass} border-none text-xs font-medium px-1.5 py-0.5`}>
                                                                 {statusLabels[displayStatus as keyof typeof statusLabels]}
                                                             </span>
                                                         </div>
 
-                                                        {/* Stats Grid */}
-                                                        <div className="grid grid-cols-2 gap-3 mb-6">
-                                                            {/* Populasi */}
-                                                            <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Populasi</p>
-                                                                <p className="text-xl font-bold text-slate-900">{k.jumlahIkan.toLocaleString('id-ID')}<span className="text-xs font-normal text-slate-400 ml-1">ekor</span></p>
-                                                            </div>
+                                                        {/* Stats List */}
+                                                        <ul className="my-4 space-y-3">
+                                                            {/* Populasi & Nilai Aset - Side by Side */}
+                                                            <li className="grid grid-cols-2 gap-2">
+                                                                <div className="flex items-center p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+                                                                    <div className="flex-1">
+                                                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Populasi</p>
+                                                                        <p className="text-base font-semibold text-slate-900 mt-1">{k.jumlahIkan.toLocaleString('id-ID')} <span className="text-sm font-normal text-slate-500">ekor</span></p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+                                                                    <div className="flex-1">
+                                                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Nilai Aset</p>
+                                                                        <p className="text-base font-semibold text-slate-900 mt-1">Rp{formatCurrency(estimasiAset)}</p>
+                                                                    </div>
+                                                                </div>
+                                                            </li>
 
-                                                            {/* Estimasi Aset */}
-                                                            <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Nilai Aset</p>
-                                                                <p className="text-xl font-bold text-slate-900">Rp{formatCurrency(estimasiAset)}</p>
-                                                            </div>
-
-                                                            {/* Dimensi */}
-                                                            <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Dimensi</p>
-                                                                <p className="text-base font-bold text-slate-900">{k.panjang}x{k.lebar}x{k.kedalaman}<span className="text-xs font-normal text-slate-400 ml-1">m</span></p>
-                                                            </div>
-
-                                                            {/* Volume */}
-                                                            <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                                                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Volume</p>
-                                                                <p className="text-base font-bold text-slate-900">{volume.toFixed(1)}<span className="text-xs font-normal text-slate-400 ml-1">m³</span></p>
-                                                            </div>
-
-                                                            {/* Feed Rec Box */}
-                                                            {feedRec && (
-                                                                <div className="col-span-2 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-3 border border-amber-100">
-                                                                    <div className="flex items-center justify-between">
+                                                            {/* Dimensi & Volume */}
+                                                            <li>
+                                                                <div className="flex items-center p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+                                                                    <div className="flex-1 grid grid-cols-2 gap-4">
                                                                         <div>
-                                                                            <p className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-1">Rekomendasi Pakan</p>
-                                                                            <p className="text-sm font-bold text-amber-900">{feedRec.amount} kg/hari <span className="text-xs font-normal text-amber-700 ml-1">({feedRec.type})</span></p>
+                                                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Dimensi</p>
+                                                                            <p className="text-base font-semibold text-slate-900 mt-1">{k.panjang}x{k.lebar}x{k.kedalaman}<span className="text-xs font-normal text-slate-500 ml-1">m</span></p>
                                                                         </div>
-                                                                        <div className="bg-white/80 rounded-lg px-2 py-1">
-                                                                            <p className="text-xs text-amber-600 font-bold uppercase">{feedRec.ratePercent}</p>
+                                                                        <div>
+                                                                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Volume</p>
+                                                                            <p className="text-base font-semibold text-slate-900 mt-1">{volume.toFixed(1)}<span className="text-xs font-normal text-slate-500 ml-1">m³</span></p>
                                                                         </div>
                                                                     </div>
                                                                 </div>
+                                                            </li>
+
+                                                            {/* Feed Rec Box */}
+                                                            {feedRec && (
+                                                                <li>
+                                                                    <div className="flex items-center p-3 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 hover:from-amber-100 hover:to-orange-100 transition-colors">
+                                                                        <div className="flex-1">
+                                                                            <div className="flex items-center justify-between">
+                                                                                <div>
+                                                                                    <p className="text-xs font-bold text-amber-700 uppercase tracking-widest">Rekomendasi Pakan</p>
+                                                                                    <p className="text-base font-semibold text-amber-900 mt-1">{feedRec.amount} kg/hari <span className="text-xs font-normal text-amber-700">({feedRec.type})</span></p>
+                                                                                </div>
+                                                                                <span className="bg-amber-100 border border-amber-200 text-amber-700 text-xs font-medium px-1.5 py-0.5 rounded-sm">{feedRec.ratePercent}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </li>
                                                             )}
-                                                        </div>
+                                                        </ul>
 
                                                         {/* Action Buttons */}
-                                                        <div className="flex flex-col gap-2">
+                                                        <div className="space-y-2">
                                                             <div className="grid grid-cols-2 gap-2">
                                                                 <button
                                                                     onClick={() => handleOpenFeed(k.id)}
-                                                                    className="btn btn-primary text-sm py-2.5"
+                                                                    className="inline-flex items-center justify-center text-white bg-blue-600 hover:bg-blue-700 box-border border border-transparent focus:ring-4 focus:ring-blue-300 shadow-xs font-medium leading-5 rounded-lg text-sm px-4 py-2.5 focus:outline-none"
                                                                 >
-                                                                    <Container className="w-4 h-4" /> Pakan
+                                                                    <Container className="w-4 h-4 me-1.5 -ms-0.5" /> Pakan
                                                                 </button>
                                                                 <button
                                                                     onClick={() => {
                                                                         setSelectedKolamId(k.id);
                                                                         setIsPanenModalOpen(true);
                                                                     }}
-                                                                    className="btn btn-success text-sm py-2.5 text-white"
+                                                                    className="inline-flex items-center justify-center text-white bg-emerald-600 hover:bg-emerald-700 box-border border border-transparent focus:ring-4 focus:ring-emerald-300 shadow-xs font-medium leading-5 rounded-lg text-sm px-4 py-2.5 focus:outline-none"
                                                                 >
-                                                                    <ShoppingCart className="w-4 h-4" /> Panen
+                                                                    <ShoppingCart className="w-4 h-4 me-1.5 -ms-0.5" /> Panen
                                                                 </button>
                                                             </div>
-                                                            <div className="flex gap-2 mt-2 pt-4 border-t border-slate-50">
+                                                            <div className="flex gap-2 pt-2 border-t border-slate-100">
                                                                 <Link
                                                                     href={`/kolam/${k.id}`}
-                                                                    className="flex-1 btn btn-secondary text-xs uppercase font-bold tracking-wider py-2"
+                                                                    className="flex-1 inline-flex items-center justify-center text-sm text-slate-600 hover:underline font-medium tracking-normal"
                                                                 >
-                                                                    <Eye className="w-4 h-4" /> Detail
+                                                                    <Eye className="w-3.5 h-3.5 me-1.5" /> Lihat Detail
                                                                 </Link>
                                                                 <Link
                                                                     href={`/kolam/${k.id}/edit`}

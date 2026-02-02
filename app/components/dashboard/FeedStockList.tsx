@@ -16,17 +16,22 @@ export default function FeedStockList() {
     const stockItems = stokPerJenis.length > 0 ? stokPerJenis.slice(0, 4) : [];
 
     return (
-        <div className="stat-card p-6 bg-white border border-slate-100 hover:shadow-md transition-all">
+        <div className="w-full p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                        <Package className="w-5 h-5" /> Stok Pakan
-                    </h3>
-                    <p className="text-xs text-slate-400 mt-1">
-                        Total {stockItems.length} jenis pakan terdaftar
-                    </p>
+                <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-teal-50 flex items-center justify-center text-teal-600">
+                        <Package className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                            Stok Pakan
+                        </h3>
+                        <p className="text-sm text-slate-600 mt-1">
+                            Total {stockItems.length} jenis pakan terdaftar
+                        </p>
+                    </div>
                 </div>
-                <Link href="/pakan" className="text-teal-600 hover:text-teal-700 text-xs font-bold uppercase tracking-wider flex items-center gap-1">
+                <Link href="/pakan" className="inline-flex font-medium items-center text-teal-600 hover:underline text-sm gap-1">
                     Kelola <ArrowRight className="w-4 h-4" />
                 </Link>
             </div>
@@ -69,12 +74,12 @@ export default function FeedStockList() {
                                     )}
                                 </div>
                                 <div>
-                                    <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1 truncate" title={s.jenis}>
+                                    <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-1 truncate" title={s.jenis}>
                                         {s.jenis}
                                     </p>
-                                    <p className={`text-xl font-bold ${textClass}`}>
+                                    <p className={`text-lg font-semibold ${textClass}`}>
                                         {s.tersedia.toFixed(1)}
-                                        <span className="text-xs font-normal text-slate-400 ml-1">kg</span>
+                                        <span className="text-sm font-normal text-slate-400 ml-1">kg</span>
                                     </p>
                                 </div>
                             </div>

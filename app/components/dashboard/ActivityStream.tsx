@@ -27,9 +27,12 @@ export default function ActivityStream() {
     };
 
     return (
-        <div className="stat-card p-6 h-full bg-white border border-slate-100 hover:shadow-md transition-all">
-            <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider mb-6 flex items-center gap-2">
-                <FileText className="w-5 h-5" /> Aktivitas Terbaru
+        <div className="w-full p-6 h-full bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
+                    <FileText className="w-6 h-6" />
+                </div>
+                Aktivitas Terbaru
             </h3>
 
             <div className="space-y-4">
@@ -43,15 +46,15 @@ export default function ActivityStream() {
 
                             <div className="flex-1">
                                 <div className="flex justify-between items-start">
-                                    <p className="text-xs text-slate-500 mb-0.5">{act.date}</p>
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${getColor(act.type).replace('text-', 'bg-opacity-20 text-')}`}>
+                                    <p className="text-sm text-slate-500 mb-0.5">{act.date}</p>
+                                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${getColor(act.type).replace('text-', 'bg-opacity-20 text-')}`}>
                                         {act.type}
                                     </span>
                                 </div>
-                                <p className="text-sm font-semibold text-slate-800 leading-tight">
+                                <p className="text-lg font-semibold text-slate-900 leading-tight">
                                     {act.title}
                                 </p>
-                                <p className="text-xs text-slate-600 mt-1">
+                                <p className="text-sm text-slate-600 mt-1">
                                     {act.description} <span className="text-slate-400 mx-1">•</span> {act.kolamName}
                                 </p>
                             </div>

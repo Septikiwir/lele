@@ -18,11 +18,11 @@ export default function FeedTrendChart() {
     const isUp = trendDiff > 0;
 
     return (
-        <div className="stat-card p-6 h-full flex flex-col bg-white border border-slate-100 hover:shadow-md transition-all">
+        <div className="w-full p-6 h-full flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h3 className="text-sm font-medium text-slate-500 uppercase tracking-wider">Konsumsi Pakan</h3>
-                    <p className="text-xs text-slate-400 mt-1">7 Hari Terakhir</p>
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Konsumsi Pakan</h3>
+                    <p className="text-sm text-slate-600 mt-1">7 Hari Terakhir</p>
                 </div>
                 <div className={`text-right ${isUp ? 'text-green-600' : trendDiff < 0 ? 'text-red-600' : 'text-slate-500'}`}>
                     <p className="font-bold text-xl">{lastDay.toFixed(1)} kg</p>
