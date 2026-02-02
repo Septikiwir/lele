@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 import PanenModal from '../modals/PanenModal';
 import { useApp } from '../../context/AppContext';
+import { useOnline } from '@/lib/use-online';
+import { WifiOff, Wifi, CloudOff } from 'lucide-react';
 
 interface DashboardLayoutProps {
     children: React.ReactNode;
@@ -15,9 +17,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     const { data: session, status } = useSession();
     const router = useRouter();
     const { isSidebarCollapsed, toggleSidebar } = useApp();
+    const { isOnline, wasOffline } = useOnline();
 
     // Panen Modal - Must be declared before any conditional returns
     const [isPanenModalOpen, setIsPanenModalOpen] = useState(false);
+    const [showReconnectedToast, setShowReconnectedToast] = useState(false);
 
     // Redirect to login if not authenticated
     useEffect(() => {
@@ -26,6 +30,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             router.push('/login');
         }
     }, [session, status, router]);
+
+    // Show reconnection toast
+    useEffect(() => {
+        if (isOnline && wasOffline) {
+            setShowReconnectedToast(true);
+            const timer = setTimeout(() => {
+                setShowReconnectedToast(false);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [isOnline, wasOffline]);
 
     // Show loading while checking authentication
     if (status === 'loading') {
@@ -46,6 +61,25 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
     return (
         <div className="min-h-screen bg-slate-50">
+            {/* Offline/Online Status Banner */}
+            {!isOnline && (
+                <div className="fixed top-0 left-0 right-0 z-50 bg-orange-600 text-white px-4 py-2 flex items-center justify-center gap-2 shadow-lg">
+                    <WifiOff className="w-4 h-4" />
+                    <span className="text-sm font-medium">
+                        Anda sedang offline - Menampilkan data tersimpan
+                    </span>
+                    <CloudOff className="w-4 h-4" />
+                </div>
+            )}
+            
+            {/* Reconnected Toast */}
+            {showReconnectedToast && (
+                <div className="fixed top-4 right-4 z-50 bg-green-600 text-white px-4 py-3 rounded-lg shadow-xl flex items-center gap-2 animate-slide-in-right">
+                    <Wifi className="w-5 h-5" />
+                    <span className="font-medium">Kembali online - Data disinkronkan</span>
+                </div>
+            )}
+
             <Sidebar 
                 isCollapsed={isSidebarCollapsed} 
                 toggleCollapse={toggleSidebar}
@@ -53,7 +87,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             />
 
             {/* Main Content */}
-            <main className={`min-h-screen transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
+            <main className={`min-h-screen transition-all duration-300 ease-in-out ${isSidebarCollapsed ? 'md:ml-20' : 'md:ml-64'} ${!isOnline ? 'mt-10' : ''}`}>
                 <div className="p-4 md:p-8 pt-4 md:pt-8 w-full mx-auto pb-20 md:pb-8">
                     {children}
                 </div>
