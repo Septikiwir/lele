@@ -406,16 +406,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         } catch (error) {
             console.error('Failed to fetch critical data:', error);
             // If network fails but we have cache, that's okay
-            if (kolam.length === 0) {
-                showToast('Offline: Menampilkan data tersimpan', 'warning');
-            }
         } finally {
             // Critical data loaded, unblock UI immediately
             setIsLoading(false);
-            // Trigger secondary fetch in background
-            fetchSecondaryData();
         }
-    }, [activeFarmId, kolam.length]);
+    }, [activeFarmId]);
 
 
     // Fetch secondary data in background
@@ -636,8 +631,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         fetchCriticalData();
     }, [fetchCriticalData]);
 
+    // Fetch secondary data after critical data loaded
+    useEffect(() => {
+        if (!isLoading && activeFarmId) {
+            fetchSecondaryData();
+        }
+    }, [isLoading, activeFarmId, fetchSecondaryData]);
+
     const refreshData = async () => {
         await fetchCriticalData();
+        await fetchSecondaryData();
     };
 
     // === CRUD Operations ===
