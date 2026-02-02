@@ -61,7 +61,7 @@ export async function POST(
         }
 
         const body = await request.json();
-        const { tanggal, jumlahIkanPerKg, catatan } = body;
+        const { tanggal, jumlahIkanPerKg, bobotGram, catatan } = body;
 
         if (!tanggal || !jumlahIkanPerKg) {
             return NextResponse.json({ error: 'Tanggal dan Jumlah Ikan per Kg wajib diisi' }, { status: 400 });
@@ -72,6 +72,7 @@ export async function POST(
                 kolamId,
                 tanggal: new Date(tanggal),
                 jumlahIkanPerKg: parseFloat(jumlahIkanPerKg),
+                bobotGram: bobotGram ? parseFloat(bobotGram) : null,
                 catatan
             }
         });

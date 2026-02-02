@@ -72,6 +72,26 @@ export async function POST(
             return NextResponse.json({ error: 'Kolam not found' }, { status: 404 })
         }
 
+        // Validate stock availability
+        const stokTersedia = await prisma.stokPakan.findMany({
+            where: { farmId, jenisPakan }
+        })
+        const totalStokAwal = stokTersedia.reduce((sum, s) => sum + s.stokAwal, 0)
+        const pakanTerpakai = await prisma.dataPakan.findMany({
+            where: {
+                jenisPakan,
+                kolam: { farmId }
+            }
+        })
+        const totalTerpakai = pakanTerpakai.reduce((sum, p) => sum + p.jumlahKg, 0)
+        const stokSisa = totalStokAwal - totalTerpakai
+
+        if (stokSisa < parseFloat(jumlahKg)) {
+            return NextResponse.json({ 
+                error: `Stok tidak cukup! Stok tersedia: ${stokSisa.toFixed(1)} kg, dibutuhkan: ${parseFloat(jumlahKg).toFixed(1)} kg` 
+            }, { status: 400 })
+        }
+
         const pakan = await prisma.dataPakan.create({
             data: {
                 kolamId,

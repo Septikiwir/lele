@@ -45,8 +45,8 @@ export default function ProfitabilityWidget() {
         <div className="w-full p-6 h-full flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
-                        <Wallet className="w-5 h-5" />
+                    <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
+                        <Wallet className="w-6 h-6" />
                     </div>
                     <div>
                         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Komposisi Pengeluaran</h3>
@@ -65,7 +65,7 @@ export default function ProfitabilityWidget() {
                         <div key={cat.key} className="p-3 rounded-xl border border-slate-100 bg-white hover:border-slate-200 transition-all">
                             <div className="flex justify-between items-center mb-2">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${cat.config.bg} text-white`}>
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${cat.config.bg} text-white`}>
                                         {cat.config.icon}
                                     </div>
                                     <div>

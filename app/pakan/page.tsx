@@ -33,6 +33,7 @@ export default function PakanPage() {
     const [showJadwalForm, setShowJadwalForm] = useState(false);
     const [deleteModal, setDeleteModal] = useState<{ type: 'stok' | 'jadwal', id: string } | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string>('');
 
     // Pagination states
     const [limitRiwayatPakan, setLimitRiwayatPakan] = useState(10);
@@ -69,6 +70,7 @@ export default function PakanPage() {
         if (!formData.kolamId || !formData.jumlahKg) return;
         if (isSubmitting) return;
 
+        setErrorMessage('');
         setIsSubmitting(true);
         try {
             addPakan({
@@ -85,6 +87,9 @@ export default function PakanPage() {
                 jenisPakan: 'Pelet Hi-Pro',
             });
             setShowForm(false);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Gagal mencatat pakan';
+            setErrorMessage(message);
         } finally {
             setIsSubmitting(false);
         }
@@ -253,77 +258,59 @@ export default function PakanPage() {
                 {/* KPI Cards Row */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                     {/* 1. Total Stok */}
-                    <div className="relative group bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden">
-                        <div className="flex justify-between items-start z-10 relative">
-                            <div>
-                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Stok Pakan</p>
-                                <div className="mt-2 flex items-baseline gap-2">
-                                    <h3 className="text-3xl font-black text-slate-900">{totalStokKg.toFixed(1)}</h3>
-                                    <span className="text-sm font-medium text-slate-500">kg</span>
-                                </div>
-                                <p className="text-xs text-slate-400 mt-2 font-medium">
-                                    {allJenisPakan.length} jenis tersedia
-                                </p>
-                            </div>
-                            <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600 group-hover:scale-110 transition-transform">
-                                <Package className="w-6 h-6" />
-                            </div>
+                    <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
+                        <div className="w-12 h-12 mb-3 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600">
+                            <Package className="w-6 h-6" />
                         </div>
-                        {/* Decorative background element */}
-                        <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-orange-50 rounded-full opacity-0 group-hover:opacity-50 transition-opacity blur-2xl"></div>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Total Stok Pakan</p>
+                        <p className="mb-2">
+                            <span className="text-2xl font-semibold tracking-tight text-slate-900">{totalStokKg.toFixed(1)}</span>
+                            <span className="text-sm font-normal text-slate-500 ml-1">kg</span>
+                        </p>
+                        <p className="text-sm text-slate-500">
+                            {allJenisPakan.length} jenis tersedia
+                        </p>
                     </div>
 
                     {/* 2. Pakan Hari Ini */}
-                    <div className="relative group bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden">
-                        <div className="flex justify-between items-start z-10 relative">
-                            <div>
-                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Konsumsi Hari Ini</p>
-                                <div className="mt-2 flex items-baseline gap-2">
-                                    <h3 className="text-3xl font-black text-slate-900">{pakanHariIni.toFixed(1)}</h3>
-                                    <span className="text-sm font-medium text-slate-500">kg</span>
-                                </div>
-                                <p className="text-xs text-slate-400 mt-2 font-medium">
-                                    Total pakan diberikan
-                                </p>
-                            </div>
-                            <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
-                                <Calendar className="w-6 h-6" />
-                            </div>
+                    <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
+                        <div className="w-12 h-12 mb-3 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                            <Calendar className="w-6 h-6" />
                         </div>
-                        <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-blue-50 rounded-full opacity-0 group-hover:opacity-50 transition-opacity blur-2xl"></div>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Konsumsi Hari Ini</p>
+                        <p className="mb-2">
+                            <span className="text-2xl font-semibold tracking-tight text-slate-900">{pakanHariIni.toFixed(1)}</span>
+                            <span className="text-sm font-normal text-slate-500 ml-1">kg</span>
+                        </p>
+                        <p className="text-sm text-slate-500">
+                            Total pakan diberikan
+                        </p>
                     </div>
 
                     {/* 3. Jadwal Berikutnya (SMART) */}
-                    <div className="relative group bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden">
-                        <div className="flex justify-between items-start z-10 relative">
-                            <div>
-                                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Jadwal Berikutnya</p>
-                                <div className="mt-2">
-                                    {nextSmart ? (
-                                        <>
-                                            <div className="flex items-baseline gap-2">
-                                                <h3 className="text-3xl font-black text-teal-600">{nextSmart.time}</h3>
-                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{nextSmart.label}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 mt-2">
-                                                <span className="text-sm font-bold text-slate-700 truncate max-w-[120px]">
-                                                    {nextSmart.kolamName}
-                                                </span>
-                                                <span className="text-xs font-medium bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full">
-                                                    {nextSmart.amount.toFixed(1)} kg
-                                                </span>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <h3 className="text-2xl font-bold text-slate-400 mt-1">Selesai</h3>
-                                    )}
-                                </div>
-                            </div>
-                            <div className="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center text-teal-600 group-hover:scale-110 transition-transform">
-                                <Clock className="w-6 h-6" />
-                            </div>
+                    <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
+                        <div className="w-12 h-12 mb-3 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600">
+                            <Clock className="w-6 h-6" />
                         </div>
-                        <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-teal-50 rounded-full opacity-0 group-hover:opacity-50 transition-opacity blur-2xl"></div>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Jadwal Berikutnya</p>
+                        {nextSmart ? (
+                            <>
+                                <p className="mb-2">
+                                    <span className="text-2xl font-semibold tracking-tight text-teal-600">{nextSmart.time}</span>
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wide ml-2">{nextSmart.label}</span>
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-semibold text-slate-700 truncate max-w-[120px]">
+                                        {nextSmart.kolamName}
+                                    </span>
+                                    <span className="text-sm text-slate-500">
+                                        {nextSmart.amount.toFixed(1)} kg
+                                    </span>
+                                </div>
+                            </>
+                        ) : (
+                            <p className="text-xl font-semibold tracking-tight text-slate-400 mb-2">Selesai</p>
+                        )}
                     </div>
                 </div>
 
@@ -578,17 +565,28 @@ export default function PakanPage() {
             {/* Modal - Tambah Pemberian Pakan */}
             <Modal
                 isOpen={showForm}
-                onClose={() => setShowForm(false)}
+                onClose={() => {
+                    setShowForm(false);
+                    setErrorMessage('');
+                }}
                 title="Catat Pemberian Pakan"
                 footer={
                     <>
-                        <button type="button" onClick={() => setShowForm(false)} className="btn btn-secondary">Batal</button>
+                        <button type="button" onClick={() => {
+                            setShowForm(false);
+                            setErrorMessage('');
+                        }} className="btn btn-secondary">Batal</button>
                         <button type="submit" form="pakan-form" className="btn btn-primary" disabled={isSubmitting}>
                             {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Simpan'}
                         </button>
                     </>
                 }
             >
+                {errorMessage && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                        {errorMessage}
+                    </div>
+                )}
                 <form id="pakan-form" onSubmit={handleSubmit} className="space-y-4">
                     <div className="form-group">
                         <label className="form-label">Kolam</label>

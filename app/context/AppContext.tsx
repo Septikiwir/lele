@@ -121,6 +121,7 @@ export interface RiwayatSampling {
     kolamId: string;
     tanggal: string;
     jumlahIkanPerKg: number;
+    bobotGram?: number; // bobot per ekor saat sampling (gram)
     catatan?: string;
 }
 
@@ -627,6 +628,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             if (res.ok) {
                 const created = await res.json();
                 setPakan(prev => [...prev, { ...created, tanggal: created.tanggal.split('T')[0] }]);
+                showToast('Pakan berhasil dicatat', 'success');
 
                 // Tambahkan ke pengeluaran juga
                 const stok = stokPakan.find(s => s.jenisPakan === newPakan.jenisPakan);
@@ -640,9 +642,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
                         jumlah: totalBiaya
                     });
                 }
+            } else {
+                const errorData = await res.json();
+                showToast(errorData.error || 'Gagal mencatat pakan', 'error');
             }
         } catch (error) {
             console.error('Failed to add pakan:', error);
+            showToast('Terjadi kesalahan saat mencatat pakan', 'error');
         }
     };
 
@@ -906,7 +912,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
             return { totalBiomass: 0, density: 0, averageWeight: 0 };
         }
 
-        const averageWeight = 1 / sampling.jumlahIkanPerKg; // kg
+        // Get base weight from sampling, then add growth (+2g per day)
+        let baseWeightGram = 0;
+        if (sampling.bobotGram) {
+            baseWeightGram = sampling.bobotGram;
+        } else {
+            baseWeightGram = 1000 / sampling.jumlahIkanPerKg;
+        }
+
+        // Calculate days since last sampling
+        const samplingDate = new Date(sampling.tanggal);
+        const today = new Date();
+        const daysSinceSampling = Math.max(0, Math.floor((today.getTime() - samplingDate.getTime()) / (1000 * 60 * 60 * 24)));
+
+        // Apply growth: +2 grams per day
+        const GROWTH_RATE_PER_DAY_GRAMS = 2;
+        const currentWeightGram = baseWeightGram + (daysSinceSampling * GROWTH_RATE_PER_DAY_GRAMS);
+        const averageWeight = currentWeightGram / 1000; // convert to kg
+
         const totalBiomass = kolam.jumlahIkan * averageWeight; // kg
         const volume = kolam.panjang * kolam.lebar * kolam.kedalaman; // m3
         const density = volume > 0 ? totalBiomass / volume : 0; // kg/m3
@@ -1426,6 +1449,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     kolamId,
                     tanggal: data.tanggal,
                     jumlahIkanPerKg,
+                    bobotGram: data.beratPerEkor,
                     catatan: `Bibit awal: ${data.beratPerEkor} gram/ekor`
                 });
             }

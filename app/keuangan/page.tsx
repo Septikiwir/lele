@@ -25,12 +25,12 @@ const tipePembeliColors: Record<TipePembeli, string> = {
 };
 
 const kategoriOptions: { value: KategoriPengeluaran; label: string; icon: React.ReactNode }[] = [
-    { value: 'BIBIT', label: 'Bibit / Benih', icon: <Fish className="w-4 h-4" /> },
-    { value: 'PAKAN', label: 'Pakan', icon: <Container className="w-4 h-4" /> },
-    { value: 'OBAT', label: 'Obat & Probiotik', icon: <Pill className="w-4 h-4" /> },
-    { value: 'LISTRIK', label: 'Listrik', icon: <Zap className="w-4 h-4" /> },
-    { value: 'TENAGA_KERJA', label: 'Tenaga Kerja', icon: <Users className="w-4 h-4" /> },
-    { value: 'LAINNYA', label: 'Lainnya', icon: <Package className="w-4 h-4" /> },
+    { value: 'BIBIT', label: 'Bibit / Benih', icon: <Fish className="w-5 h-5" /> },
+    { value: 'PAKAN', label: 'Pakan', icon: <Container className="w-5 h-5" /> },
+    { value: 'OBAT', label: 'Obat & Probiotik', icon: <Pill className="w-5 h-5" /> },
+    { value: 'LISTRIK', label: 'Listrik', icon: <Zap className="w-5 h-5" /> },
+    { value: 'TENAGA_KERJA', label: 'Tenaga Kerja', icon: <Users className="w-5 h-5" /> },
+    { value: 'LAINNYA', label: 'Lainnya', icon: <Package className="w-5 h-5" /> },
 ];
 
 const kategoriColors: Record<KategoriPengeluaran, string> = {
@@ -295,7 +295,7 @@ export default function KeuanganPage() {
                 {/* KPI Cards Row */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                     {/* 1. Pendapatan Bersih */}
-                    <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="block p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${netProfit >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
                                 <Banknote className="w-6 h-6" />
@@ -311,7 +311,7 @@ export default function KeuanganPage() {
                     </div>
 
                     {/* 2. Total Pendapatan */}
-                    <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="block p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
                                 <TrendingUp className="w-6 h-6" />
@@ -325,7 +325,7 @@ export default function KeuanganPage() {
                     </div>
 
                     {/* 3. Total Pengeluaran */}
-                    <div className="block max-w-sm p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="block p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
                                 <Banknote className="w-6 h-6" />
@@ -346,8 +346,8 @@ export default function KeuanganPage() {
                     <div className="lg:col-span-2 space-y-6">
 
                         {/* Section: Profit Per Kolam */}
-                        <div className="bg-white rounded-2xl border border-slate-100 hover:shadow-md transition-all overflow-hidden">
-                            <div className="px-4 md:px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                            <div className="px-4 md:px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
                                 <h3 className="font-semibold text-slate-800 flex items-center gap-2">
                                     <span>📊</span> Profitabilitas Kolam
                                 </h3>
@@ -360,7 +360,7 @@ export default function KeuanganPage() {
                                     const isProfit = profit >= 0;
 
                                     return (
-                                        <div key={k.id} className="p-4 rounded-xl border border-slate-100 hover:border-slate-300 transition-all bg-white relative group">
+                                        <div key={k.id} className="p-4 rounded-lg border border-slate-200 bg-white relative group">
                                             <div className="flex justify-between items-start mb-3">
                                                 <h4 className="font-bold text-slate-900">{k.nama}</h4>
                                                 <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${isProfit ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
@@ -391,8 +391,8 @@ export default function KeuanganPage() {
                         </div>
 
                         {/* Section: Tabbed Transaction History */}
-                        <div className="bg-white rounded-2xl border border-slate-100 hover:shadow-md transition-all overflow-hidden">
-                            <div className="px-4 md:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
+                        <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                            <div className="px-4 md:px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
                                 <h3 className="font-semibold text-slate-800">Riwayat Transaksi</h3>
 
                                 <div className="flex flex-wrap gap-2">
@@ -531,7 +531,7 @@ export default function KeuanganPage() {
                                     </table>
                                 </div>
                             )}
-                            <div className="px-4 md:px-6 py-4 border-t border-slate-100 flex justify-end items-center bg-slate-50/50">
+                            <div className="px-4 md:px-6 py-4 border-t border-slate-200 flex justify-end items-center bg-slate-50/50">
                                 <div className="flex items-center gap-2 text-sm text-slate-500">
                                     <span>Tampilkan</span>
                                     <select
@@ -554,7 +554,7 @@ export default function KeuanganPage() {
                     <div className="space-y-6">
 
                         {/* Section: Expense Breakdown */}
-                        <div className="bg-white rounded-2xl p-4 md:p-6 border border-slate-100 hover:shadow-md transition-all">
+                        <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
                             <div className="mb-4">
                                 <h3 className="font-semibold text-slate-800">Komposisi Pengeluaran</h3>
                             </div>
@@ -563,10 +563,10 @@ export default function KeuanganPage() {
                                     const percentage = grandTotalPengeluaran > 0 ? (k.total / grandTotalPengeluaran) * 100 : 0;
                                     const theme = kategoriThemes[k.value];
                                     return (
-                                        <div key={k.value} className={`p-3 rounded-xl border transition-all bg-white border-slate-100 ${theme.bg} ${theme.border}`}>
+                                        <div key={k.value} className={`p-3 rounded-lg border transition-all bg-white border-slate-200 ${theme.bg} ${theme.border}`}>
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-3">
-                                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${theme.iconBg}`}>
+                                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${theme.iconBg}`}>
                                                         {k.icon}
                                                     </div>
                                                     <div>
@@ -591,14 +591,14 @@ export default function KeuanganPage() {
                         </div>
 
                         {/* Section: Buyer List */}
-                        <div className="bg-white rounded-2xl border border-slate-100 hover:shadow-md transition-all overflow-hidden">
-                            <div className="px-4 md:px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                        <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                            <div className="px-4 md:px-6 py-4 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
                                 <h3 className="font-semibold text-slate-800">Daftar Pembeli</h3>
                                 <button onClick={() => setShowPembeliForm(true)} className="text-xs text-primary-600 font-medium hover:underline">
                                     + Baru
                                 </button>
                             </div>
-                            <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
+                            <div className="divide-y divide-slate-200 max-h-[300px] overflow-y-auto">
                                 {pembeli.length === 0 ? (
                                     <div className="p-6 text-center text-slate-400">Belum ada pembeli.</div>
                                 ) : (

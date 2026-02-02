@@ -69,7 +69,7 @@ export default function AlertCenter() {
                                         <p className="text-xs text-slate-500">Turun <span className="font-bold text-red-600">{Math.abs(k.dropPercent).toFixed(0)}%</span></p>
                                     </div>
                                 </div>
-                                <ArrowRightIcon className="text-slate-300 w-4 h-4 group-hover:text-red-400 group-hover:translate-x-1 transition-all" />
+                                <ArrowRight className="text-slate-300 w-4 h-4 group-hover:text-red-400 group-hover:translate-x-1 transition-all" />
                             </Link>
                         ))}
                     </div>
@@ -90,7 +90,7 @@ export default function AlertCenter() {
                                         <p className="text-xs text-slate-500">Sisa <span className="font-bold text-red-600">{item.tersedia.toFixed(1)} kg</span></p>
                                     </div>
                                 </div>
-                                <ArrowRightIcon className="text-slate-300 w-4 h-4 group-hover:text-red-400 group-hover:translate-x-1 transition-all" />
+                                <ArrowRight className="text-slate-300 w-4 h-4 group-hover:text-red-400 group-hover:translate-x-1 transition-all" />
                             </Link>
                         ))}
                     </div>

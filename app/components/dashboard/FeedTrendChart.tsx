@@ -1,6 +1,7 @@
 'use client';
 import { ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } from 'recharts';
 import { useApp } from '../../context/AppContext';
+import { Container } from 'lucide-react';
 
 export default function FeedTrendChart() {
     const { getFeedTrend } = useApp();
@@ -20,12 +21,20 @@ export default function FeedTrendChart() {
     return (
         <div className="w-full p-6 h-full flex flex-col bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between mb-6">
-                <div>
-                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Konsumsi Pakan</h3>
-                    <p className="text-sm text-slate-600 mt-1">7 Hari Terakhir</p>
+                <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+                        <Container className="w-6 h-6" />
+                    </div>
+                    <div>
+                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Konsumsi Pakan</h3>
+                        <p className="text-sm text-slate-600 mt-1">7 Hari Terakhir</p>
+                    </div>
                 </div>
-                <div className={`text-right ${isUp ? 'text-green-600' : trendDiff < 0 ? 'text-red-600' : 'text-slate-500'}`}>
-                    <p className="font-bold text-xl">{lastDay.toFixed(1)} kg</p>
+                <div className="text-right">
+                    <p>
+                        <span className="font-semibold text-[18px] text-slate-900">{lastDay.toFixed(1)}</span>
+                        <span className="text-sm font-normal text-slate-500"> kg</span>
+                    </p>
                     {lastDay > 0 && (
                         <p className="text-xs font-medium">
                             {isUp ? '↑' : trendDiff < 0 ? '↓' : '-'}

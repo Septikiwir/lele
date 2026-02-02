@@ -181,19 +181,24 @@ export default function KolamPage() {
     const totalEstimasiAset = kolam.reduce((sum, k) => {
         if (k.jumlahIkan === 0) return sum;
         const latestSampling = getLatestSampling(k.id);
-        const growth = 2; // g/day
+        const GROWTH_RATE_PER_DAY_GRAMS = 2;
         let currentWeight = 0;
         const today = new Date();
 
         if (latestSampling && latestSampling.jumlahIkanPerKg > 0) {
-            const lastWeight = 1000 / latestSampling.jumlahIkanPerKg;
+            let baseWeightGram = 0;
+            if (latestSampling.bobotGram) {
+                baseWeightGram = latestSampling.bobotGram;
+            } else {
+                baseWeightGram = 1000 / latestSampling.jumlahIkanPerKg;
+            }
             const samplingDate = new Date(latestSampling.tanggal);
             const daysSinceSampling = Math.max(0, Math.floor((today.getTime() - samplingDate.getTime()) / (1000 * 60 * 60 * 24)));
-            currentWeight = lastWeight + (daysSinceSampling * growth);
+            currentWeight = baseWeightGram + (daysSinceSampling * GROWTH_RATE_PER_DAY_GRAMS);
         } else {
             const tebarDate = k.tanggalTebar ? new Date(k.tanggalTebar) : new Date();
             const daysPassed = Math.max(0, Math.floor((today.getTime() - tebarDate.getTime()) / (1000 * 60 * 60 * 24)));
-            currentWeight = 5 + (daysPassed * growth);
+            currentWeight = 5 + (daysPassed * GROWTH_RATE_PER_DAY_GRAMS);
         }
         return sum + ((k.jumlahIkan * currentWeight / 1000) * hargaPasarPerKg);
     }, 0);
@@ -399,17 +404,22 @@ export default function KolamPage() {
                                                 if (!isEmpty) {
                                                     const latestSampling = getLatestSampling(k.id);
                                                     const today = new Date();
-                                                    const growth = 2; // Default 2g/day
+                                                    const GROWTH_RATE_PER_DAY_GRAMS = 2;
 
                                                     if (latestSampling && latestSampling.jumlahIkanPerKg > 0) {
-                                                        const lastWeight = 1000 / latestSampling.jumlahIkanPerKg;
+                                                        let baseWeightGram = 0;
+                                                        if (latestSampling.bobotGram) {
+                                                            baseWeightGram = latestSampling.bobotGram;
+                                                        } else {
+                                                            baseWeightGram = 1000 / latestSampling.jumlahIkanPerKg;
+                                                        }
                                                         const samplingDate = new Date(latestSampling.tanggal);
                                                         const daysSinceSampling = Math.max(0, Math.floor((today.getTime() - samplingDate.getTime()) / (1000 * 60 * 60 * 24)));
-                                                        currentWeight = lastWeight + (daysSinceSampling * growth);
+                                                        currentWeight = baseWeightGram + (daysSinceSampling * GROWTH_RATE_PER_DAY_GRAMS);
                                                     } else {
                                                         const tebarDate = k.tanggalTebar ? new Date(k.tanggalTebar) : new Date();
                                                         const daysPassed = Math.max(0, Math.floor((today.getTime() - tebarDate.getTime()) / (1000 * 60 * 60 * 24)));
-                                                        currentWeight = 5 + (daysPassed * growth);
+                                                        currentWeight = 5 + (daysPassed * GROWTH_RATE_PER_DAY_GRAMS);
                                                     }
                                                     const totalBiomass = (k.jumlahIkan * currentWeight) / 1000;
                                                     feedRec = getFeedRecommendation(currentWeight, totalBiomass);

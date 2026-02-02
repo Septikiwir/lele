@@ -94,14 +94,21 @@ export default function ProduksiPage() {
         // --- UPDATED WEIGHT CALCULATION ---
         let currentWeight = 0;
         const latestSampling = getLatestSampling(k.id);
+        const GROWTH_RATE_PER_DAY_GRAMS = 2;
 
         if (latestSampling && latestSampling.jumlahIkanPerKg > 0) {
             // Use sampling data as baseline
-            const lastWeight = 1000 / latestSampling.jumlahIkanPerKg; // grams
+            let baseWeightGram = 0;
+            if (latestSampling.bobotGram) {
+                baseWeightGram = latestSampling.bobotGram;
+            } else {
+                baseWeightGram = 1000 / latestSampling.jumlahIkanPerKg;
+            }
+            
             const samplingDate = new Date(latestSampling.tanggal);
             const daysSinceSampling = Math.max(0, Math.floor((today.getTime() - samplingDate.getTime()) / (1000 * 60 * 60 * 24)));
 
-            currentWeight = lastWeight + (daysSinceSampling * growth);
+            currentWeight = baseWeightGram + (daysSinceSampling * GROWTH_RATE_PER_DAY_GRAMS);
         } else {
             // Fallback to purely estimated growth from start
             currentWeight = bibit + (daysPassed * growth);

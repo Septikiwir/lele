@@ -339,6 +339,7 @@ model RiwayatSampling {
   id              String   @id @default(cuid())
   tanggal         DateTime
   jumlahIkanPerKg Float    // e.g., 8 (ekor per kg), 10.5, etc.
+  bobotGram       Float?   // bobot per ekor saat sampling (gram), auto-calculated from jumlahIkanPerKg if not provided
   catatan         String?
 
   createdAt DateTime @default(now())

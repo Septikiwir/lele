@@ -53,38 +53,40 @@ async function main() {
     }
 
     // Check and create StokPakan
-    const existingStok = await prisma.stokPakan.findFirst({ where: { farmId: farm.id } })
-    if (!existingStok) {
-        await prisma.stokPakan.create({
-            data: {
-                farmId: farm.id,
-                jenisPakan: 'Pelet Hi-Pro',
-                stokAwal: 100,
-                hargaPerKg: 12000,
-                tanggalTambah: new Date('2025-01-01'),
-                keterangan: 'Stok awal bulan Januari'
-            }
-        })
-        console.log(`📦 Created stok pakan`)
-    } else {
-        console.log(`📦 Stok pakan exists`)
-    }
+    // Disabled: User harus menambahkan stok pakan sendiri
+    // const existingStok = await prisma.stokPakan.findFirst({ where: { farmId: farm.id } })
+    // if (!existingStok) {
+    //     await prisma.stokPakan.create({
+    //         data: {
+    //             farmId: farm.id,
+    //             jenisPakan: 'Pelet Hi-Pro',
+    //             stokAwal: 100,
+    //             hargaPerKg: 12000,
+    //             tanggalTambah: new Date('2025-01-01'),
+    //             keterangan: 'Stok awal bulan Januari'
+    //         }
+    //     })
+    //     console.log(`📦 Created stok pakan`)
+    // } else {
+    //     console.log(`📦 Stok pakan exists`)
+    // }
 
     // Check and create DataPakan
-    const existingPakan = await prisma.dataPakan.findFirst({ where: { kolamId: kolam.id } })
-    if (!existingPakan) {
-        await prisma.dataPakan.create({
-            data: {
-                kolamId: kolam.id,
-                tanggal: new Date('2025-01-27'),
-                jumlahKg: 15,
-                jenisPakan: 'Pelet Hi-Pro'
-            }
-        })
-        console.log(`🍖 Created data pakan`)
-    } else {
-        console.log(`🍖 Data pakan exists`)
-    }
+    // Disabled: User harus mencatat pakan sendiri
+    // const existingPakan = await prisma.dataPakan.findFirst({ where: { kolamId: kolam.id } })
+    // if (!existingPakan) {
+    //     await prisma.dataPakan.create({
+    //         data: {
+    //             kolamId: kolam.id,
+    //             tanggal: new Date('2025-01-27'),
+    //             jumlahKg: 15,
+    //             jenisPakan: 'Pelet Hi-Pro'
+    //         }
+    //     })
+    //     console.log(`🍖 Created data pakan`)
+    // } else {
+    //     console.log(`🍖 Data pakan exists`)
+    // }
 
     // Check and create KondisiAir
     const existingAir = await prisma.kondisiAir.findFirst({ where: { kolamId: kolam.id } })
