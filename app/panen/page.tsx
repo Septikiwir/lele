@@ -6,7 +6,7 @@ import { useApp, Kolam, TipePembeli } from '../context/AppContext';
 import { useToast } from '../context/ToastContext'; // Import Toast
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 import Modal from '../components/ui/Modal';
-import { Plus, Loader2, Fish, ShoppingCart } from 'lucide-react';
+import { Plus, Loader2, Fish, ShoppingCart, Sprout } from 'lucide-react';
 import EmptyState from '../components/ui/EmptyState';
 import PanenModal from '../components/modals/PanenModal';
 
@@ -450,7 +450,7 @@ export default function ProduksiPage() {
                                                 setIsPanenModalOpen(true);
                                             }}
                                         >
-                                            <HarvestIcon className="w-4 h-4" /> Panen
+                                            <Sprout className="w-4 h-4" /> Panen
                                         </button>
                                         {/* View Details used to be implicit by clicking, now explicit button helps affordance */}
                                     </div>
@@ -470,7 +470,7 @@ export default function ProduksiPage() {
                             <div key={k.id} className="card p-5 border border-dashed border-slate-300 hover:border-blue-400 transition-colors bg-slate-50">
                                 <div className="flex items-center gap-3 mb-4 opacity-70">
                                     <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
-                                        <FishIcon className="w-5 h-5 text-slate-400" />
+                                        <Fish className="w-5 h-5 text-slate-400" />
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-slate-700">{k.nama}</h3>
@@ -484,7 +484,7 @@ export default function ProduksiPage() {
                                         setIsTebarModalOpen(true);
                                     }}
                                 >
-                                    <PlusIcon /> Mulai Siklus
+                                    <Plus /> Mulai Siklus
                                 </button>
                             </div>
                         ))}
@@ -504,7 +504,7 @@ export default function ProduksiPage() {
                             <EmptyState
                                 title="Belum Ada Data Panen"
                                 description="Belum ada riwayat panen yang tercatat."
-                                icon={<HarvestIcon className="w-12 h-12 text-slate-300" />}
+                                icon={<Sprout className="w-12 h-12 text-slate-300" />}
                             />
                         </div>
                     ) : (
