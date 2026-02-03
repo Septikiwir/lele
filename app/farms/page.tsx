@@ -143,111 +143,106 @@ export default function SuperAdminFarmsPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <div>
+      <div className="bg-white border-b border-slate-200 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <span className="px-3 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded-full">
                   SUPERADMIN
                 </span>
               </div>
-              <h1 className="text-3xl font-bold text-slate-900">Manajemen Peternakan</h1>
-              <p className="text-slate-600 mt-1">Kelola semua peternakan dan pemiliknya</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Manajemen Peternakan</h1>
+              <p className="text-sm sm:text-base text-slate-600 mt-1">Kelola semua peternakan dan pemiliknya</p>
             </div>
-            <div className="flex items-center gap-4">
-              {/* User Info */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
+              {/* User Info - Hidden on mobile */}
               {userInfo && (
-                <div className="text-right">
+                <div className="hidden sm:block text-right">
                   <p className="text-sm font-semibold text-slate-900">{userInfo.name}</p>
                   <p className="text-xs text-slate-600">{userInfo.email}</p>
                 </div>
               )}
-              {/* Logout Button */}
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-                title="Logout"
-              >
-                <LogOut size={20} />
-                <span className="hidden sm:inline">Logout</span>
-              </button>
-              {/* Create Farm Button */}
-              <Link
-                href="/admin/farms/create"
-                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition"
-              >
-                <Plus size={20} />
-                <span className="hidden sm:inline">Buat Peternakan</span>
-              </Link>
+              <div className="flex gap-2 w-full sm:w-auto">
+                {/* Logout Button */}
+                <button
+                  onClick={handleLogout}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm sm:text-base"
+                  title="Logout"
+                >
+                  <LogOut size={18} className="sm:w-5 sm:h-5" />
+                  <span className="hidden sm:inline">Logout</span>
+                </button>
+                {/* Create Farm Button */}
+                <Link
+                  href="/admin/farms/create"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 sm:px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition text-sm sm:text-base"
+                >
+                  <Plus size={18} className="sm:w-5 sm:h-5" />
+                  <span className="hidden sm:inline">Buat Peternakan</span>
+                  <span className="sm:hidden">Buat</span>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          <div className="mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm sm:text-base">
             {error}
           </div>
         )}
 
         {farms.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🐠</div>
-            <h2 className="text-2xl font-semibold text-slate-900 mb-2">Belum ada peternakan</h2>
-            <p className="text-slate-600 mb-6">Buat peternakan pertama</p>
+          <div className="text-center py-8 sm:py-12">
+            <div className="text-4xl sm:text-6xl mb-4">🐠</div>
+            <h2 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-2">Belum ada peternakan</h2>
+            <p className="text-sm sm:text-base text-slate-600 mb-6">Buat peternakan pertama</p>
             <Link
               href="/admin/farms/create"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition"
+              className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition text-sm sm:text-base"
             >
-              <Plus size={20} />
+              <Plus size={18} />
               Buat Peternakan
             </Link>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {farms.map((farm) => (
               <div
                 key={farm.id}
-                className="bg-white rounded-lg border border-slate-200 hover:border-teal-300 hover:shadow-md transition p-6"
+                className="bg-white rounded-lg border border-slate-200 hover:border-teal-300 hover:shadow-md transition p-4 sm:p-6 flex flex-col"
               >
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-semibold text-lg text-slate-900">{farm.nama}</h3>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-base sm:text-lg text-slate-900 break-words">{farm.nama}</h3>
                     {farm.alamat && (
-                      <p className="text-sm text-slate-600 mt-1">{farm.alamat}</p>
+                      <p className="text-xs sm:text-sm text-slate-600 mt-1 break-words">{farm.alamat}</p>
                     )}
                   </div>
                 </div>
 
                 <div className="bg-slate-50 rounded p-3 mb-4">
                   <p className="text-xs text-slate-600">Pemilik</p>
-                  <p className="font-semibold text-slate-900">{farm.owner.name}</p>
-                  <p className="text-xs text-slate-500">{farm.owner.email}</p>
+                  <p className="font-semibold text-sm sm:text-base text-slate-900 break-words">{farm.owner.name}</p>
+                  <p className="text-xs text-slate-500 break-all">{farm.owner.email}</p>
                 </div>
 
                 <p className="text-xs text-slate-500 mb-4">
                   Dibuat: {new Date(farm.createdAt).toLocaleDateString('id-ID')}
                 </p>
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2 mt-auto">
                   <Link
                     href={`/admin/farms/${farm.id}`}
-                    className="flex-2 flex items-center justify-center gap-2 px-4 py-2 bg-teal-50 text-teal-600 rounded hover:bg-teal-100 transition text-sm font-medium"
+                    className="flex-1 min-w-[60px] flex items-center justify-center gap-1 px-2 sm:px-4 py-2 bg-teal-50 text-teal-600 rounded hover:bg-teal-100 transition text-xs sm:text-sm font-medium"
                     title="Detail"
                   >
-                    <Eye size={18} />
+                    <Eye size={16} />
                     <span>Detail</span>
-                  </Link>
-
-                  <Link
-                    href={`/admin/farms/${farm.id}/edit`}
-                    className="flex-shrink-0 flex items-center justify-center p-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition"
-                    title="Edit"
-                  >
-                    <Edit2 size={18} />
                   </Link>
 
                   <button
@@ -258,15 +253,23 @@ export default function SuperAdminFarmsPage() {
                     className="flex-shrink-0 flex items-center justify-center p-2 bg-red-50 text-red-600 rounded hover:bg-red-100 transition"
                     title="Hapus"
                   >
-                    <Trash2 size={18} />
+                    <Trash2 size={16} />
                   </button>
+
+                  <Link
+                    href={`/admin/farms/${farm.id}/edit`}
+                    className="flex-shrink-0 flex items-center justify-center p-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition"
+                    title="Edit"
+                  >
+                    <Edit2 size={16} />
+                  </Link>
 
                   <Link
                     href={`/admin/farms/${farm.id}/owner`}
                     className="flex-shrink-0 flex items-center justify-center p-2 bg-purple-50 text-purple-600 rounded hover:bg-purple-100 transition"
                     title="Kelola Anggota"
                   >
-                    <Users size={18} />
+                    <Users size={16} />
                   </Link>
                 </div>
               </div>
@@ -278,21 +281,21 @@ export default function SuperAdminFarmsPage() {
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-sm w-full p-6">
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">Hapus Peternakan?</h3>
-            <p className="text-slate-600 mb-6">
+          <div className="bg-white rounded-lg max-w-sm w-full p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-slate-900 mb-2">Hapus Peternakan?</h3>
+            <p className="text-sm sm:text-base text-slate-600 mb-6">
               Tindakan ini tidak dapat dibatalkan. Semua data akan dihapus.
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-col sm:flex-row">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition"
+                className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition text-sm sm:text-base"
               >
                 Batal
               </button>
               <button
                 onClick={handleDelete}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm sm:text-base"
               >
                 Hapus
               </button>
