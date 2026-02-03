@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import { Plus, Edit2, Trash2, Users, LogOut, AlertCircle } from 'lucide-react';
+import { useSession, signOut } from 'next-auth/react';
+import { Plus, Edit2, Trash2, Users, LogOut, AlertCircle, Eye } from 'lucide-react';
+import { useToast } from '@/app/context/ToastContext';
 
 interface Farm {
   id: string;
@@ -20,12 +21,14 @@ interface Farm {
 export default function SuperAdminFarmsPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { showToast } = useToast();
   const [farms, setFarms] = useState<Farm[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedFarmId, setSelectedFarmId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [userInfo, setUserInfo] = useState<{ name: string; email: string; role: string } | null>(null);
 
   // Check authorization
   useEffect(() => {
@@ -48,6 +51,11 @@ export default function SuperAdminFarmsPage() {
       
       if (data.role === 'SUPERADMIN') {
         setIsAuthorized(true);
+        setUserInfo({
+          name: data.name || 'Admin',
+          email: data.email || '',
+          role: data.role
+        });
         fetchFarms();
       } else {
         setError('Akses ditolak. Hanya superadmin yang bisa mengakses halaman ini.');
@@ -79,6 +87,7 @@ export default function SuperAdminFarmsPage() {
     if (!selectedFarmId) return;
 
     try {
+      const deletingFarm = farms.find(f => f.id === selectedFarmId);
       const res = await fetch(`/api/admin/farms/${selectedFarmId}`, {
         method: 'DELETE',
       });
@@ -88,9 +97,21 @@ export default function SuperAdminFarmsPage() {
       setFarms(farms.filter(f => f.id !== selectedFarmId));
       setShowDeleteConfirm(false);
       setSelectedFarmId(null);
+      
+      showToast(
+        `Peternakan "${deletingFarm?.nama}" dan pemilik "${deletingFarm?.owner.name}" berhasil dihapus`,
+        'success'
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error deleting farm');
+      const errorMsg = err instanceof Error ? err.message : 'Error deleting farm';
+      setError(errorMsg);
+      showToast(errorMsg, 'error');
     }
+  };
+
+  const handleLogout = async () => {
+    showToast('Berhasil logout', 'success');
+    await signOut({ redirect: true, callbackUrl: '/admin/login' });
   };
 
   if (status === 'loading' || loading) {
@@ -134,13 +155,32 @@ export default function SuperAdminFarmsPage() {
               <h1 className="text-3xl font-bold text-slate-900">Manajemen Peternakan</h1>
               <p className="text-slate-600 mt-1">Kelola semua peternakan dan pemiliknya</p>
             </div>
-            <Link
-              href="/admin/farms/create"
-              className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition"
-            >
-              <Plus size={20} />
-              Buat Peternakan
-            </Link>
+            <div className="flex items-center gap-4">
+              {/* User Info */}
+              {userInfo && (
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-slate-900">{userInfo.name}</p>
+                  <p className="text-xs text-slate-600">{userInfo.email}</p>
+                </div>
+              )}
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                title="Logout"
+              >
+                <LogOut size={20} />
+                <span className="hidden sm:inline">Logout</span>
+              </button>
+              {/* Create Farm Button */}
+              <Link
+                href="/admin/farms/create"
+                className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition"
+              >
+                <Plus size={20} />
+                <span className="hidden sm:inline">Buat Peternakan</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -194,12 +234,20 @@ export default function SuperAdminFarmsPage() {
 
                 <div className="flex gap-2">
                   <Link
+                    href={`/admin/farms/${farm.id}`}
+                    className="flex-2 flex items-center justify-center gap-2 px-4 py-2 bg-teal-50 text-teal-600 rounded hover:bg-teal-100 transition text-sm font-medium"
+                    title="Detail"
+                  >
+                    <Eye size={18} />
+                    <span>Detail</span>
+                  </Link>
+
+                  <Link
                     href={`/admin/farms/${farm.id}/edit`}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition text-sm font-medium"
+                    className="flex-shrink-0 flex items-center justify-center p-2 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition"
                     title="Edit"
                   >
-                    <Edit2 size={16} />
-                    <span className="hidden sm:inline">Edit</span>
+                    <Edit2 size={18} />
                   </Link>
 
                   <button
@@ -207,20 +255,18 @@ export default function SuperAdminFarmsPage() {
                       setSelectedFarmId(farm.id);
                       setShowDeleteConfirm(true);
                     }}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-50 text-red-600 rounded hover:bg-red-100 transition text-sm font-medium"
-                    title="Delete"
+                    className="flex-shrink-0 flex items-center justify-center p-2 bg-red-50 text-red-600 rounded hover:bg-red-100 transition"
+                    title="Hapus"
                   >
-                    <Trash2 size={16} />
-                    <span className="hidden sm:inline">Hapus</span>
+                    <Trash2 size={18} />
                   </button>
 
                   <Link
                     href={`/admin/farms/${farm.id}/owner`}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-purple-50 text-purple-600 rounded hover:bg-purple-100 transition text-sm font-medium"
+                    className="flex-shrink-0 flex items-center justify-center p-2 bg-purple-50 text-purple-600 rounded hover:bg-purple-100 transition"
                     title="Kelola Anggota"
                   >
-                    <Users size={16} />
-                    <span className="hidden sm:inline">Anggota</span>
+                    <Users size={18} />
                   </Link>
                 </div>
               </div>

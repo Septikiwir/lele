@@ -95,15 +95,43 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
+    // Get farm with owner info
+    const farm = await prisma.farm.findUnique({
+      where: { id: farmId },
+      select: { ownerId: true }
+    })
+
+    if (!farm) {
+      return NextResponse.json({ error: 'Farm not found' }, { status: 404 })
+    }
+
+    const ownerId = farm.ownerId
+
+    // Delete farm (this will cascade delete FarmMembers)
     await prisma.farm.delete({
       where: { id: farmId }
     })
 
+    // Check if owner has any other farms
+    const ownerOtherFarms = await prisma.farm.findFirst({
+      where: { ownerId }
+    })
+
+    // If owner has no other farms, delete the owner user
+    if (!ownerOtherFarms) {
+      await prisma.user.delete({
+        where: { id: ownerId }
+      })
+      console.log('✅ Farm and owner user deleted:', { farmId, ownerId })
+    } else {
+      console.log('✅ Farm deleted, owner kept (has other farms):', { farmId, ownerId })
+    }
+
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error deleting farm:', error)
     return NextResponse.json(
-      { error: 'Failed to delete' },
+      { error: 'Failed to delete farm' },
       { status: 500 }
     )
   }

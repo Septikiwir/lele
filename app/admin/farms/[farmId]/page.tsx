@@ -32,7 +32,7 @@ interface FarmMember {
 export default function FarmDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const farmId = params.id as string;
+  const farmId = params.farmId as string;
   const { data: session, status } = useSession();
 
   const [farm, setFarm] = useState<Farm | null>(null);

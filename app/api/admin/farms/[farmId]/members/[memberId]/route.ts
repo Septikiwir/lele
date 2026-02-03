@@ -40,11 +40,25 @@ export async function DELETE(
     }
 
     // Delete member
-    await prisma.farmMember.delete({
+    const deletedMember = await prisma.farmMember.delete({
       where: { id: memberId },
     });
 
-    return NextResponse.json({ success: true });
+    console.log('✅ FarmMember deleted successfully:', {
+      id: deletedMember.id,
+      userId: deletedMember.userId,
+      farmId: deletedMember.farmId,
+      role: deletedMember.role
+    });
+
+    return NextResponse.json({ 
+      success: true,
+      message: 'Member removed from farm successfully',
+      deletedMember: {
+        id: deletedMember.id,
+        userId: deletedMember.userId
+      }
+    });
   } catch (error) {
     console.error('Error deleting member:', error);
     return NextResponse.json(

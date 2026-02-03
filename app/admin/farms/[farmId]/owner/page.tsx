@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { ArrowLeft, Plus, Trash2, AlertCircle, Search } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, AlertCircle } from 'lucide-react';
 
 interface FarmMember {
   id: string;
@@ -18,12 +18,6 @@ interface FarmMember {
   };
 }
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
-
 interface Farm {
   nama: string;
 }
@@ -31,19 +25,18 @@ interface Farm {
 export default function FarmOwnerManagementPage() {
   const router = useRouter();
   const params = useParams();
-  const farmId = params.id as string;
+  const farmId = params.farmId as string;
   const { data: session, status } = useSession();
 
   const [farm, setFarm] = useState<Farm | null>(null);
   const [members, setMembers] = useState<FarmMember[]>([]);
-  const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
   const [showAddMember, setShowAddMember] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState('');
-  const [selectedRole, setSelectedRole] = useState('OPERATOR');
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
   const [memberToDelete, setMemberToDelete] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -65,7 +58,7 @@ export default function FarmOwnerManagementPage() {
 
       if (data.role === 'SUPERADMIN') {
         setIsAuthorized(true);
-        await Promise.all([loadFarmInfo(), loadMembers(), loadAvailableUsers()]);
+        await Promise.all([loadFarmInfo(), loadMembers()]);
       } else {
         setError('Akses ditolak');
         setTimeout(() => router.push('/dashboard'), 2000);
@@ -105,7 +98,6 @@ export default function FarmOwnerManagementPage() {
       const res = await fetch('/api/admin/users');
       if (res.ok) {
         const usersData = await res.json();
-        setAvailableUsers(usersData);
       }
     } catch (err) {
       console.error('Error loading users:', err);
@@ -113,30 +105,59 @@ export default function FarmOwnerManagementPage() {
   };
 
   const handleAddMember = async () => {
-    if (!selectedUserId) {
-      setError('Pilih pengguna');
+    if (!newUserName.trim()) {
+      setError('Nama operator harus diisi');
+      return;
+    }
+    if (!newUserEmail.trim()) {
+      setError('Email operator harus diisi');
+      return;
+    }
+    if (!newUserPassword.trim()) {
+      setError('Password operator harus diisi');
       return;
     }
 
     try {
-      const res = await fetch(`/api/admin/farms/${farmId}/members`, {
+      // Create new user first
+      const createUserRes = await fetch('/api/admin/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          userId: selectedUserId,
-          role: selectedRole,
+          name: newUserName,
+          email: newUserEmail,
+          password: newUserPassword,
+          role: 'OPERATOR',
         }),
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
+      if (!createUserRes.ok) {
+        const errorData = await createUserRes.json();
+        throw new Error(errorData.message || 'Failed to create user');
+      }
+
+      const newUser = await createUserRes.json();
+
+      // Add user as member to farm
+      const addMemberRes = await fetch(`/api/admin/farms/${farmId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: newUser.id,
+          role: 'OPERATOR',
+        }),
+      });
+
+      if (!addMemberRes.ok) {
+        const errorData = await addMemberRes.json();
         throw new Error(errorData.message || 'Failed to add member');
       }
 
       await loadMembers();
       setShowAddMember(false);
-      setSelectedUserId('');
-      setSelectedRole('OPERATOR');
+      setNewUserName('');
+      setNewUserEmail('');
+      setNewUserPassword('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error adding member');
     }
@@ -150,7 +171,10 @@ export default function FarmOwnerManagementPage() {
         method: 'DELETE',
       });
 
-      if (!res.ok) throw new Error('Failed to remove member');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to remove member');
+      }
 
       await loadMembers();
       setMemberToDelete(null);
@@ -159,12 +183,6 @@ export default function FarmOwnerManagementPage() {
       setError(err instanceof Error ? err.message : 'Error removing member');
     }
   };
-
-  const filteredUsers = availableUsers.filter(user =>
-    !members.some(m => m.userId === user.id) &&
-    (user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
 
   if (status === 'loading' || loading) {
     return (
@@ -194,11 +212,11 @@ export default function FarmOwnerManagementPage() {
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Link
-            href={`/admin/farms/${farmId}`}
+            href="/farms"
             className="flex items-center gap-2 text-teal-600 hover:text-teal-700 mb-4"
           >
             <ArrowLeft size={20} />
-            Kembali ke Detail
+            Kembali ke Daftar Farm
           </Link>
           <h1 className="text-3xl font-bold text-slate-900">Kelola Anggota Peternakan</h1>
           <p className="text-slate-600 mt-2">{farm?.nama}</p>
@@ -274,69 +292,46 @@ export default function FarmOwnerManagementPage() {
               <h3 className="text-lg font-semibold text-slate-900 mb-4">Tambah Anggota Baru</h3>
 
               <div className="space-y-4">
-                {/* Search Users */}
+                {/* User Name Input */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Cari Pengguna
+                    Nama Operator
                   </label>
-                  <div className="relative">
-                    <Search
-                      size={18}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Cari berdasarkan nama atau email..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    placeholder="Masukkan nama operator..."
+                    value={newUserName}
+                    onChange={(e) => setNewUserName(e.target.value)}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
                 </div>
 
-                {/* User List */}
+                {/* Email Input */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Pilih Pengguna
+                    Email
                   </label>
-                  {filteredUsers.length === 0 ? (
-                    <p className="text-slate-600 text-sm py-4">
-                      {availableUsers.length === 0
-                        ? 'Tidak ada pengguna tersedia'
-                        : 'Tidak ada hasil pencarian'}
-                    </p>
-                  ) : (
-                    <select
-                      value={selectedUserId}
-                      onChange={(e) => setSelectedUserId(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                    >
-                      <option value="">-- Pilih pengguna --</option>
-                      {filteredUsers.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.name} ({user.email})
-                        </option>
-                      ))}
-                    </select>
-                  )}
+                  <input
+                    type="email"
+                    placeholder="Masukkan email operator..."
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
                 </div>
 
-                {/* Role Selection */}
+                {/* Password Input */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Peran
+                    Password
                   </label>
-                  <select
-                    value={selectedRole}
-                    onChange={(e) => setSelectedRole(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
-                  >
-                    <option value="OPERATOR">Operator</option>
-                    <option value="OWNER">Pemilik</option>
-                  </select>
-                  <p className="text-xs text-slate-600 mt-2">
-                    Operator memiliki akses terbatas. Pemilik memiliki kontrol penuh.
-                  </p>
+                  <input
+                    type="password"
+                    placeholder="Masukkan password operator..."
+                    value={newUserPassword}
+                    onChange={(e) => setNewUserPassword(e.target.value)}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  />
                 </div>
 
                 {/* Buttons */}
@@ -350,8 +345,9 @@ export default function FarmOwnerManagementPage() {
                   <button
                     onClick={() => {
                       setShowAddMember(false);
-                      setSearchTerm('');
-                      setSelectedUserId('');
+                      setNewUserName('');
+                      setNewUserEmail('');
+                      setNewUserPassword('');
                     }}
                     className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition font-medium"
                   >
