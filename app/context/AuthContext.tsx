@@ -1,10 +1,10 @@
 'use client';
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
-export type UserRole = 'admin' | 'operator' | 'viewer';
+export type UserRole = 'admin' | 'operator' | 'viewer' | 'SUPERADMIN' | 'OWNER' | 'OPERATOR';
 
 export interface User {
     id: string;
@@ -28,15 +28,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: session, status } = useSession();
     const router = useRouter();
     const isLoading = status === 'loading';
+    const [user, setUser] = useState<User | null>(null);
 
-    // Map NextAuth session to our User type
-    const user: User | null = session?.user ? {
-        id: session.user.id || '',
-        name: session.user.name || 'User',
-        email: session.user.email || '',
-        role: 'admin', // Default role - will be updated when we implement proper roles
-        plan: 'Pro Plan'
-    } : null;
+    // Fetch actual user data from API to get role
+    useEffect(() => {
+        if (status !== 'authenticated' || !session?.user?.id) {
+            setUser(null);
+            return;
+        }
+
+        const fetchUserData = async () => {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (!res.ok) throw new Error('Failed to fetch user');
+                
+                const userData = await res.json();
+                setUser({
+                    id: userData.id || session.user?.id || '',
+                    name: userData.name || session.user?.name || 'User',
+                    email: userData.email || session.user?.email || '',
+                    role: userData.role || 'OWNER',
+                    plan: 'Pro Plan'
+                });
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+                // Fallback to session data
+                setUser({
+                    id: session.user?.id || '',
+                    name: session.user?.name || 'User',
+                    email: session.user?.email || '',
+                    role: 'OWNER',
+                    plan: 'Pro Plan'
+                });
+            }
+        };
+
+        fetchUserData();
+    }, [status, session]);
 
     const logout = async () => {
         await signOut({ redirect: false });

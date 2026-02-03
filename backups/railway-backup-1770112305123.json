@@ -1,0 +1,100 @@
+{
+  "users": [
+    {
+      "id": "cml5bsn1u0000t896yn4godjm",
+      "name": "Test User",
+      "email": "test@example.com",
+      "emailVerified": "2026-02-02T15:29:41.135Z",
+      "password": "$2b$10$OOoaJv.2nsrV5FEBPe7jcOymqth/u7Wf8DAO.e1dkDq7qsq3NMHCe",
+      "image": null,
+      "createdAt": "2026-02-02T15:29:42.066Z",
+      "updatedAt": "2026-02-02T15:29:42.066Z",
+      "accounts": [],
+      "sessions": [],
+      "ownedFarms": [
+        {
+          "id": "cml5bso6l0002t896cyvoqnb6",
+          "nama": "Farm Test",
+          "alamat": "Jl. Test No. 1",
+          "createdAt": "2026-02-02T15:29:43.533Z",
+          "updatedAt": "2026-02-02T15:29:43.533Z",
+          "ownerId": "cml5bsn1u0000t896yn4godjm",
+          "members": [
+            {
+              "id": "cml5bso6l0004t896gorrqhrp",
+              "role": "OWNER",
+              "joinedAt": "2026-02-02T15:29:43.533Z",
+              "userId": "cml5bsn1u0000t896yn4godjm",
+              "farmId": "cml5bso6l0002t896cyvoqnb6"
+            }
+          ],
+          "kolam": [
+            {
+              "id": "cml5bspll0006t89651pasevy",
+              "nama": "Kolam A1",
+              "panjang": 10,
+              "lebar": 5,
+              "kedalaman": 1.2,
+              "tanggalTebar": "2025-01-01T00:00:00.000Z",
+              "jumlahIkan": 5000,
+              "status": "AMAN",
+              "positionX": 5,
+              "positionY": 3,
+              "positionW": 3,
+              "positionH": 2,
+              "color": "#f59e0b",
+              "createdAt": "2026-02-02T15:29:45.369Z",
+              "updatedAt": "2026-02-02T15:29:45.369Z",
+              "farmId": "cml5bso6l0002t896cyvoqnb6",
+              "dataPakan": [],
+              "kondisiAir": [],
+              "pengeluaran": [],
+              "jadwalPakan": [],
+              "riwayatPanen": [],
+              "penjualan": [],
+              "riwayatIkan": [],
+              "riwayatSampling": [
+                {
+                  "id": "cml5bsqpt0008t896tv3cxuk4",
+                  "tanggal": "2025-01-01T00:00:00.000Z",
+                  "jumlahIkanPerKg": 20,
+                  "bobotGram": null,
+                  "catatan": "Bibit awal",
+                  "createdAt": "2026-02-02T15:29:46.818Z",
+                  "updatedAt": "2026-02-02T15:29:46.818Z",
+                  "kolamId": "cml5bspll0006t89651pasevy"
+                }
+              ]
+            }
+          ],
+          "stokPakan": [
+            {
+              "id": "cml5cmun300011c1atbq142ly",
+              "jenisPakan": "Pelet",
+              "stokAwal": 50,
+              "hargaPerKg": 14000,
+              "tanggalTambah": "2026-02-02T00:00:00.000Z",
+              "keterangan": null,
+              "createdAt": "2026-02-02T15:53:11.582Z",
+              "farmId": "cml5bso6l0002t896cyvoqnb6"
+            }
+          ],
+          "pembeli": [],
+          "pengeluaran": []
+        }
+      ],
+      "farmMembers": [
+        {
+          "id": "cml5bso6l0004t896gorrqhrp",
+          "role": "OWNER",
+          "joinedAt": "2026-02-02T15:29:43.533Z",
+          "userId": "cml5bsn1u0000t896yn4godjm",
+          "farmId": "cml5bso6l0002t896cyvoqnb6"
+        }
+      ]
+    }
+  ],
+  "verificationTokens": [],
+  "exportedAt": "2026-02-03T09:51:45.122Z",
+  "note": "Full database export from Railway MySQL for migration to Supabase PostgreSQL"
+}

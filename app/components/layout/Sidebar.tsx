@@ -21,7 +21,8 @@ import {
   ChevronRight,
   Fish,
   Wallet,
-  User
+  User,
+  Shield
 } from 'lucide-react';
 
 const navigationGroups = [
@@ -214,7 +215,19 @@ export default function Sidebar({ isCollapsed = false, toggleCollapse, onPanenCl
 
         {/* Bottom Section: Profile & Logout - Fixed at bottom */}
         {user ? (
-          <div className="p-4 border-t border-slate-800 bg-[#0f2937] flex-shrink-0">
+          <div className="p-4 border-t border-slate-800 bg-[#0f2937] flex-shrink-0 space-y-3">
+            {/* Admin Panel Link - Only for SUPERADMIN */}
+            {user.role === 'SUPERADMIN' && (
+              <Link
+                href="/farms"
+                onClick={() => setIsOpen(false)}
+                className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-500 hover:to-purple-600 transition-all shadow-md shadow-purple-500/30 ${isCollapsed && !isOpen ? 'px-0' : 'w-full'}`}
+              >
+                <Shield className="w-4 h-4" />
+                {(!isCollapsed || isOpen) && <span>Panel Admin</span>}
+              </Link>
+            )}
+
             <div className={`flex items-center gap-3 px-3 py-3 rounded-xl bg-slate-800/40 hover:bg-slate-800/60 transition-colors cursor-pointer group ${isCollapsed && !isOpen ? 'justify-center px-0 bg-transparent hover:bg-transparent' : ''}`}>
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center text-sm ring-2 ring-slate-800 shadow-md text-white">
                 {user.avatar ? user.avatar : <User className="w-5 h-5" />}
@@ -231,7 +244,7 @@ export default function Sidebar({ isCollapsed = false, toggleCollapse, onPanenCl
 
             <button
               onClick={logout}
-              className={`w-full mt-4 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors ${isCollapsed && !isOpen ? 'mt-2 px-0' : ''}`}
+              className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors ${isCollapsed && !isOpen ? 'px-0' : ''}`}
             >
               <LogOut className="w-5 h-5" />
               {(!isCollapsed || isOpen) && <span>Keluar Aplikasi</span>}
