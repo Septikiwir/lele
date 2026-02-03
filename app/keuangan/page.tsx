@@ -347,7 +347,7 @@ export default function KeuanganPage() {
                         <div className="mb-6">
                             <h3 className="font-semibold text-slate-800">Komposisi Pengeluaran</h3>
                         </div>
-                        <div className="grid grid-cols-6 gap-4 overflow-x-auto pb-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                             {kategoriTotals.sort((a, b) => b.total - a.total).map((k) => {
                                 const percentage = grandTotalPengeluaran > 0 ? (k.total / grandTotalPengeluaran) * 100 : 0;
                                 const theme = kategoriThemes[k.value];
