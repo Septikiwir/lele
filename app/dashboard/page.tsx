@@ -33,7 +33,7 @@ export default function DashboardPage() {
   const pakanHariIni = pakan
     .filter(p => p.tanggal === new Date().toISOString().split('T')[0])
     .reduce((sum, p) => sum + p.jumlahKg, 0);
-  
+
   // Calculate Total Modal (all pengeluaran)
   const totalModal = pengeluaran.reduce((sum, p) => sum + p.jumlah, 0);
 
@@ -58,7 +58,7 @@ export default function DashboardPage() {
         </div>
 
         {/* ROW 2: High Level KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* 1. Asset Value (Main Financial KPI) */}
           <AssetValueCard />
 

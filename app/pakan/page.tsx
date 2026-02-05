@@ -256,7 +256,7 @@ export default function PakanPage() {
                 </div>
 
                 {/* KPI Cards Row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {/* 1. Total Stok */}
                     <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
                         <div className="w-12 h-12 mb-3 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600">
@@ -288,7 +288,7 @@ export default function PakanPage() {
                     </div>
 
                     {/* 3. Jadwal Berikutnya (SMART) */}
-                    <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
+                    <div className="block col-span-2 lg:col-span-1 p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
                         <div className="w-12 h-12 mb-3 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600">
                             <Clock className="w-6 h-6" />
                         </div>

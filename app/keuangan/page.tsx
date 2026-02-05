@@ -294,7 +294,7 @@ export default function KeuanganPage() {
                 </div>
 
                 {/* KPI Cards Row */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {/* 1. Pendapatan Bersih */}
                     <div className="block p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
@@ -326,7 +326,7 @@ export default function KeuanganPage() {
                     </div>
 
                     {/* 3. Total Pengeluaran */}
-                    <div className="block col-span-2 md:col-span-1 p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="block col-span-2 md:col-span-2 lg:col-span-1 p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
                                 <Banknote className="w-6 h-6" />
@@ -388,12 +388,13 @@ export default function KeuanganPage() {
                         {/* Section: Profit Per Kolam */}
                         <div className="lg:col-span-2">
                             <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                                <div className="px-4 md:px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
-                                    <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                                        <span>📊</span> Profitabilitas Kolam
-                                    </h3>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
+                                        <Banknote className="w-6 h-6" />
+                                    </div>
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Profitabilitas Kolam</p>
                                 </div>
-                                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {sortedKolamProfit.map(k => {
                                         const pendapatan = getTotalPenjualanByKolam(k.id);
                                         const pengeluaranTotal = getTotalPengeluaranByKolam(k.id);

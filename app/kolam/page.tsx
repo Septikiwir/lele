@@ -223,7 +223,7 @@ export default function KolamPage() {
                 </div>
 
                 {/* Summary KPIs */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     {/* Total Kolam */}
                     <div className="w-full p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
@@ -295,7 +295,7 @@ export default function KolamPage() {
                             <svg className="w-3 h-3 ms-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                         </Link>
                     </div>
-                    </div>
+                </div>
 
                 {/* Tab Navigation */}
                 <div className="flex space-x-1 bg-slate-100 p-1 rounded-xl w-fit">
@@ -649,25 +649,25 @@ export default function KolamPage() {
                                                     <span className={`text-xs font-bold ${cycle.sr >= 90 ? 'text-emerald-600' : cycle.sr >= 80 ? 'text-amber-600' : 'text-red-600'}`}>
                                                         {cycle.sr.toFixed(1)}%
                                                     </span>
-                                                    </td>
-                                                    <td className="text-right">
-                                                        <button
-                                                            onClick={() => {
-                                                                setSelectedCycle(cycle);
-                                                                setIsCycleModalOpen(true);
-                                                            }}
-                                                            className="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors group-hover:scale-110"
-                                                            title="Lihat Detail Siklus"
-                                                        >
-                                                            <Eye className="w-4 h-4" />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })
-                                    )}
-                                </tbody>
-                            </table>
+                                                </td>
+                                                <td className="text-right">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSelectedCycle(cycle);
+                                                            setIsCycleModalOpen(true);
+                                                        }}
+                                                        className="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors group-hover:scale-110"
+                                                        title="Lihat Detail Siklus"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
 
                         {/* Pagination Controls */}
                         {totalPages > 1 && (
