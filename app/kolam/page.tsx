@@ -225,14 +225,14 @@ export default function KolamPage() {
                 {/* Summary KPIs */}
                 <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     {/* Total Kolam */}
-                    <div className="w-full p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="w-full p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-                                <Box className="w-6 h-6" />
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                <Box className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Kolam</p>
+                            <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">Total Kolam</p>
                         </div>
-                        <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">{totalKolam}</h5>
+                        <h5 className="mb-2 text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">{totalKolam}</h5>
                         <p className="mb-3 text-sm text-slate-600">
                             <span className="text-emerald-600 font-semibold">{kolamAktif}</span> Aktif <span className="text-slate-300 mx-1">•</span> <span className="text-slate-400">{totalKolam - kolamAktif}</span> Kosong
                         </p>
@@ -243,14 +243,14 @@ export default function KolamPage() {
                     </div>
 
                     {/* Total Populasi */}
-                    <div className="w-full p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="w-full p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600">
-                                <Fish className="w-6 h-6" />
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600">
+                                <Fish className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Populasi</p>
+                            <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">Total Populasi</p>
                         </div>
-                        <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">{totalIkan.toLocaleString('id-ID')} <span className="text-sm font-normal text-slate-500">ekor</span></h5>
+                        <h5 className="mb-2 text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">{totalIkan.toLocaleString('id-ID')} <span className="text-sm font-normal text-slate-500">ekor</span></h5>
                         <p className="mb-3 text-sm text-slate-600">
                             Tersebar di {kolamAktif} kolam aktif
                         </p>
@@ -261,14 +261,14 @@ export default function KolamPage() {
                     </div>
 
                     {/* Estimasi Aset */}
-                    <div className="w-full p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="w-full p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-                                <Banknote className="w-6 h-6" />
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                <Banknote className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Estimasi Aset</p>
+                            <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">Estimasi Aset</p>
                         </div>
-                        <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">Rp {formatCurrency(totalEstimasiAset)}</h5>
+                        <h5 className="mb-2 text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">Rp {formatCurrency(totalEstimasiAset)}</h5>
                         <p className="mb-3 text-sm text-slate-600">
                             Berdasarkan berat estimasi & harga pasar saat ini
                         </p>
@@ -279,14 +279,14 @@ export default function KolamPage() {
                     </div>
 
                     {/* Pakan Hari Ini */}
-                    <div className="w-full p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="w-full p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
-                                <Container className="w-6 h-6" />
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
+                                <Container className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Pakan Hari Ini</p>
+                            <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">Pakan Hari Ini</p>
                         </div>
-                        <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">0.0 <span className="text-sm font-normal text-slate-500">kg</span></h5>
+                        <h5 className="mb-2 text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">0.0 <span className="text-sm font-normal text-slate-500">kg</span></h5>
                         <p className="mb-3 text-sm text-slate-600">
                             Total pakan yang diberikan hari ini
                         </p>

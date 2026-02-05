@@ -20,14 +20,14 @@ export default function AssetValueCard() {
     };
 
     return (
-        <div className="w-full p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+        <div className="w-full p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
             <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                    <Banknote className="w-6 h-6" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                    <Banknote className="w-5 h-5 sm:w-6 sm:h-6" />
                 </div>
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Aset</p>
+                <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">Total Aset</p>
             </div>
-            <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">Rp {formatCurrency(assetValue)}</h5>
+            <h5 className="mb-2 text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">Rp {formatCurrency(assetValue)}</h5>
             <p className="mb-3 text-sm text-slate-600">
                 *Berat 85-150g/ekor
             </p>

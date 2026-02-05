@@ -258,13 +258,13 @@ export default function PakanPage() {
                 {/* KPI Cards Row */}
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {/* 1. Total Stok */}
-                    <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
-                        <div className="w-12 h-12 mb-3 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600">
-                            <Package className="w-6 h-6" />
+                    <div className="block p-4 sm:p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 mb-3 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600">
+                            <Package className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Total Stok Pakan</p>
+                        <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Total Stok Pakan</p>
                         <p className="mb-2">
-                            <span className="text-2xl font-semibold tracking-tight text-slate-900">{totalStokKg.toFixed(1)}</span>
+                            <span className="text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">{totalStokKg.toFixed(1)}</span>
                             <span className="text-sm font-normal text-slate-500 ml-1">kg</span>
                         </p>
                         <p className="text-sm text-slate-500">
@@ -273,13 +273,13 @@ export default function PakanPage() {
                     </div>
 
                     {/* 2. Pakan Hari Ini */}
-                    <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
-                        <div className="w-12 h-12 mb-3 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
-                            <Calendar className="w-6 h-6" />
+                    <div className="block p-4 sm:p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 mb-3 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                            <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Konsumsi Hari Ini</p>
+                        <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Konsumsi Hari Ini</p>
                         <p className="mb-2">
-                            <span className="text-2xl font-semibold tracking-tight text-slate-900">{pakanHariIni.toFixed(1)}</span>
+                            <span className="text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">{pakanHariIni.toFixed(1)}</span>
                             <span className="text-sm font-normal text-slate-500 ml-1">kg</span>
                         </p>
                         <p className="text-sm text-slate-500">
@@ -288,15 +288,15 @@ export default function PakanPage() {
                     </div>
 
                     {/* 3. Jadwal Berikutnya (SMART) */}
-                    <div className="block col-span-2 lg:col-span-1 p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
-                        <div className="w-12 h-12 mb-3 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600">
-                            <Clock className="w-6 h-6" />
+                    <div className="block col-span-2 lg:col-span-1 p-4 sm:p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 mb-3 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600">
+                            <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
                         </div>
-                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Jadwal Berikutnya</p>
+                        <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Jadwal Berikutnya</p>
                         {nextSmart ? (
                             <>
                                 <p className="mb-2">
-                                    <span className="text-2xl font-semibold tracking-tight text-teal-600">{nextSmart.time}</span>
+                                    <span className="text-lg sm:text-2xl font-semibold tracking-tight text-teal-600">{nextSmart.time}</span>
                                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wide ml-2">{nextSmart.label}</span>
                                 </p>
                                 <div className="flex items-center gap-2">

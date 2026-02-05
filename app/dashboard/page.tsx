@@ -63,14 +63,14 @@ export default function DashboardPage() {
           <AssetValueCard />
 
           {/* 2. Total Modal */}
-          <div className="w-full p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+          <div className="w-full p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
-                <Banknote className="w-6 h-6" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
+                <Banknote className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Modal</p>
+              <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">Total Modal</p>
             </div>
-            <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">Rp{formatCurrency(totalModal)}</h5>
+            <h5 className="mb-2 text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">Rp{formatCurrency(totalModal)}</h5>
             <p className="mb-3 text-sm text-slate-600">
               Semua pengeluaran
             </p>
@@ -81,14 +81,14 @@ export default function DashboardPage() {
           </div>
 
           {/* 3. Biological KPI (Population) */}
-          <div className="w-full p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+          <div className="w-full p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600">
-                <Fish className="w-6 h-6" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600">
+                <Fish className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Populasi</p>
+              <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">Populasi</p>
             </div>
-            <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">{totalIkan.toLocaleString('id-ID')} <span className="text-sm font-normal text-slate-500">ekor</span></h5>
+            <h5 className="mb-2 text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">{totalIkan.toLocaleString('id-ID')} <span className="text-sm font-normal text-slate-500">ekor</span></h5>
             <p className="mb-3 text-sm text-slate-600">
               <strong>{totalKolam}</strong> Kolam Aktif
             </p>
@@ -99,14 +99,14 @@ export default function DashboardPage() {
           </div>
 
           {/* 4. Operational KPI (Feed Today) */}
-          <div className="w-full p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+          <div className="w-full p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-                <Calendar className="w-6 h-6" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Pakan Hari Ini</p>
+              <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">Pakan Hari Ini</p>
             </div>
-            <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">{pakanHariIni.toFixed(1)} <span className="text-sm font-normal text-slate-500">kg</span></h5>
+            <h5 className="mb-2 text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">{pakanHariIni.toFixed(1)} <span className="text-sm font-normal text-slate-500">kg</span></h5>
             <p className="mb-3 text-sm text-slate-600">
               Update: Hari ini
             </p>
