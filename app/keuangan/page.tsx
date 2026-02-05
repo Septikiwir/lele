@@ -294,16 +294,16 @@ export default function KeuanganPage() {
                 </div>
 
                 {/* KPI Cards Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {/* 1. Pendapatan Bersih */}
-                    <div className="block p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="block p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${netProfit >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-                                <Banknote className="w-6 h-6" />
+                            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center ${netProfit >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                                <Banknote className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Pendapatan Bersih</p>
+                            <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">Pendapatan Bersih</p>
                         </div>
-                        <h5 className={`mb-2 text-2xl font-semibold tracking-tight ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                        <h5 className={`mb-2 text-lg sm:text-2xl font-semibold tracking-tight ${netProfit >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
                             {netProfit >= 0 ? '+' : '-'}Rp {formatCurrency(Math.abs(netProfit))}
                         </h5>
                         <p className="mb-3 text-sm text-slate-600">
@@ -312,28 +312,28 @@ export default function KeuanganPage() {
                     </div>
 
                     {/* 2. Total Pendapatan */}
-                    <div className="block p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="block p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-                                <TrendingUp className="w-6 h-6" />
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Pendapatan</p>
+                            <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">Total Pendapatan</p>
                         </div>
-                        <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">Rp {formatCurrency(totalPendapatan)}</h5>
+                        <h5 className="mb-2 text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">Rp {formatCurrency(totalPendapatan)}</h5>
                         <p className="mb-3 text-sm text-slate-600">
                             {totalBerat.toLocaleString('id-ID')} kg ikan terjual
                         </p>
                     </div>
 
                     {/* 3. Total Pengeluaran */}
-                    <div className="block col-span-2 md:col-span-2 lg:col-span-1 p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="block col-span-2 md:col-span-2 lg:col-span-1 p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
-                                <Banknote className="w-6 h-6" />
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
+                                <Banknote className="w-5 h-5 sm:w-6 sm:h-6" />
                             </div>
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Pengeluaran</p>
+                            <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">Total Pengeluaran</p>
                         </div>
-                        <h5 className="mb-2 text-2xl font-semibold tracking-tight text-slate-900">Rp {formatCurrency(grandTotalPengeluaran)}</h5>
+                        <h5 className="mb-2 text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">Rp {formatCurrency(grandTotalPengeluaran)}</h5>
                         <p className="mb-3 text-sm text-slate-600">
                             Termasuk biaya operasional & umum
                         </p>
