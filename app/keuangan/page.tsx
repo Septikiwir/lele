@@ -482,7 +482,7 @@ export default function KeuanganPage() {
 
                 {/* Section: Tabbed Transaction History */}
                 <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                         <div className="flex items-center gap-3">
                             <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center ${netProfit >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
                                 <Banknote className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -490,12 +490,12 @@ export default function KeuanganPage() {
                             <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Riwayat Transaksi</p>
                         </div>
 
-                        <div className="flex flex-wrap gap-3">
-                            <div className="inline-flex">
+                        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                            <div className="inline-flex bg-slate-100 sm:bg-transparent rounded-lg p-1 sm:p-0">
                                 <button
                                     onClick={() => setTransactionTab('penjualan')}
-                                    className={`px-4 py-2 text-slate-600 font-medium text-sm flex items-center gap-2 ${transactionTab === 'penjualan'
-                                        ? 'bg-emerald-50 text-emerald-700 shadow-sm border border-slate-200 rounded-lg'
+                                    className={`flex-1 sm:flex-none px-4 py-2 font-medium text-sm flex items-center justify-center gap-2 transition-all ${transactionTab === 'penjualan'
+                                        ? 'bg-white text-emerald-700 shadow-sm border-slate-200 rounded-md sm:bg-emerald-50 sm:text-emerald-700 sm:border sm:rounded-lg'
                                         : 'text-slate-500 hover:text-slate-800'
                                         }`}
                                 >
@@ -503,8 +503,8 @@ export default function KeuanganPage() {
                                 </button>
                                 <button
                                     onClick={() => setTransactionTab('pengeluaran')}
-                                    className={`px-4 py-2 text-slate-600 font-medium text-sm flex items-center gap-2 ${transactionTab === 'pengeluaran'
-                                        ? 'bg-red-50 text-red-700 shadow-sm border border-slate-200 rounded-lg'
+                                    className={`flex-1 sm:flex-none px-4 py-2 font-medium text-sm flex items-center justify-center gap-2 transition-all ${transactionTab === 'pengeluaran'
+                                        ? 'bg-white text-red-700 shadow-sm border-slate-200 rounded-md sm:bg-red-50 sm:text-red-700 sm:border sm:rounded-lg'
                                         : 'text-slate-500 hover:text-slate-800'
                                         }`}
                                 >
@@ -514,7 +514,7 @@ export default function KeuanganPage() {
                             <select
                                 value={transactionTab === 'penjualan' ? filterKolamPenjualan : filterKolamPengeluaran}
                                 onChange={(e) => transactionTab === 'penjualan' ? setFilterKolamPenjualan(e.target.value) : setFilterKolamPengeluaran(e.target.value)}
-                                className="bg-white border border-slate-200 text-xs rounded-lg px-2 py-1 focus:ring-0 focus:border-slate-300 w-[150px]"
+                                className="bg-white border border-slate-200 text-xs rounded-lg px-2 py-2 sm:py-1 focus:ring-0 focus:border-slate-300 w-full sm:w-[150px]"
                             >
                                 <option value="">Semua Kolam</option>
                                 {transactionTab === 'pengeluaran' && <option value="UMUM">Umum (Farm Level)</option>}
