@@ -1054,35 +1054,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }, [stokPakan]);
 
     const getTotalPengeluaranByKolam = useCallback((kolamId: string): number => {
-        // 1. Manual expenses
+        // Source of truth is now the pengeluaran table only
+        // Feed costs are automatically added to pengeluaran when feed is logged
         const specificExpenses = pengeluaran.filter(p => p.kolamId === kolamId);
-        const expenseTotal = specificExpenses.reduce((sum, p) => sum + p.jumlah, 0);
-
-        // 2. Feed Cost (Calculated)
-        const kolamPakan = pakan.filter(p => p.kolamId === kolamId);
-        const feedCost = kolamPakan.reduce((sum, p) => {
-            const price = getFeedPrice(p.jenisPakan);
-            return sum + (p.jumlahKg * price);
-        }, 0);
-
-        return expenseTotal + feedCost;
-    }, [pengeluaran, pakan, getFeedPrice]);
+        return specificExpenses.reduce((sum, p) => sum + p.jumlah, 0);
+    }, [pengeluaran]);
 
     const getTotalPengeluaranByKategori = useCallback((kolamId: string, kategori: KategoriPengeluaran): number => {
-        let total = pengeluaran
+        return pengeluaran
             .filter(p => p.kolamId === kolamId && p.kategori === kategori)
             .reduce((sum, p) => sum + p.jumlah, 0);
-
-        if (kategori === 'PAKAN') {
-            const kolamPakan = pakan.filter(p => p.kolamId === kolamId);
-            const feedCost = kolamPakan.reduce((sum, p) => {
-                const price = getFeedPrice(p.jenisPakan);
-                return sum + (p.jumlahKg * price);
-            }, 0);
-            total += feedCost;
-        }
-        return total;
-    }, [pengeluaran, pakan, getFeedPrice]);
+    }, [pengeluaran]);
 
     const getStokTersediaByJenis = (jenisPakan: string): number => {
         const totalStok = stokPakan

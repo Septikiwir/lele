@@ -99,7 +99,7 @@ export default function KeuanganPage() {
     const [pengeluaranFormData, setPengeluaranFormData] = useState({
         kolamId: '',
         tanggal: new Date().toISOString().split('T')[0],
-        kategori: 'BIBIT' as KategoriPengeluaran,
+        kategori: 'LAINNYA' as KategoriPengeluaran,
         keterangan: '',
         jumlah: '',
     });
@@ -180,7 +180,7 @@ export default function KeuanganPage() {
             setPengeluaranFormData({
                 kolamId: '',
                 tanggal: new Date().toISOString().split('T')[0],
-                kategori: 'BIBIT',
+                kategori: 'LAINNYA',
                 keterangan: '',
                 jumlah: '',
             });
@@ -795,21 +795,51 @@ export default function KeuanganPage() {
 
                     <div className="form-group">
                         <label className="form-label">Kategori</label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {kategoriOptions.map(k => (
-                                <button
-                                    key={k.value}
-                                    type="button"
-                                    onClick={() => setPengeluaranFormData({ ...pengeluaranFormData, kategori: k.value })}
-                                    className={`p-3 rounded-xl border-2 text-center transition-all ${pengeluaranFormData.kategori === k.value
-                                        ? 'border-teal-500 bg-teal-50'
-                                        : 'border-slate-200 hover:border-slate-300'
-                                        }`}
-                                >
-                                    <div className="mb-1 flex items-center justify-center">{k.icon}</div>
-                                    <div className="text-xs font-medium">{k.label}</div>
-                                </button>
-                            ))}
+                        <div className="grid grid-cols-2 gap-2">
+                            {kategoriOptions.filter(k => k.value !== 'BIBIT' && k.value !== 'PAKAN').map(k => {
+                                const isSelected = pengeluaranFormData.kategori === k.value;
+                                let activeClass = '';
+                                let iconColor = '';
+
+                                switch (k.value) {
+                                    case 'OBAT':
+                                        activeClass = 'border-purple-500 bg-purple-50 text-purple-700';
+                                        iconColor = 'text-purple-600';
+                                        break;
+                                    case 'LISTRIK':
+                                        activeClass = 'border-blue-500 bg-blue-50 text-blue-700';
+                                        iconColor = 'text-blue-600';
+                                        break;
+                                    case 'TENAGA_KERJA':
+                                        activeClass = 'border-emerald-500 bg-emerald-50 text-emerald-700';
+                                        iconColor = 'text-emerald-600';
+                                        break;
+                                    case 'LAINNYA':
+                                        activeClass = 'border-slate-500 bg-slate-50 text-slate-700';
+                                        iconColor = 'text-slate-600';
+                                        break;
+                                    default:
+                                        activeClass = 'border-teal-500 bg-teal-50 text-teal-700';
+                                        iconColor = 'text-teal-600';
+                                }
+
+                                return (
+                                    <button
+                                        key={k.value}
+                                        type="button"
+                                        onClick={() => setPengeluaranFormData({ ...pengeluaranFormData, kategori: k.value })}
+                                        className={`p-3 rounded-xl border-2 text-center transition-all ${isSelected
+                                            ? activeClass
+                                            : 'border-slate-200 hover:border-slate-300 bg-white text-slate-500'
+                                            }`}
+                                    >
+                                        <div className={`mb-1 flex items-center justify-center ${isSelected ? iconColor : 'text-slate-400'}`}>
+                                            {k.icon}
+                                        </div>
+                                        <div className="text-xs font-medium">{k.label}</div>
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
 
