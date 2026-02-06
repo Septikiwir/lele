@@ -384,16 +384,19 @@ export default function KeuanganPage() {
                     </div>
 
                     {/* Profit & Buyer Grid */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Section: Profit Per Kolam */}
-                        <div className="lg:col-span-2">
-                            <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                        {/* LEFT COLUMN */}
+                        <div className="lg:col-span-2 h-full">
+                            <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden h-full">
                                 <div className="flex items-center gap-3 mb-4">
                                     <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
                                         <Banknote className="w-6 h-6" />
                                     </div>
-                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Profitabilitas Kolam</p>
+                                    <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                        Profitabilitas Kolam
+                                    </p>
                                 </div>
+
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     {sortedKolamProfit.map(k => {
                                         const pendapatan = getTotalPenjualanByKolam(k.id);
@@ -402,10 +405,18 @@ export default function KeuanganPage() {
                                         const isProfit = profit >= 0;
 
                                         return (
-                                            <div key={k.id} className="p-4 rounded-lg border border-slate-200 bg-white relative group">
+                                            <div
+                                                key={k.id}
+                                                className="p-4 rounded-lg border border-slate-200 bg-white"
+                                            >
                                                 <div className="flex justify-between items-start mb-3">
                                                     <h4 className="font-bold text-slate-900">{k.nama}</h4>
-                                                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${isProfit ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                                                    <span
+                                                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${isProfit
+                                                            ? 'bg-emerald-100 text-emerald-700'
+                                                            : 'bg-red-100 text-red-700'
+                                                            }`}
+                                                    >
                                                         {isProfit ? 'Profit' : 'Rugi'}
                                                     </span>
                                                 </div>
@@ -413,15 +424,22 @@ export default function KeuanganPage() {
                                                 <div className="space-y-2 text-sm">
                                                     <div className="flex justify-between">
                                                         <span className="text-slate-500">Pendapatan</span>
-                                                        <span className="font-medium text-emerald-600">+Rp {pendapatan.toLocaleString('id-ID')}</span>
+                                                        <span className="font-medium text-emerald-600">
+                                                            +Rp {pendapatan.toLocaleString('id-ID')}
+                                                        </span>
                                                     </div>
                                                     <div className="flex justify-between">
                                                         <span className="text-slate-500">Pengeluaran</span>
-                                                        <span className="font-medium text-red-600">-Rp {pengeluaranTotal.toLocaleString('id-ID')}</span>
+                                                        <span className="font-medium text-red-600">
+                                                            -Rp {pengeluaranTotal.toLocaleString('id-ID')}
+                                                        </span>
                                                     </div>
-                                                    <div className="pt-2 border-t border-slate-50 flex justify-between items-center">
+                                                    <div className="pt-2 border-t border-slate-50 flex justify-between">
                                                         <span className="font-semibold text-slate-700">Net</span>
-                                                        <span className={`font-bold ${isProfit ? 'text-slate-900' : 'text-red-600'}`}>
+                                                        <span
+                                                            className={`font-bold ${isProfit ? 'text-slate-900' : 'text-red-600'
+                                                                }`}
+                                                        >
                                                             Rp {Math.abs(profit).toLocaleString('id-ID')}
                                                         </span>
                                                     </div>
@@ -433,31 +451,50 @@ export default function KeuanganPage() {
                             </div>
                         </div>
 
-                        {/* RIGHT COLUMN - Buyers */}
-                        <div>
-                            <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-200">
+                        {/* RIGHT COLUMN */}
+                        <div className="h-full">
+                            <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm
+                    h-full flex flex-col">
+                                {/* Header */}
                                 <div className="flex items-center justify-between mb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center ${netProfit >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
-                                            <Banknote className="w-5 h-5 sm:w-6 sm:h-6" />
+                                        <div
+                                            className={`w-12 h-12 rounded-xl flex items-center justify-center ${netProfit >= 0
+                                                ? 'bg-emerald-50 text-emerald-600'
+                                                : 'bg-red-50 text-red-600'
+                                                }`}
+                                        >
+                                            <Banknote className="w-6 h-6" />
                                         </div>
-                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Daftar Pembeli</p>
+                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                            Daftar Pembeli
+                                        </p>
                                     </div>
+
                                     <button
                                         onClick={() => setShowPembeliForm(true)}
-                                        className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 font-medium text-sm hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-2"
+                                        className="px-4 py-2 bg-white border border-slate-200 rounded-lg
+                     text-slate-600 font-medium text-sm hover:bg-slate-50"
                                     >
-                                        <Plus className="w-4 h-4" /> Pembeli
+                                        <Plus className="w-4 h-4 inline" /> Pembeli
                                     </button>
                                 </div>
-                                <div className="grid grid-cols-1 gap-4 max-h-[300px] overflow-y-auto">
+
+                                {/* List (scroll) */}
+                                <div className="flex flex-col gap-4 overflow-y-auto flex-1 min-h-0">
                                     {pembeli.length === 0 ? (
-                                        <div className="p-6 text-center text-slate-400">Belum ada pembeli.</div>
+                                        <div className="p-6 text-center text-slate-400">
+                                            Belum ada pembeli.
+                                        </div>
                                     ) : (
                                         pembeli.map(p => {
                                             const tipe = tipePembeliOptions.find(t => t.value === p.tipe);
                                             return (
-                                                <div key={p.id} className="p-4 rounded-lg border transition-all bg-white border-slate-200 flex items-center justify-between hover:bg-slate-50 group">
+                                                <div
+                                                    key={p.id}
+                                                    className="p-4 rounded-lg border border-slate-200 bg-white
+                           flex items-center justify-between hover:bg-slate-50"
+                                                >
                                                     <div>
                                                         <h4 className="font-medium text-slate-900 text-sm">{p.nama}</h4>
                                                         <div className="flex items-center gap-2 mt-1">
@@ -467,7 +504,13 @@ export default function KeuanganPage() {
                                                             {p.kontak && <span className="text-xs text-slate-400">• {p.kontak}</span>}
                                                         </div>
                                                     </div>
-                                                    <button onClick={() => setDeleteModal({ type: 'pembeli', id: p.id })} className="text-slate-300 hover:text-red-500 opacity-50 group-hover:opacity-100 transition-all px-2">
+
+                                                    <button
+                                                        onClick={() =>
+                                                            setDeleteModal({ type: 'pembeli', id: p.id })
+                                                        }
+                                                        className="text-slate-300 hover:text-red-500"
+                                                    >
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
@@ -478,6 +521,7 @@ export default function KeuanganPage() {
                             </div>
                         </div>
                     </div>
+
                 </div>
 
                 {/* Section: Tabbed Transaction History */}
@@ -494,7 +538,7 @@ export default function KeuanganPage() {
                             <div className="inline-flex bg-slate-100 sm:bg-transparent rounded-lg p-1 sm:p-0">
                                 <button
                                     onClick={() => setTransactionTab('penjualan')}
-                                    className={`flex-1 sm:flex-none px-4 py-2 font-medium text-sm flex items-center justify-center gap-2 transition-all ${transactionTab === 'penjualan'
+                                    className={`flex-1 sm:flex-none px-4 py-2 font-medium text-sm flex items-center justify-center gap-2${transactionTab === 'penjualan'
                                         ? 'bg-white text-emerald-700 shadow-sm border-slate-200 rounded-md sm:bg-emerald-50 sm:text-emerald-700 sm:border sm:rounded-lg'
                                         : 'text-slate-500 hover:text-slate-800'
                                         }`}
@@ -503,7 +547,7 @@ export default function KeuanganPage() {
                                 </button>
                                 <button
                                     onClick={() => setTransactionTab('pengeluaran')}
-                                    className={`flex-1 sm:flex-none px-4 py-2 font-medium text-sm flex items-center justify-center gap-2 transition-all ${transactionTab === 'pengeluaran'
+                                    className={`flex-1 sm:flex-none px-4 py-2 font-medium text-sm flex items-center justify-center gap-2${transactionTab === 'pengeluaran'
                                         ? 'bg-white text-red-700 shadow-sm border-slate-200 rounded-md sm:bg-red-50 sm:text-red-700 sm:border sm:rounded-lg'
                                         : 'text-slate-500 hover:text-slate-800'
                                         }`}
@@ -531,23 +575,17 @@ export default function KeuanganPage() {
                             <table className="table">
                                 <thead>
                                     <tr>
-                                        <th scope="col" className="p-4">
-                                            <div className="flex items-center">
-                                                <input id="keu-penjualan-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
-                                                <label htmlFor="keu-penjualan-checkbox-header" className="sr-only">Select all</label>
-                                            </div>
-                                        </th>
-                                        <th>Tanggal</th>
-                                        <th>Kolam</th>
-                                        <th>Pembeli</th>
-                                        <th className="text-right">Nilai</th>
-                                        <th className="text-right">Aksi</th>
+                                        <th className="pl-6 text-left w-[15%]">Tanggal</th>
+                                        <th className="text-left w-[20%]">Kolam</th>
+                                        <th className="text-left w-[30%]">Pembeli</th>
+                                        <th className="text-right w-[20%]">Nilai</th>
+                                        <th className="pr-6 text-right w-[15%]">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filteredPenjualan.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="table-empty">
+                                            <td colSpan={5} className="table-empty text-center py-8 text-slate-500">
                                                 Belum ada data penjualan.
                                             </td>
                                         </tr>
@@ -558,13 +596,7 @@ export default function KeuanganPage() {
                                             const total = p.beratKg * p.hargaPerKg;
                                             return (
                                                 <tr key={p.id}>
-                                                    <td className="w-4 p-4">
-                                                        <div className="flex items-center">
-                                                            <input id={`keu-penjualan-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
-                                                            <label htmlFor={`keu-penjualan-checkbox-${p.id}`} className="sr-only">Checkbox</label>
-                                                        </div>
-                                                    </td>
-                                                    <td className="text-body">{p.tanggal}</td>
+                                                    <td className="text-body pl-6">{p.tanggal}</td>
                                                     <td className="font-medium text-heading">{k?.nama}</td>
                                                     <td className="text-body">{buyer?.nama || '-'}</td>
                                                     <td className="text-right font-medium text-emerald-600">
@@ -573,7 +605,7 @@ export default function KeuanganPage() {
                                                             {p.beratKg} kg @ {p.hargaPerKg.toLocaleString('id-ID')}
                                                         </div>
                                                     </td>
-                                                    <td className="text-right">
+                                                    <td className="text-right pr-6">
                                                         <button onClick={() => setDeleteModal({ type: 'penjualan', id: p.id })} className="text-slate-300 hover:text-red-500 transition-colors">
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
@@ -593,23 +625,17 @@ export default function KeuanganPage() {
                             <table className="table">
                                 <thead>
                                     <tr>
-                                        <th scope="col" className="p-4">
-                                            <div className="flex items-center">
-                                                <input id="keu-pengeluaran-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
-                                                <label htmlFor="keu-pengeluaran-checkbox-header" className="sr-only">Select all</label>
-                                            </div>
-                                        </th>
-                                        <th>Tanggal</th>
-                                        <th>Kategori</th>
-                                        <th>Detail</th>
-                                        <th className="text-right">Jumlah</th>
-                                        <th className="text-right">Aksi</th>
+                                        <th className="pl-6 text-left w-[15%]">Tanggal</th>
+                                        <th className="text-left w-[20%]">Kategori</th>
+                                        <th className="text-left w-[30%]">Detail</th>
+                                        <th className="text-right w-[20%]">Jumlah</th>
+                                        <th className="pr-6 text-right w-[15%]">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {filteredPengeluaran.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="table-empty">
+                                            <td colSpan={5} className="table-empty text-center py-8 text-slate-500">
                                                 Belum ada data pengeluaran.
                                             </td>
                                         </tr>
@@ -618,15 +644,9 @@ export default function KeuanganPage() {
                                             const cat = kategoriOptions.find(c => c.value === p.kategori);
                                             return (
                                                 <tr key={p.id}>
-                                                    <td className="w-4 p-4">
-                                                        <div className="flex items-center">
-                                                            <input id={`keu-pengeluaran-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
-                                                            <label htmlFor={`keu-pengeluaran-checkbox-${p.id}`} className="sr-only">Checkbox</label>
-                                                        </div>
-                                                    </td>
-                                                    <td className="text-body">{p.tanggal}</td>
+                                                    <td className="text-body pl-6">{p.tanggal}</td>
                                                     <td>
-                                                        <span className={`badge ${kategoriColors[p.kategori]} flex items-center gap-1.5`}>
+                                                        <span className={`badge ${kategoriColors[p.kategori]} flex flex-row items-center gap-1.5 w-fit whitespace-nowrap [&>svg]:w-3.5 [&>svg]:h-3.5`}>
                                                             {cat?.icon} {cat?.label}
                                                         </span>
                                                     </td>
@@ -637,7 +657,7 @@ export default function KeuanganPage() {
                                                     <td className="text-right font-medium text-red-600">
                                                         Rp {p.jumlah.toLocaleString('id-ID')}
                                                     </td>
-                                                    <td className="text-right">
+                                                    <td className="text-right pr-6">
                                                         <button onClick={() => setDeleteModal({ type: 'pengeluaran', id: p.id })} className="text-slate-300 hover:text-red-500 transition-colors">
                                                             <Trash2 className="w-4 h-4" />
                                                         </button>
