@@ -6,6 +6,8 @@ import { AppProvider } from "./context/AppContext";
 import { FarmProvider } from "./context/FarmContext";
 import { AuthProvider } from "./context/AuthContext";
 import NextAuthProvider from "./providers/AuthProvider";
+import ServiceWorkerRegistration from "./components/ServiceWorkerRegistration";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,17 +46,20 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <NextAuthProvider>
-          <AuthProvider>
-            <FarmProvider>
-              <ToastProvider>
-                <AppProvider>
-                  {children}
-                </AppProvider>
-              </ToastProvider>
-            </FarmProvider>
-          </AuthProvider>
-        </NextAuthProvider>
+        <ServiceWorkerRegistration />
+        <ErrorBoundary>
+          <NextAuthProvider>
+            <AuthProvider>
+              <FarmProvider>
+                <ToastProvider>
+                  <AppProvider>
+                    {children}
+                  </AppProvider>
+                </ToastProvider>
+              </FarmProvider>
+            </AuthProvider>
+          </NextAuthProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Fish } from 'lucide-react';
+import { Fish, WifiOff } from 'lucide-react';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -12,6 +12,23 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isOnline, setIsOnline] = useState(true);
+
+    useEffect(() => {
+        // Check online status
+        setIsOnline(navigator.onLine);
+
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -27,12 +44,15 @@ export default function LoginPage() {
 
             if (result?.error) {
                 setError('Email atau password salah');
-            } else {
+            } else if (result?.ok) {
                 router.push('/dashboard');
                 router.refresh();
+            } else {
+                setError('Terjadi kesalahan saat login');
             }
-        } catch {
-            setError('Terjadi kesalahan saat login');
+        } catch (err) {
+            console.error('Login error:', err);
+            setError('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
         } finally {
             setLoading(false);
         }
@@ -41,6 +61,19 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-teal-50 to-cyan-100 flex items-center justify-center p-4">
             <div className="w-full max-w-md">
+                {/* Offline Warning */}
+                {!isOnline && (
+                    <div className="mb-4 p-4 bg-orange-50 border border-orange-200 rounded-lg flex items-center gap-3">
+                        <WifiOff className="w-5 h-5 text-orange-600 flex-shrink-0" />
+                        <div>
+                            <p className="text-sm font-medium text-orange-900">Anda Sedang Offline</p>
+                            <p className="text-xs text-orange-700 mt-1">
+                                Login memerlukan koneksi internet. Jika sudah login sebelumnya, data Anda tersimpan.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
                 {/* Logo */}
                 <div className="text-center mb-6 sm:mb-8">
                     <div className="inline-flex items-center gap-3 mb-2">

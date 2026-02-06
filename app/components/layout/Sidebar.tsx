@@ -39,9 +39,17 @@ const navigationGroups = [
     ]
   },
   {
+    title: 'Transaksi',
+    items: [
+      { name: 'Penjualan', href: '/penjualan', icon: DollarSign },
+      { name: 'Pengeluaran', href: '/pengeluaran', icon: CreditCard }
+    ]
+  },
+  {
     title: 'Keuangan',
     items: [
-      { name: 'Keuangan', href: '/keuangan', icon: Wallet }
+      { name: 'Keuangan', href: '/keuangan', icon: Wallet },
+      { name: 'Laporan', href: '/laporan', icon: FileText }
     ]
   }
 ];
@@ -68,16 +76,22 @@ export default function Sidebar({ isCollapsed = false, toggleCollapse, onPanenCl
   return (
     <>
       {/* Mobile Bottom Navigation - Visible below md */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 md:hidden pb-safe">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 md:hidden pb-safe shadow-lg">
         <div className="flex items-center justify-around h-16 px-2">
-          {/* 1. Home */}
-          <Link href="/" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname === '/' ? 'text-teal-600' : 'text-slate-400'}`}>
+          {/* 1. Dashboard */}
+          <Link 
+            href="/dashboard" 
+            className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${pathname === '/dashboard' ? 'text-teal-600' : 'text-slate-400 hover:text-slate-600'}`}
+          >
             <LayoutDashboard className="w-5 h-5" />
-            <span className="text-[10px] font-medium">Home</span>
+            <span className="text-[10px] font-medium">Dashboard</span>
           </Link>
 
           {/* 2. Kolam */}
-          <Link href="/kolam" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/kolam') ? 'text-teal-600' : 'text-slate-400'}`}>
+          <Link 
+            href="/kolam" 
+            className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${pathname.startsWith('/kolam') ? 'text-teal-600' : 'text-slate-400 hover:text-slate-600'}`}
+          >
             <Box className="w-5 h-5" />
             <span className="text-[10px] font-medium">Kolam</span>
           </Link>
@@ -86,14 +100,18 @@ export default function Sidebar({ isCollapsed = false, toggleCollapse, onPanenCl
           <div className="relative -top-5">
             <button
               onClick={onPanenClick}
-              className="flex items-center justify-center w-14 h-14 rounded-full bg-teal-600 text-white shadow-lg shadow-teal-500/40 hover:scale-105 transition-transform"
+              className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-500/40 hover:scale-105 active:scale-95 transition-transform"
+              aria-label="Input Panen"
             >
               <span className="text-2xl mb-1">+</span>
             </button>
           </div>
 
           {/* 4. Keuangan */}
-          <Link href="/keuangan" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${pathname.startsWith('/keuangan') ? 'text-teal-600' : 'text-slate-400'}`}>
+          <Link 
+            href="/keuangan" 
+            className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${pathname.startsWith('/keuangan') ? 'text-teal-600' : 'text-slate-400 hover:text-slate-600'}`}
+          >
             <Wallet className="w-5 h-5" />
             <span className="text-[10px] font-medium">Keuangan</span>
           </Link>
@@ -101,7 +119,8 @@ export default function Sidebar({ isCollapsed = false, toggleCollapse, onPanenCl
           {/* 5. Menu (Triggers Sidebar) */}
           <button
             onClick={() => setIsOpen(true)}
-            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${isOpen ? 'text-teal-600' : 'text-slate-400'}`}
+            className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isOpen ? 'text-teal-600' : 'text-slate-400 hover:text-slate-600'}`}
+            aria-label="Buka Menu"
           >
             <Menu className="w-5 h-5" />
             <span className="text-[10px] font-medium">Menu</span>

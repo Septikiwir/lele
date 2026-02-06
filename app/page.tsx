@@ -2,29 +2,41 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useAuth } from './context/AuthContext';
 
 export default function Home() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
-    if (status === 'loading') return; // Wait for session to load
-    
-    if (session) {
-      // User is logged in, redirect to dashboard
-      router.push('/dashboard');
-    } else {
-      // User is not logged in, redirect to login
-      router.push('/login');
+    // Quick redirect without waiting too long
+    const timeout = setTimeout(() => {
+      if (user) {
+        router.push('/dashboard');
+      } else {
+        router.push('/login');
+      }
+    }, 100);
+
+    return () => clearTimeout(timeout);
+  }, [user, router]);
+
+  // Don't wait for isLoading - just redirect quickly
+  useEffect(() => {
+    if (!isLoading) {
+      if (user) {
+        router.push('/dashboard');
+      } else {
+        router.push('/login');
+      }
     }
-  }, [session, status, router]);
+  }, [isLoading, user, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50">
       <div className="flex flex-col items-center gap-4">
         <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-slate-500">Loading...</p>
+        <p className="text-slate-500">Redirecting...</p>
       </div>
     </div>
   );

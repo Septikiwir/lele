@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useToast } from './ToastContext';
+import { cacheManager } from '@/lib/offline-db';
 
 // Types
 export interface Kolam {
@@ -288,6 +289,24 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+// Helper: Fetch with timeout
+async function fetchWithTimeout(url: string, timeout = 5000) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        return response;
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if ((error as Error).name === 'AbortError') {
+            console.warn(`Request to ${url} timed out after ${timeout}ms`);
+        }
+        throw error;
+    }
+}
+
 // Helper to map DB status to local status
 function mapStatus(status: string): 'aman' | 'waspada' | 'berisiko' {
     const s = status?.toLowerCase();
@@ -351,7 +370,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
 
         try {
-            const res = await fetch('/api/farms');
+            const res = await fetchWithTimeout('/api/farms', 3000);
             if (res.ok) {
                 const farms = await res.json();
                 if (farms.length > 0) {
@@ -360,6 +379,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
             }
         } catch (error) {
             console.error('Failed to fetch farms:', error);
+            // If offline or timeout, try to use last known farm from localStorage
+            if (typeof window !== 'undefined') {
+                const lastFarmId = localStorage.getItem('last_farm_id');
+                if (lastFarmId) {
+                    setActiveFarmId(lastFarmId);
+                }
+            }
         }
     }, [isAuthenticated]);
 
@@ -371,26 +397,139 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
 
         setIsLoading(true);
+        
+        // Try to load from cache first (instant UI)
         try {
-            const kolamRes = await fetch(`/api/farms/${activeFarmId}/kolam`);
+            const cachedKolam = await cacheManager.getKolam(activeFarmId);
+            if (cachedKolam.length > 0) {
+                setKolam(cachedKolam.map(k => ({
+                    id: k.id,
+                    nama: k.nama,
+                    panjang: k.panjang,
+                    lebar: k.lebar,
+                    kedalaman: k.kedalaman,
+                    tanggalTebar: k.tanggalTebar,
+                    jumlahIkan: k.jumlahIkan,
+                    status: k.statusAktif ? 'aman' : 'berisiko',
+                    position: undefined
+                })));
+                setIsLoading(false);
+            }
+        } catch (error) {
+            console.error('Failed to load cached kolam:', error);
+        }
+
+        // Then fetch from network to update (with timeout)
+        try {
+            const kolamRes = await fetchWithTimeout(`/api/farms/${activeFarmId}/kolam`, 5000);
             if (kolamRes.ok) {
                 const data = await kolamRes.json();
                 setKolam(data.map(mapKolam));
+                // Cache the fresh data
+                await cacheManager.cacheKolam(activeFarmId, data);
+                // Save farmId for offline use
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem('last_farm_id', activeFarmId);
+                }
             }
         } catch (error) {
             console.error('Failed to fetch critical data:', error);
+            // If network fails but we have cache, that's okay
         } finally {
             // Critical data loaded, unblock UI immediately
             setIsLoading(false);
-            // Trigger secondary fetch in background
-            fetchSecondaryData();
         }
     }, [activeFarmId]);
 
-    // Fetch secondary data in background
+
+    // Fetch secondary data in background (non-blocking)
     const fetchSecondaryData = useCallback(async () => {
         if (!activeFarmId) return;
 
+        // Load from cache first for instant display (non-blocking)
+        Promise.all([
+            cacheManager.getPakan(activeFarmId),
+            cacheManager.getStokPakan(activeFarmId),
+            cacheManager.getKondisiAir(activeFarmId),
+            cacheManager.getPengeluaran(activeFarmId),
+            cacheManager.getPenjualan(activeFarmId),
+            cacheManager.getSampling(activeFarmId)
+        ]).then(([
+            cachedPakan,
+            cachedStokPakan,
+            cachedKondisiAir,
+            cachedPengeluaran,
+            cachedPenjualan,
+            cachedSampling
+        ]) => {
+            if (cachedPakan.length > 0) {
+                setPakan(cachedPakan.map(p => ({
+                    id: p.id,
+                    kolamId: p.kolamId,
+                    tanggal: p.tanggal.split('T')[0],
+                    jumlahKg: p.jumlah,
+                    jenisPakan: p.jenisPakan
+                })));
+            }
+            if (cachedStokPakan.length > 0) {
+                setStokPakan(cachedStokPakan.map(s => ({
+                    id: s.id,
+                    jenisPakan: s.jenisPakan,
+                    stokAwal: s.jumlahKg,
+                    hargaPerKg: s.hargaPerKg,
+                    tanggalTambah: s.tanggalBeli.split('T')[0],
+                    keterangan: undefined
+                })));
+            }
+            if (cachedKondisiAir.length > 0) {
+                setKondisiAir(cachedKondisiAir.map(k => ({
+                    id: k.id,
+                    kolamId: k.kolamId,
+                    tanggal: k.tanggal.split('T')[0],
+                    warna: '',
+                    bau: '',
+                    ketinggian: 0,
+                    ph: k.ph,
+                    suhu: k.suhu
+                })));
+            }
+            if (cachedPengeluaran.length > 0) {
+                setPengeluaran(cachedPengeluaran.map(p => ({
+                    id: p.id,
+                    kolamId: null,
+                    tanggal: p.tanggal.split('T')[0],
+                    kategori: p.kategori as KategoriPengeluaran,
+                    keterangan: p.deskripsi,
+                    jumlah: p.jumlah
+                })));
+            }
+            if (cachedPenjualan.length > 0) {
+                setPenjualan(cachedPenjualan.map(p => ({
+                    id: p.id,
+                    kolamId: '',
+                    pembeliId: '',
+                    tanggal: p.tanggal.split('T')[0],
+                    beratKg: p.beratTotal,
+                    hargaPerKg: p.hargaPerKg,
+                    jumlahIkan: undefined,
+                    keterangan: undefined
+                })));
+            }
+            if (cachedSampling.length > 0) {
+                setRiwayatSampling(cachedSampling.map(s => ({
+                    id: s.id,
+                    kolamId: s.kolamId,
+                    tanggal: s.tanggal,
+                    jumlahIkanPerKg: s.beratRataRata > 0 ? 1000 / s.beratRataRata : 0,
+                    bobotGram: s.beratRataRata,
+                    catatan: undefined
+                })));
+            }
+        }).catch(error => {
+            console.error('Failed to load cached data:', error);
+        });
+
+        // Then fetch fresh data from network
         try {
             const [
                 pakanRes,
@@ -422,6 +561,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     ...p,
                     tanggal: (p.tanggal as string).split('T')[0]
                 })));
+                await cacheManager.cachePakan(activeFarmId, data);
             }
             if (stokPakanRes.ok) {
                 const data = await stokPakanRes.json();
@@ -429,6 +569,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     ...s,
                     tanggalTambah: (s.tanggalTambah as string).split('T')[0]
                 })));
+                await cacheManager.cacheStokPakan(activeFarmId, data);
             }
             if (kondisiAirRes.ok) {
                 const data = await kondisiAirRes.json();
@@ -436,6 +577,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     ...k,
                     tanggal: (k.tanggal as string).split('T')[0]
                 })));
+                await cacheManager.cacheKondisiAir(activeFarmId, data);
             }
             if (pengeluaranRes.ok) {
                 const data = await pengeluaranRes.json();
@@ -444,6 +586,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     tanggal: (p.tanggal as string).split('T')[0],
                     kategori: p.kategori
                 })));
+                await cacheManager.cachePengeluaran(activeFarmId, data);
             }
             if (pembeliRes.ok) {
                 const data = await pembeliRes.json();
@@ -455,6 +598,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     ...p,
                     tanggal: (p.tanggal as string).split('T')[0]
                 })));
+                await cacheManager.cachePenjualan(activeFarmId, data);
             }
             if (jadwalRes.ok) {
                 const data = await jadwalRes.json();
@@ -481,6 +625,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     ...s,
                     tanggal: new Date(s.tanggal).toISOString()
                 })));
+                await cacheManager.cacheSampling(activeFarmId, data);
             }
         } catch (error) {
             console.error('Failed to fetch secondary data:', error);
@@ -513,8 +658,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         fetchCriticalData();
     }, [fetchCriticalData]);
 
+    // Fetch secondary data in background (non-blocking)
+    useEffect(() => {
+        if (!isLoading && activeFarmId) {
+            // Don't await - let it run in background
+            fetchSecondaryData();
+        }
+    }, [isLoading, activeFarmId, fetchSecondaryData]);
+
     const refreshData = async () => {
         await fetchCriticalData();
+        await fetchSecondaryData();
     };
 
     // === CRUD Operations ===
