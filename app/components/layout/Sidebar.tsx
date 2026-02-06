@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { 
+import { useApp } from '../../context/AppContext';
+import {
   LayoutDashboard,
   Box,
   Map,
@@ -20,9 +21,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Fish,
-  Wallet,
   User,
-  Shield
+  Shield,
+  Users,
+  Wallet,
+  Calculator
 } from 'lucide-react';
 
 const navigationGroups = [
@@ -42,7 +45,8 @@ const navigationGroups = [
   {
     title: 'Keuangan',
     items: [
-      { name: 'Keuangan', href: '/keuangan', icon: Wallet }
+      { name: 'Keuangan', href: '/keuangan', icon: Wallet },
+      { name: 'Simulasi', href: '/simulasi-keuangan', icon: Calculator }
     ]
   }
 ];
@@ -57,9 +61,23 @@ export default function Sidebar({ isCollapsed = false, toggleCollapse, onPanenCl
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const { user, logout } = useAuth();
+  const { activeFarmId } = useApp();
+
+  // Dynamic Navigation Groups
+  const dynamicGroups = [...navigationGroups];
+
+  // Add Manajemen group for Owners/Admins if farm is active
+  if (activeFarmId && user && ['OWNER', 'ADMIN', 'SUPERADMIN', 'owner', 'admin'].includes(user.role)) {
+    dynamicGroups.push({
+      title: 'Manajemen',
+      items: [
+        { name: 'Anggota', href: '/anggota', icon: Users }
+      ]
+    });
+  }
 
   // Role-based filtering
-  const filteredGroups = navigationGroups.filter(group => {
+  const filteredGroups = dynamicGroups.filter(group => {
     if (user?.role === 'operator') {
       return group.title !== 'Keuangan';
     }

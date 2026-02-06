@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
+import bcrypt from 'bcryptjs'
 
 export async function GET(
   req: NextRequest,
@@ -83,75 +84,76 @@ export async function POST(
     }
 
     const body = await req.json()
-    const { email, role } = body
+    const { name, email, password, role } = body
 
-    if (!email || !role) {
+    if (!name || !email || !password || !role) {
       return NextResponse.json(
-        { error: 'Email dan role harus diisi' },
+        { error: 'Nama, Email, Password, dan Role harus diisi' },
         { status: 400 }
       )
     }
 
     // Validate role
-    if (!['OWNER', 'ADMIN', 'OPERATOR', 'VIEWER'].includes(role)) {
+    if (role !== 'OPERATOR') {
       return NextResponse.json(
-        { error: 'Role tidak valid' },
+        { error: 'Hanya role OPERATOR yang dapat ditambahkan' },
         { status: 400 }
       )
     }
 
-    // Find user by email
-    const user = await prisma.user.findUnique({
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
       where: { email }
     })
 
-    if (!user) {
+    if (existingUser) {
       return NextResponse.json(
-        { error: 'User dengan email ini tidak ditemukan' },
-        { status: 404 }
-      )
-    }
-
-    // Check if already member
-    const existing = await prisma.farmMember.findUnique({
-      where: {
-        userId_farmId: {
-          userId: user.id,
-          farmId: farmId
-        }
-      }
-    })
-
-    if (existing) {
-      return NextResponse.json(
-        { error: 'User sudah menjadi anggota farm ini' },
+        { error: 'Email sudah terdaftar di sistem. Gunakan email lain.' },
         { status: 400 }
       )
     }
 
-    // Add member
-    const member = await prisma.farmMember.create({
-      data: {
-        userId: user.id,
-        farmId: farmId,
-        role
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    // Transaction: Create User + Add to FarmMember
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Create User
+      const newUser = await tx.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          role: 'OPERATOR', // Global role
+        }
+      })
+
+      // 2. Add to FarmMember
+      const newMember = await tx.farmMember.create({
+        data: {
+          userId: newUser.id,
+          farmId: farmId,
+          role: 'OPERATOR' // Farm role
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
           }
         }
-      }
+      })
+
+      return newMember
     })
 
-    return NextResponse.json(member, { status: 201 })
+    return NextResponse.json(result, { status: 201 })
   } catch (error) {
-    console.error('Error adding member:', error)
+    console.error('Error creating operator:', error)
     return NextResponse.json(
-      { error: 'Failed to add member' },
+      { error: 'Failed to create operator account' },
       { status: 500 }
     )
   }
