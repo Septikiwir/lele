@@ -83,6 +83,7 @@ model Farm {
   alamat    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  modalAwal Float    @default(0)
 
   // Owner (User who created the farm)
   ownerId String

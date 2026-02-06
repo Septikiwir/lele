@@ -72,6 +72,18 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
             }
         }
 
+        // Validasi berat dan jumlah tidak boleh negatif atau nol
+        const beratTotal = Number(panenForm.beratTotalKg);
+        const jumlahEkor = Number(panenForm.jumlahEkor);
+        if (beratTotal <= 0) {
+            showToast('Berat total harus lebih dari 0 kg', 'error');
+            return;
+        }
+        if (jumlahEkor <= 0) {
+            showToast('Jumlah ekor harus lebih dari 0', 'error');
+            return;
+        }
+
         // Combine selected date with CURRENT time
         const now = new Date();
         const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS
@@ -201,7 +213,7 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
                             <button
                                 type="button"
                                 onClick={() => setIsBuyerModalOpen(true)}
-                                className="btn btn-secondary px-3"
+                                className="btn btn-secondary px-2 sm:px-3 flex-shrink-0"
                                 title="Tambah Pembeli Baru"
                             >
                                 <Plus className="w-4 h-4" />
@@ -249,6 +261,7 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
                             <input
                                 type="number"
                                 step="0.1"
+                                min="0.1"
                                 className="input w-full"
                                 required
                                 placeholder="0"
@@ -278,6 +291,7 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
                             <label className="form-label">Jlh Ekor</label>
                             <input
                                 type="number"
+                                min="1"
                                 className="input w-full"
                                 placeholder="0"
                                 value={panenForm.jumlahEkor}

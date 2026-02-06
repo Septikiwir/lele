@@ -46,6 +46,7 @@ const navigationGroups = [
     title: 'Keuangan',
     items: [
       { name: 'Keuangan', href: '/keuangan', icon: Wallet },
+      { name: 'Arus Kas', href: '/arus-kas', icon: FileText },
       { name: 'Simulasi', href: '/simulasi-keuangan', icon: Calculator }
     ]
   }

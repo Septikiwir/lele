@@ -1,5 +1,5 @@
 import { auth } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
+import prisma from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
@@ -48,7 +48,9 @@ export async function PUT(
 ) {
   try {
     const { farmId } = await params
+    console.log('[API] PUT Farm:', farmId);
     const session = await auth()
+    console.log('[API] Session:', session?.user?.id);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -67,28 +69,39 @@ export async function PUT(
     }
 
     const body = await req.json()
-    const { nama, alamat } = body
+    console.log('[API] Update Body:', body);
+    const { nama, alamat, modalAwal } = body
 
-    if (!nama || !nama.trim()) {
-      return NextResponse.json(
-        { error: 'Nama peternakan harus diisi' },
-        { status: 400 }
-      )
+    const data: any = {}
+
+    if (nama !== undefined) {
+      if (!nama || !nama.trim()) {
+        return NextResponse.json(
+          { error: 'Nama peternakan harus diisi' },
+          { status: 400 }
+        )
+      }
+      data.nama = nama.trim()
+    }
+
+    if (alamat !== undefined) {
+      data.alamat = alamat?.trim() || null
+    }
+
+    if (modalAwal !== undefined) {
+      data.modalAwal = Number(modalAwal)
     }
 
     const updated = await prisma.farm.update({
       where: { id: farmId },
-      data: {
-        nama: nama.trim(),
-        alamat: alamat?.trim() || null
-      }
+      data
     })
 
     return NextResponse.json(updated)
   } catch (error) {
     console.error('Error updating farm:', error)
     return NextResponse.json(
-      { error: 'Failed to update farm' },
+      { error: error instanceof Error ? error.message : 'Failed to update farm', details: String(error) },
       { status: 500 }
     )
   }

@@ -1,11 +1,12 @@
 'use client';
 
 import DashboardLayout from '../components/layout/DashboardLayout';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp, TipePembeli, KategoriPengeluaran } from '../context/AppContext';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
+import { useToast } from '../context/ToastContext';
 
-import { Plus, Trash2, Loader2, Banknote, Fish, Container, Pill, Zap, Users, Package, TrendingUp, Truck, Store, Utensils, PieChart } from 'lucide-react';
+import { Plus, Trash2, Loader2, Banknote, Fish, Container, Pill, Zap, Users, Package, TrendingUp, Truck, Store, Utensils, PieChart, Wallet, Pencil, Check, X } from 'lucide-react';
 
 import Modal from '../components/ui/Modal';
 import EmptyState from '../components/ui/EmptyState';
@@ -59,11 +60,23 @@ export default function KeuanganPage() {
         addPenjualan, deletePenjualan,
         addPengeluaran, deletePengeluaran,
         getTotalPenjualan, getTotalPenjualanByKolam, getProfitByKolam,
-        getTotalPengeluaranByKolam, getTotalPengeluaranByKategori
+        getTotalPengeluaranByKolam, getTotalPengeluaranByKategori,
+        farm, updateFarm
     } = useApp();
+    const { showToast } = useToast();
 
     // Transaction tab state
+    const [modalAwal, setModalAwal] = useState<number>(0);
+    const [isEditingModal, setIsEditingModal] = useState(false);
+    const [tempModal, setTempModal] = useState<number>(0);
     const [transactionTab, setTransactionTab] = useState<'penjualan' | 'pengeluaran'>('penjualan');
+
+    // Sync modalAwal from farm data
+    useEffect(() => {
+        if (farm?.modalAwal !== undefined) {
+            setModalAwal(farm.modalAwal);
+        }
+    }, [farm]);
 
     // Penjualan state
     const [showPenjualanForm, setShowPenjualanForm] = useState(false);
@@ -162,14 +175,14 @@ export default function KeuanganPage() {
         }
     };
 
-    const handlePengeluaranSubmit = (e: React.FormEvent) => {
+    const handlePengeluaranSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!pengeluaranFormData.jumlah || !pengeluaranFormData.keterangan) return;
         if (isSubmitting) return;
 
         setIsSubmitting(true);
         try {
-            addPengeluaran({
+            await addPengeluaran({
                 kolamId: pengeluaranFormData.kolamId || null,
                 tanggal: pengeluaranFormData.tanggal,
                 kategori: pengeluaranFormData.kategori,
@@ -185,6 +198,9 @@ export default function KeuanganPage() {
                 jumlah: '',
             });
             setShowPengeluaranForm(false);
+            showToast('Pengeluaran berhasil dicatat', 'success');
+        } catch (error) {
+            showToast(error instanceof Error ? error.message : 'Gagal mencatat pengeluaran', 'error');
         } finally {
             setIsSubmitting(false);
         }
@@ -294,7 +310,84 @@ export default function KeuanganPage() {
                 </div>
 
                 {/* KPI Cards Row */}
-                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                    {/* 0. Uang Tersedia */}
+                    <div className="block p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600">
+                                    <Wallet className="w-5 h-5 sm:w-6 sm:h-6" />
+                                </div>
+                                <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">Uang Tersedia</p>
+                            </div>
+
+                            {!isEditingModal ? (
+                                <button
+                                    onClick={() => {
+                                        setTempModal(modalAwal);
+                                        setIsEditingModal(true);
+                                    }}
+                                    className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
+                                >
+                                    <Pencil className="w-4 h-4" />
+                                </button>
+                            ) : (
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={async () => {
+                                            if (updateFarm) {
+                                                try {
+                                                    await updateFarm({ modalAwal: tempModal });
+                                                    setIsEditingModal(false);
+                                                } catch (error) {
+                                                    // Error handled by updateFarm toast
+                                                }
+                                            }
+                                        }}
+                                        className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                        title="Simpan"
+                                    >
+                                        <Check className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => setIsEditingModal(false)}
+                                        className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                        title="Batal"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-1 mb-2">
+                            <span className="text-lg sm:text-2xl font-semibold text-slate-400">Rp</span>
+                            {isEditingModal ? (
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={tempModal ? formatCurrencyInput(tempModal) : ''}
+                                    onChange={(e) => {
+                                        const val = parseCurrencyInput(e.target.value);
+                                        if (val === '' || /^\d+$/.test(val)) {
+                                            setTempModal(Number(val));
+                                        }
+                                    }}
+                                    autoFocus
+                                    placeholder="0"
+                                    className="text-lg sm:text-2xl font-semibold tracking-tight text-slate-900 w-full border-b border-violet-200 focus:border-violet-500 p-0 focus:ring-0 placeholder:text-slate-300 bg-transparent"
+                                />
+                            ) : (
+                                <span className="text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">
+                                    {modalAwal ? formatCurrencyInput(modalAwal) : '0'}
+                                </span>
+                            )}
+                        </div>
+                        <p className="mb-3 text-sm text-slate-600">
+                            Modal awal / Kas ditangan
+                        </p>
+                    </div>
+
                     {/* 1. Pendapatan Bersih */}
                     <div className="block p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
@@ -326,7 +419,7 @@ export default function KeuanganPage() {
                     </div>
 
                     {/* 3. Total Pengeluaran */}
-                    <div className="block col-span-2 md:col-span-2 lg:col-span-1 p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+                    <div className="block p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600">
                                 <Banknote className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -767,6 +860,13 @@ export default function KeuanganPage() {
                 }
             >
                 <form id="pengeluaran-form" onSubmit={handlePengeluaranSubmit} className="space-y-4">
+                    {/* Available Funds Display */}
+                    <div className="p-3 bg-blue-50 rounded-xl mb-4">
+                        <p className="text-xs text-blue-600 mb-1">Uang Tersedia</p>
+                        <p className="text-lg font-bold text-blue-900">
+                            Rp {farm?.modalAwal.toLocaleString('id-ID') || 0}
+                        </p>
+                    </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="form-group">
                             <label className="form-label">Kolam</label>
@@ -866,6 +966,23 @@ export default function KeuanganPage() {
                             required
                         />
                     </div>
+                    {/* Expense Total Display */}
+                    {pengeluaranFormData.jumlah && parseFloat(pengeluaranFormData.jumlah) > 0 && (
+                        <div className="p-4 bg-orange-50 rounded-xl space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-orange-700">Total Pengeluaran:</span>
+                                <span className="font-bold text-orange-900">
+                                    Rp {parseFloat(pengeluaranFormData.jumlah).toLocaleString('id-ID')}
+                                </span>
+                            </div>
+                            <div className="flex justify-between text-sm pt-2 border-t border-orange-200">
+                                <span className="text-orange-700">Sisa Dana:</span>
+                                <span className={`font-bold ${(farm?.modalAwal || 0) >= parseFloat(pengeluaranFormData.jumlah) ? 'text-green-600' : 'text-red-600'}`}>
+                                    Rp {((farm?.modalAwal || 0) - parseFloat(pengeluaranFormData.jumlah)).toLocaleString('id-ID')}
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </form>
             </Modal>
 

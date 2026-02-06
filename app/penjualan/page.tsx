@@ -63,25 +63,25 @@ export default function PenjualanPage() {
         setIsSubmitting(true);
         try {
             addPenjualan({
-            kolamId: penjualanForm.kolamId,
-            pembeliId: penjualanForm.pembeliId,
-            tanggal: penjualanForm.tanggal,
-            beratKg: parseFloat(penjualanForm.beratKg),
-            hargaPerKg: parseFloat(penjualanForm.hargaPerKg),
-            jumlahIkan: penjualanForm.jumlahIkan ? parseInt(penjualanForm.jumlahIkan) : undefined,
-            keterangan: penjualanForm.keterangan || undefined,
-        });
+                kolamId: penjualanForm.kolamId,
+                pembeliId: penjualanForm.pembeliId,
+                tanggal: penjualanForm.tanggal,
+                beratKg: parseFloat(penjualanForm.beratKg),
+                hargaPerKg: parseFloat(penjualanForm.hargaPerKg),
+                jumlahIkan: penjualanForm.jumlahIkan ? parseInt(penjualanForm.jumlahIkan) : undefined,
+                keterangan: penjualanForm.keterangan || undefined,
+            });
 
-        setPenjualanForm({
-            kolamId: '',
-            pembeliId: '',
-            tanggal: new Date().toISOString().split('T')[0],
-            beratKg: '',
-            hargaPerKg: '',
-            jumlahIkan: '',
-            keterangan: '',
-        });
-        setShowPenjualanForm(false);
+            setPenjualanForm({
+                kolamId: '',
+                pembeliId: '',
+                tanggal: new Date().toISOString().split('T')[0],
+                beratKg: '',
+                hargaPerKg: '',
+                jumlahIkan: '',
+                keterangan: '',
+            });
+            setShowPenjualanForm(false);
         } finally {
             setIsSubmitting(false);
         }
@@ -95,19 +95,19 @@ export default function PenjualanPage() {
         setIsSubmitting(true);
         try {
             addPembeli({
-            nama: pembeliForm.nama,
-            tipe: pembeliForm.tipe,
-            kontak: pembeliForm.kontak || undefined,
-            alamat: pembeliForm.alamat || undefined,
-        });
+                nama: pembeliForm.nama,
+                tipe: pembeliForm.tipe,
+                kontak: pembeliForm.kontak || undefined,
+                alamat: pembeliForm.alamat || undefined,
+            });
 
-        setPembeliForm({
-            nama: '',
-            tipe: 'TENGKULAK',
-            kontak: '',
-            alamat: '',
-        });
-        setShowPembeliForm(false);
+            setPembeliForm({
+                nama: '',
+                tipe: 'TENGKULAK',
+                kontak: '',
+                alamat: '',
+            });
+            setShowPembeliForm(false);
         } finally {
             setIsSubmitting(false);
         }
@@ -261,95 +261,95 @@ export default function PenjualanPage() {
                     )}
                 </div>
 
-            {/* Riwayat Penjualan */}
-            <div className="table-container">
-                <div className="px-6 py-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <span>📊</span>
-                        <span>Riwayat Penjualan</span>
-                    </h2>
-                    <select
-                        value={filterKolam}
-                        onChange={(e) => setFilterKolam(e.target.value)}
-                        className="input py-2 sm:max-w-xs w-full"
-                    >
-                        <option value="">Semua Kolam</option>
-                        {kolam.map(k => (
-                            <option key={k.id} value={k.id}>{k.nama}</option>
-                        ))}
-                    </select>
-                </div>
-                {filteredPenjualan.length === 0 ? (
-                    <div className="p-6">
-                        <EmptyState
-                            title="Belum Ada Penjualan"
-                            description="Belum ada data penjualan yang tercatat"
-                            icon="💵"
-                        />
+                {/* Riwayat Penjualan */}
+                <div className="table-container">
+                    <div className="px-6 py-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <span>📊</span>
+                            <span>Riwayat Penjualan</span>
+                        </h2>
+                        <select
+                            value={filterKolam}
+                            onChange={(e) => setFilterKolam(e.target.value)}
+                            className="input py-2 sm:max-w-xs w-full"
+                        >
+                            <option value="">Semua Kolam</option>
+                            {kolam.map(k => (
+                                <option key={k.id} value={k.id}>{k.nama}</option>
+                            ))}
+                        </select>
                     </div>
-                ) : (
-                    <table className="table">
-                        <thead>
-                            <tr>
-                                <th scope="col" className="p-4">
-                                    <div className="flex items-center">
-                                        <input id="penjualan-riwayat-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
-                                        <label htmlFor="penjualan-riwayat-checkbox-header" className="sr-only">Select all</label>
-                                    </div>
-                                </th>
-                                <th>Tanggal</th>
-                                <th>Kolam</th>
-                                <th>Pembeli</th>
-                                <th className="text-right">Berat (kg)</th>
-                                <th className="text-right">Harga/kg</th>
-                                <th className="text-right">Total</th>
-                                <th>Keterangan</th>
-                                <th className="text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredPenjualan.map(p => {
-                                const k = kolam.find(kol => kol.id === p.kolamId);
-                                const buyer = pembeli.find(b => b.id === p.pembeliId);
-                                const total = p.beratKg * p.hargaPerKg;
-                                return (
-                                    <tr key={p.id}>
-                                        <td className="w-4 p-4">
-                                            <div className="flex items-center">
-                                                <input id={`penjualan-riwayat-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
-                                                <label htmlFor={`penjualan-riwayat-checkbox-${p.id}`} className="sr-only">Checkbox</label>
-                                            </div>
-                                        </td>
-                                        <td className="text-sm text-body">{p.tanggal}</td>
-                                        <td className="font-medium text-heading">{k?.nama || 'Unknown'}</td>
-                                        <td className="text-body">{buyer?.nama || 'Unknown'}</td>
-                                        <td className="text-right text-sm text-body">{p.beratKg}</td>
-                                        <td className="text-right text-sm text-body">Rp {p.hargaPerKg.toLocaleString('id-ID')}</td>
-                                        <td className="text-right font-medium text-green-600">
-                                            Rp {total.toLocaleString('id-ID')}
-                                        </td>
-                                        <td className="text-body text-sm">{p.keterangan || '-'}</td>
-                                        <td className="text-right">
-                                            <button
-                                                onClick={() => setDeleteModal({ type: 'penjualan', id: p.id })}
-                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                )}
-            </div>
+                    {filteredPenjualan.length === 0 ? (
+                        <div className="p-6">
+                            <EmptyState
+                                title="Belum Ada Penjualan"
+                                description="Belum ada data penjualan yang tercatat"
+                                icon="💵"
+                            />
+                        </div>
+                    ) : (
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col" className="p-4">
+                                        <div className="flex items-center">
+                                            <input id="penjualan-riwayat-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                            <label htmlFor="penjualan-riwayat-checkbox-header" className="sr-only">Select all</label>
+                                        </div>
+                                    </th>
+                                    <th>Tanggal</th>
+                                    <th>Kolam</th>
+                                    <th>Pembeli</th>
+                                    <th className="text-right">Berat (kg)</th>
+                                    <th className="text-right">Harga/kg</th>
+                                    <th className="text-right">Total</th>
+                                    <th>Keterangan</th>
+                                    <th className="text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredPenjualan.map(p => {
+                                    const k = kolam.find(kol => kol.id === p.kolamId);
+                                    const buyer = pembeli.find(b => b.id === p.pembeliId);
+                                    const total = p.beratKg * p.hargaPerKg;
+                                    return (
+                                        <tr key={p.id}>
+                                            <td className="w-4 p-4">
+                                                <div className="flex items-center">
+                                                    <input id={`penjualan-riwayat-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                    <label htmlFor={`penjualan-riwayat-checkbox-${p.id}`} className="sr-only">Checkbox</label>
+                                                </div>
+                                            </td>
+                                            <td className="text-sm text-body">{p.tanggal}</td>
+                                            <td className="font-medium text-heading">{k?.nama || 'Unknown'}</td>
+                                            <td className="text-body">{buyer?.nama || 'Unknown'}</td>
+                                            <td className="text-right text-sm text-body">{p.beratKg}</td>
+                                            <td className="text-right text-sm text-body">Rp {p.hargaPerKg.toLocaleString('id-ID')}</td>
+                                            <td className="text-right font-medium text-green-600">
+                                                Rp {total.toLocaleString('id-ID')}
+                                            </td>
+                                            <td className="text-body text-sm">{p.keterangan || '-'}</td>
+                                            <td className="text-right">
+                                                <button
+                                                    onClick={() => setDeleteModal({ type: 'penjualan', id: p.id })}
+                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
             </div>
 
             {/* Form Modal - Penjualan */}
-            <Modal 
-                isOpen={showPenjualanForm} 
-                onClose={() => setShowPenjualanForm(false)} 
+            <Modal
+                isOpen={showPenjualanForm}
+                onClose={() => setShowPenjualanForm(false)}
                 title="Catat Penjualan Baru"
                 footer={
                     <>
@@ -410,7 +410,7 @@ export default function PenjualanPage() {
                             <input
                                 type="number"
                                 step="0.1"
-                                min="0"
+                                min="0.1"
                                 value={penjualanForm.beratKg}
                                 onChange={(e) => setPenjualanForm({ ...penjualanForm, beratKg: e.target.value })}
                                 placeholder="Contoh: 100"
@@ -441,7 +441,7 @@ export default function PenjualanPage() {
                         <label className="form-label">Jumlah Ikan (opsional)</label>
                         <input
                             type="number"
-                            min="0"
+                            min="1"
                             value={penjualanForm.jumlahIkan}
                             onChange={(e) => setPenjualanForm({ ...penjualanForm, jumlahIkan: e.target.value })}
                             placeholder="Contoh: 500"
@@ -463,9 +463,9 @@ export default function PenjualanPage() {
             </Modal>
 
             {/* Form Modal - Pembeli */}
-            <Modal 
-                isOpen={showPembeliForm} 
-                onClose={() => setShowPembeliForm(false)} 
+            <Modal
+                isOpen={showPembeliForm}
+                onClose={() => setShowPembeliForm(false)}
                 title="Tambah Pembeli Baru"
                 footer={
                     <>

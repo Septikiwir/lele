@@ -29,7 +29,7 @@ export default function KolamPage() {
         kolam, deleteKolam, calculateKepadatan, getUnifiedStatus,
         getLatestSampling, getFeedRecommendation,
         addPakan, addRiwayatPanen, addPenjualan, pembeli, getAllJenisPakan, tebarBibit,
-        hargaPasarPerKg, getCycleHistory, riwayatPanen
+        hargaPasarPerKg, getCycleHistory, riwayatPanen, farm
     } = useApp();
     const { showToast } = useToast();
     const [deleteModal, setDeleteModal] = useState<string | null>(null);
@@ -1039,6 +1039,13 @@ export default function KolamPage() {
                 }
             >
                 <form id="tebar-form" onSubmit={handleTebarSubmit} className="space-y-4">
+                    {/* Available Funds Display */}
+                    <div className="p-3 bg-blue-50 rounded-xl mb-4">
+                        <p className="text-xs text-blue-600 mb-1">Uang Tersedia</p>
+                        <p className="text-lg font-bold text-blue-900">
+                            Rp {farm?.modalAwal.toLocaleString('id-ID') || 0}
+                        </p>
+                    </div>
                     <div className="form-group">
                         <label className="form-label">Kolam</label>
                         <select
@@ -1098,6 +1105,23 @@ export default function KolamPage() {
                         </div>
                         <p className="form-hint">Harga pembelian bibit per ekor</p>
                     </div>
+                    {/* Expense Total Display */}
+                    {tebarForm.jumlah && tebarForm.hargaPerEkor && parseFloat(tebarForm.jumlah) > 0 && parseFloat(tebarForm.hargaPerEkor) > 0 && (
+                        <div className="p-4 bg-orange-50 rounded-xl space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-orange-700">Total Pengeluaran:</span>
+                                <span className="font-bold text-orange-900">
+                                    Rp {(parseFloat(tebarForm.jumlah) * parseFloat(tebarForm.hargaPerEkor)).toLocaleString('id-ID')}
+                                </span>
+                            </div>
+                            <div className="flex justify-between text-sm pt-2 border-t border-orange-200">
+                                <span className="text-orange-700">Sisa Dana:</span>
+                                <span className={`font-bold ${(farm?.modalAwal || 0) >= (parseFloat(tebarForm.jumlah) * parseFloat(tebarForm.hargaPerEkor)) ? 'text-green-600' : 'text-red-600'}`}>
+                                    Rp {((farm?.modalAwal || 0) - (parseFloat(tebarForm.jumlah) * parseFloat(tebarForm.hargaPerEkor))).toLocaleString('id-ID')}
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </form>
             </Modal>
         </DashboardLayout>

@@ -883,9 +883,13 @@ body {
   max-width: 28rem;
   /* 448px - md default */
   width: 100%;
-  max-height: 100%;
+  max-height: calc(100vh - 2rem);
+  /* Ensure modal doesn't exceed viewport */
   margin: 1rem;
   animation: slideUp 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 @media (min-width: 768px) {
@@ -966,6 +970,9 @@ body {
 .modal-body {
   padding-top: 1rem;
   padding-bottom: 1rem;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 @media (min-width: 768px) {
@@ -981,6 +988,7 @@ body {
   gap: 1rem;
   border-top: 1px solid var(--default);
   padding-top: 1rem;
+  flex-shrink: 0;
 }
 
 @media (min-width: 768px) {

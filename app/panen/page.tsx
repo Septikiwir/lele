@@ -11,7 +11,7 @@ import EmptyState from '../components/ui/EmptyState';
 import PanenModal from '../components/modals/PanenModal';
 
 export default function ProduksiPage() {
-    const { kolam, pakan, riwayatPanen, pembeli, addRiwayatPanen, addPenjualan, addPembeli, getPanenByKolam, tebarBibit, getLatestSampling, getFeedRecommendation } = useApp();
+    const { kolam, pakan, riwayatPanen, pembeli, addRiwayatPanen, addPenjualan, addPembeli, getPanenByKolam, tebarBibit, getLatestSampling, getFeedRecommendation, farm } = useApp();
     const { showToast } = useToast(); // Destructure showToast
     const [selectedKolamId, setSelectedKolamId] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,10 +20,10 @@ export default function ProduksiPage() {
     const [growthRate, setGrowthRate] = useState('2');
     const [hargaPerKg, setHargaPerKg] = useState('25000');
     const [ukuranBibitEst, setUkuranBibitEst] = useState('5');
-    
+
     // Pagination state
     const [limitRiwayatPanen, setLimitRiwayatPanen] = useState(10);
-    
+
     // Filtered and sorted data
     const filteredRiwayatPanen = riwayatPanen
         .slice()
@@ -104,7 +104,7 @@ export default function ProduksiPage() {
             } else {
                 baseWeightGram = 1000 / latestSampling.jumlahIkanPerKg;
             }
-            
+
             const samplingDate = new Date(latestSampling.tanggal);
             const daysSinceSampling = Math.max(0, Math.floor((today.getTime() - samplingDate.getTime()) / (1000 * 60 * 60 * 24)));
 
@@ -194,7 +194,7 @@ export default function ProduksiPage() {
     const handleTebarSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (isSubmitting) return;
-        
+
         setIsSubmitting(true);
         try {
             await tebarBibit(tebarForm.kolamId, {
@@ -207,7 +207,7 @@ export default function ProduksiPage() {
             setTebarForm({ ...tebarForm, jumlah: '', beratPerEkor: '5', hargaPerEkor: '' });
             showToast('Siklus berhasil dimulai', 'success');
         } catch (error) {
-            showToast('Gagal menebar bibit', 'error');
+            showToast(error instanceof Error ? error.message : 'Gagal menebar bibit', 'error');
         } finally {
             setIsSubmitting(false);
         }
@@ -509,65 +509,65 @@ export default function ProduksiPage() {
                         </div>
                     ) : (
                         <>
-                        <table className="table">
-                            <thead>
-                                <tr>
-                                    <th scope="col" className="p-4">
-                                        <div className="flex items-center">
-                                            <input id="panen-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
-                                            <label htmlFor="panen-checkbox-header" className="sr-only">Select all</label>
-                                        </div>
-                                    </th>
-                                    <th>Tanggal</th>
-                                    <th>Kolam</th>
-                                    <th>Tipe</th>
-                                    <th className="text-right">Berat (Kg)</th>
-                                    <th className="text-right">Total (Rp)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredRiwayatPanen.map(p => (
-                                    <tr key={p.id}>
-                                        <td className="w-4 p-4">
+                            <table className="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col" className="p-4">
                                             <div className="flex items-center">
-                                                <input id={`panen-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
-                                                <label htmlFor={`panen-checkbox-${p.id}`} className="sr-only">Checkbox</label>
+                                                <input id="panen-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                <label htmlFor="panen-checkbox-header" className="sr-only">Select all</label>
                                             </div>
-                                        </td>
-                                        <td className="text-sm text-body">{p.tanggal}</td>
-                                        <td className="font-medium text-heading">{p.kolam?.nama || '-'}</td>
-                                        <td>
-                                            <span className={`badge ${p.tipe === 'TOTAL' ? 'bg-red-100 text-red-600' : 'bg-teal-100 text-teal-600'}`}>
-                                                {p.tipe}
-                                            </span>
-                                        </td>
-                                        <td className="text-right text-body">{p.beratTotalKg}</td>
-                                        <td className="text-right font-medium text-emerald-600">
-                                            Rp {(p.beratTotalKg * p.hargaPerKg).toLocaleString('id-ID')}
-                                        </td>
+                                        </th>
+                                        <th>Tanggal</th>
+                                        <th>Kolam</th>
+                                        <th>Tipe</th>
+                                        <th className="text-right">Berat (Kg)</th>
+                                        <th className="text-right">Total (Rp)</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <nav className="table-pagination" aria-label="Table navigation">
-                            <span className="table-pagination-info">
-                                Menampilkan <span className="font-semibold">{Math.min(limitRiwayatPanen, filteredRiwayatPanen.length)}</span> dari <span className="font-semibold">{riwayatPanen.length}</span> data
-                            </span>
-                            <div className="flex items-center gap-2">
-                                <label className="text-sm text-slate-600">Tampilkan:</label>
-                                <select 
-                                    value={limitRiwayatPanen} 
-                                    onChange={(e) => setLimitRiwayatPanen(Number(e.target.value))} 
-                                    className="input py-1 px-2 text-sm"
-                                >
-                                    <option value={10}>10</option>
-                                    <option value={25}>25</option>
-                                    <option value={50}>50</option>
-                                    <option value={100}>100</option>
-                                    <option value={9999}>Semua</option>
-                                </select>
-                            </div>
-                        </nav>
+                                </thead>
+                                <tbody>
+                                    {filteredRiwayatPanen.map(p => (
+                                        <tr key={p.id}>
+                                            <td className="w-4 p-4">
+                                                <div className="flex items-center">
+                                                    <input id={`panen-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                    <label htmlFor={`panen-checkbox-${p.id}`} className="sr-only">Checkbox</label>
+                                                </div>
+                                            </td>
+                                            <td className="text-sm text-body">{p.tanggal}</td>
+                                            <td className="font-medium text-heading">{p.kolam?.nama || '-'}</td>
+                                            <td>
+                                                <span className={`badge ${p.tipe === 'TOTAL' ? 'bg-red-100 text-red-600' : 'bg-teal-100 text-teal-600'}`}>
+                                                    {p.tipe}
+                                                </span>
+                                            </td>
+                                            <td className="text-right text-body">{p.beratTotalKg}</td>
+                                            <td className="text-right font-medium text-emerald-600">
+                                                Rp {(p.beratTotalKg * p.hargaPerKg).toLocaleString('id-ID')}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                            <nav className="table-pagination" aria-label="Table navigation">
+                                <span className="table-pagination-info">
+                                    Menampilkan <span className="font-semibold">{Math.min(limitRiwayatPanen, filteredRiwayatPanen.length)}</span> dari <span className="font-semibold">{riwayatPanen.length}</span> data
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <label className="text-sm text-slate-600">Tampilkan:</label>
+                                    <select
+                                        value={limitRiwayatPanen}
+                                        onChange={(e) => setLimitRiwayatPanen(Number(e.target.value))}
+                                        className="input py-1 px-2 text-sm"
+                                    >
+                                        <option value={10}>10</option>
+                                        <option value={25}>25</option>
+                                        <option value={50}>50</option>
+                                        <option value={100}>100</option>
+                                        <option value={9999}>Semua</option>
+                                    </select>
+                                </div>
+                            </nav>
                         </>
                     )}
                 </div>
@@ -576,9 +576,9 @@ export default function ProduksiPage() {
             {/* --- MODALS --- */}
 
             {/* Modal Tebar */}
-            <Modal 
-                isOpen={isTebarModalOpen} 
-                onClose={() => setIsTebarModalOpen(false)} 
+            <Modal
+                isOpen={isTebarModalOpen}
+                onClose={() => setIsTebarModalOpen(false)}
                 title="Mulai Siklus (Tebar Bibit)"
                 footer={
                     <>
@@ -591,6 +591,13 @@ export default function ProduksiPage() {
                 }
             >
                 <form id="form-tebar" onSubmit={handleTebarSubmit} className="space-y-4">
+                    {/* Available Funds Display */}
+                    <div className="p-3 bg-blue-50 rounded-xl mb-4">
+                        <p className="text-xs text-blue-600 mb-1">Uang Tersedia</p>
+                        <p className="text-lg font-bold text-blue-900">
+                            Rp {farm?.modalAwal.toLocaleString('id-ID') || 0}
+                        </p>
+                    </div>
                     <div className="p-3 bg-blue-50 rounded-lg text-sm text-blue-700 mb-4">
                         Data ini akan memulai siklus baru dan mencatat sampling awal.
                     </div>
@@ -632,20 +639,37 @@ export default function ProduksiPage() {
                         </div>
                         <p className="text-xs text-slate-500 mt-1">Harga pembelian bibit per ekor</p>
                     </div>
+                    {/* Expense Total Display */}
+                    {tebarForm.jumlah && tebarForm.hargaPerEkor && parseFloat(tebarForm.jumlah) > 0 && parseFloat(tebarForm.hargaPerEkor) > 0 && (
+                        <div className="p-4 bg-orange-50 rounded-xl space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-orange-700">Total Pengeluaran:</span>
+                                <span className="font-bold text-orange-900">
+                                    Rp {(parseFloat(tebarForm.jumlah) * parseFloat(tebarForm.hargaPerEkor)).toLocaleString('id-ID')}
+                                </span>
+                            </div>
+                            <div className="flex justify-between text-sm pt-2 border-t border-orange-200">
+                                <span className="text-orange-700">Sisa Dana:</span>
+                                <span className={`font-bold ${(farm?.modalAwal || 0) >= (parseFloat(tebarForm.jumlah) * parseFloat(tebarForm.hargaPerEkor)) ? 'text-green-600' : 'text-red-600'}`}>
+                                    Rp {((farm?.modalAwal || 0) - (parseFloat(tebarForm.jumlah) * parseFloat(tebarForm.hargaPerEkor))).toLocaleString('id-ID')}
+                                </span>
+                            </div>
+                        </div>
+                    )}
                 </form>
             </Modal>
 
             {/* Modal Panen - Reusable Component */}
-            <PanenModal 
+            <PanenModal
                 isOpen={isPanenModalOpen}
                 onClose={() => setIsPanenModalOpen(false)}
                 defaultKolamId={selectedKolamId}
             />
 
             {/* Modal Quick Add Buyer */}
-            <Modal 
-                isOpen={isBuyerModalOpen} 
-                onClose={() => setIsBuyerModalOpen(false)} 
+            <Modal
+                isOpen={isBuyerModalOpen}
+                onClose={() => setIsBuyerModalOpen(false)}
                 title="Tambah Pembeli Baru"
                 footer={
                     <>

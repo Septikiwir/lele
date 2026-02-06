@@ -23,6 +23,13 @@ export interface Kolam {
     }
 }
 
+export interface Farm {
+    id: string;
+    nama: string;
+    alamat?: string;
+    modalAwal: number;
+}
+
 export interface DataPakan {
     id: string;
     kolamId: string;
@@ -174,6 +181,8 @@ interface AppContextType {
 
     // Farm
     activeFarmId: string | null;
+    farm: Farm | null;
+    updateFarm: (updates: Partial<Farm>) => Promise<void>;
     isLoading: boolean;
 
     // Kolam CRUD
@@ -325,6 +334,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const { showToast } = useToast();
     const [activeFarmId, setActiveFarmId] = useState<string | null>(null);
+    const [farm, setFarm] = useState<Farm | null>(null);
     const [kolam, setKolam] = useState<Kolam[]>([]);
     const [pakan, setPakan] = useState<DataPakan[]>([]);
     const [kondisiAir, setKondisiAir] = useState<KondisiAir[]>([]);
@@ -355,6 +365,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             if (res.ok) {
                 const farms = await res.json();
                 if (farms.length > 0) {
+                    setFarm(farms[0]);
                     setActiveFarmId(farms[0].id);
                 }
             }
@@ -517,6 +528,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
         await fetchCriticalData();
     };
 
+    const updateFarm = async (updates: Partial<Farm>) => {
+        if (!activeFarmId) return;
+
+        // Optimistic update
+        setFarm(prev => prev ? { ...prev, ...updates } : null);
+
+        try {
+            const res = await fetch(`/api/farms/${activeFarmId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates)
+            });
+
+            if (res.ok) {
+                const updated = await res.json();
+                setFarm(updated);
+                showToast('Data farm berhasil diperbarui', 'success');
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || 'Failed to update');
+            }
+        } catch (error) {
+            console.error('Failed to update farm:', error);
+            showToast(error instanceof Error ? error.message : 'Gagal memperbarui data farm', 'error');
+            // Revert
+            fetchFarm();
+        }
+    };
+
     // === CRUD Operations ===
 
     const addKolam = async (newKolam: Omit<Kolam, 'id' | 'status'>) => {
@@ -671,10 +711,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
 
     const addPengeluaran = async (newPengeluaran: Omit<Pengeluaran, 'id'>) => {
-        console.log('addPengeluaran called', { activeFarmId, newPengeluaran });
-        if (!activeFarmId) {
-            console.error('No activeFarmId found');
-            return;
+        if (!activeFarmId) return;
+
+        // 1. Validation: Check available funds
+        if (farm && farm.modalAwal < newPengeluaran.jumlah) {
+            throw new Error('Uang tersedia tidak mencukupi untuk pengeluaran ini');
         }
 
         try {
@@ -690,9 +731,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     tanggal: created.tanggal.split('T')[0],
                     kategori: created.kategori
                 }]);
+
+                // 2. Deduction: Decrease available funds
+                if (farm) {
+                    const newModal = farm.modalAwal - newPengeluaran.jumlah;
+                    await updateFarm({ modalAwal: newModal });
+                }
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || 'Gagal menyimpan pengeluaran');
             }
         } catch (error) {
             console.error('Failed to add pengeluaran:', error);
+            throw error; // Propagate error to caller
         }
     };
 
@@ -703,6 +754,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const addStokPakan = async (newStok: Omit<StokPakan, 'id'>) => {
         if (!activeFarmId) return;
 
+        // 1. Validation
+        const totalBiaya = newStok.stokAwal * newStok.hargaPerKg;
+        if (farm && farm.modalAwal < totalBiaya) {
+            throw new Error('Uang tersedia tidak mencukupi untuk pembelian pakan ini');
+        }
+
         try {
             const res = await fetch(`/api/farms/${activeFarmId}/stok-pakan`, {
                 method: 'POST',
@@ -712,6 +769,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
             if (res.ok) {
                 const created = await res.json();
                 setStokPakan(prev => [...prev, { ...created, tanggalTambah: created.tanggalTambah.split('T')[0] }]);
+
+                // 2. Record Expense & Deduct logic (handled by addPengeluaran)
+                await addPengeluaran({
+                    tanggal: newStok.tanggalTambah,
+                    kategori: 'PAKAN',
+                    keterangan: `Stok Pakan ${newStok.jenisPakan} ${newStok.stokAwal}kg`,
+                    jumlah: totalBiaya,
+                    kolamId: null
+                });
             }
         } catch (error) {
             console.error('Failed to add stok pakan:', error);
@@ -758,6 +824,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
             if (res.ok) {
                 const created = await res.json();
                 setPenjualan(prev => [...prev, { ...created, tanggal: created.tanggal.split('T')[0] }]);
+
+                // Add revenue to available funds
+                const revenue = newPenjualan.beratKg * newPenjualan.hargaPerKg;
+                if (farm && revenue > 0) {
+                    const newModal = farm.modalAwal + revenue;
+                    await updateFarm({ modalAwal: newModal });
+                }
             }
         } catch (error) {
             console.error('Failed to add penjualan:', error);
@@ -1412,6 +1485,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const tebarBibit = async (kolamId: string, data: { tanggal: string; jumlah: number; beratPerEkor: number; hargaPerEkor: number }) => {
         if (!activeFarmId) return;
 
+        // 1. Validation Check
+        const totalHarga = data.jumlah * data.hargaPerEkor;
+        if (farm && farm.modalAwal < totalHarga) {
+            throw new Error('Uang tersedia tidak mencukupi untuk tebar bibit');
+        }
+
         try {
             await updateKolam(kolamId, {
                 tanggalTebar: data.tanggal,
@@ -1662,6 +1741,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             jadwalPakan,
             riwayatPanen,
             activeFarmId,
+            farm,
+            updateFarm,
             isLoading,
             addKolam,
             updateKolam,

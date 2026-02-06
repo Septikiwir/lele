@@ -4,6 +4,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import { useState, useEffect } from 'react';
 import { useApp, JadwalPakan } from '../context/AppContext';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
+import { useToast } from '../context/ToastContext';
 
 import { Plus, Trash2, AlertTriangle, Clock, Loader2, Calendar, ArrowRight, Container, Package } from 'lucide-react';
 import Modal from '../components/ui/Modal';
@@ -25,6 +26,7 @@ export default function PakanPage() {
         getStokTersediaByJenis,
         getAllJenisPakan,
         getDailyFeedStatus,
+        farm
     } = useApp();
 
 
@@ -95,14 +97,16 @@ export default function PakanPage() {
         }
     };
 
-    const handleStokSubmit = (e: React.FormEvent) => {
+    const { showToast } = useToast(); // Using toast context
+
+    const handleStokSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!stokFormData.jenisPakan || !stokFormData.stokAwal || !stokFormData.hargaPerKg) return;
         if (isSubmitting) return;
 
         setIsSubmitting(true);
         try {
-            addStokPakan({
+            await addStokPakan({
                 jenisPakan: stokFormData.jenisPakan,
                 stokAwal: parseFloat(stokFormData.stokAwal),
                 hargaPerKg: parseFloat(stokFormData.hargaPerKg),
@@ -118,6 +122,9 @@ export default function PakanPage() {
                 keterangan: '',
             });
             setShowStokForm(false);
+            showToast('Stok pakan berhasil ditambahkan', 'success');
+        } catch (error) {
+            showToast(error instanceof Error ? error.message : 'Gagal menambah stok pakan', 'error');
         } finally {
             setIsSubmitting(false);
         }
@@ -673,6 +680,13 @@ export default function PakanPage() {
                 }
             >
                 <form id="stok-form" onSubmit={handleStokSubmit} className="space-y-4">
+                    {/* Available Funds Display */}
+                    <div className="p-3 bg-blue-50 rounded-xl mb-4">
+                        <p className="text-xs text-blue-600 mb-1">Uang Tersedia</p>
+                        <p className="text-lg font-bold text-blue-900">
+                            Rp {farm?.modalAwal.toLocaleString('id-ID') || 0}
+                        </p>
+                    </div>
                     <div className="form-group">
                         <label className="form-label">Jenis Pakan</label>
                         <div className="space-y-2">
@@ -729,6 +743,23 @@ export default function PakanPage() {
                             required
                         />
                     </div>
+                    {/* Expense Total Display */}
+                    {stokFormData.stokAwal && stokFormData.hargaPerKg && parseFloat(stokFormData.stokAwal) > 0 && parseFloat(stokFormData.hargaPerKg) > 0 && (
+                        <div className="p-4 bg-orange-50 rounded-xl space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-orange-700">Total Pengeluaran:</span>
+                                <span className="font-bold text-orange-900">
+                                    Rp {(parseFloat(stokFormData.stokAwal) * parseFloat(stokFormData.hargaPerKg)).toLocaleString('id-ID')}
+                                </span>
+                            </div>
+                            <div className="flex justify-between text-sm pt-2 border-t border-orange-200">
+                                <span className="text-orange-700">Sisa Dana:</span>
+                                <span className={`font-bold ${(farm?.modalAwal || 0) >= (parseFloat(stokFormData.stokAwal) * parseFloat(stokFormData.hargaPerKg)) ? 'text-green-600' : 'text-red-600'}`}>
+                                    Rp {((farm?.modalAwal || 0) - (parseFloat(stokFormData.stokAwal) * parseFloat(stokFormData.hargaPerKg))).toLocaleString('id-ID')}
+                                </span>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="form-group">
                         <label className="form-label">Keterangan (opsional)</label>

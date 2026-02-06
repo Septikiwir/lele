@@ -146,8 +146,8 @@ export default function SimulasiKeuanganPage() {
                 </div>
 
                 {/* --- CARD 2: PREDIKSI UNTUNG (MOVED UP FOR BETTER FLOW) --- */}
-                <div className="card bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="flex items-center gap-3 mb-4 sm:mb-6 border-b border-slate-100 pb-4">
+                <div className="card bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-8">
+                    <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                         <div className="w-10 h-10 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600">
                             <TrendingUp className="w-5 h-5" />
                         </div>
@@ -193,7 +193,7 @@ export default function SimulasiKeuanganPage() {
                                                         type="number"
                                                         value={item.harga}
                                                         onChange={(e) => handleBiayaChange(item.id, 'harga', Number(e.target.value))}
-                                                        className="w-24 sm:w-28 px-2 py-1 border border-slate-200 rounded text-right text-sm"
+                                                        className="w-24 sm:w-28 px-2 py-1 border border-slate-200 rounded text-right text-right text-sm"
                                                     />
                                                 </td>
                                                 <td className="px-3 py-2 text-right font-medium text-slate-700">
@@ -201,10 +201,7 @@ export default function SimulasiKeuanganPage() {
                                                 </td>
                                             </tr>
                                         ))}
-                                        <tr className="bg-slate-50 font-bold border-t-2 border-slate-200">
-                                            <td colSpan={4} className="px-3 py-3 text-right text-slate-800">Total HPP / Modal:</td>
-                                            <td className="px-3 py-3 text-right text-red-600">{formatCurrency(totalBiayaProduksi)}</td>
-                                        </tr>
+
                                     </tbody>
                                 </table>
                             </div>
@@ -214,122 +211,128 @@ export default function SimulasiKeuanganPage() {
                         <div className="space-y-6">
 
                             {/* Kalkulator Panen */}
-                            <div className="bg-blue-50 p-5 rounded-xl border border-blue-100">
+                            <div>
                                 <h3 className="text-sm font-semibold text-blue-800 mb-3 uppercase tracking-wider flex items-center gap-2">
                                     <Fish className="w-4 h-4" />
                                     Kalkulator Panen
                                 </h3>
+                                <div className="bg-blue-50 p-5 rounded-xl border border-blue-100">
 
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-blue-700">Jumlah Bibit</span>
-                                        <span className="font-bold text-slate-800">{formatNumber(jumlahBibit)} ekor</span>
-                                    </div>
-
-                                    <div>
-                                        <label className="text-xs font-medium text-blue-600 block mb-1">Survival Rate (SR)</label>
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="number"
-                                                value={panenConfig.survivalRate}
-                                                onChange={(e) => setPanenConfig({ ...panenConfig, survivalRate: Number(e.target.value) })}
-                                                className="input bg-white border-blue-200 h-8 text-sm"
-                                            />
-                                            <span className="text-xs text-blue-600 font-medium">%</span>
+                                    <div className="space-y-3">
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-blue-700">Jumlah Bibit</span>
+                                            <span className="font-bold text-slate-800">{formatNumber(jumlahBibit)} ekor</span>
                                         </div>
-                                    </div>
 
-                                    <div>
-                                        <label className="text-xs font-medium text-blue-600 block mb-1">Target Bobot / Ekor</label>
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="number"
-                                                value={panenConfig.targetBobot}
-                                                onChange={(e) => setPanenConfig({ ...panenConfig, targetBobot: Number(e.target.value) })}
-                                                className="input bg-white border-blue-200 h-8 text-sm"
-                                            />
-                                            <span className="text-xs text-blue-600 font-medium">gram</span>
+                                        <div>
+                                            <label className="text-xs font-medium text-blue-600 block mb-1">Survival Rate (SR)</label>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="number"
+                                                    value={panenConfig.survivalRate}
+                                                    onChange={(e) => setPanenConfig({ ...panenConfig, survivalRate: Number(e.target.value) })}
+                                                    className="input bg-white border-blue-200 h-8 text-sm"
+                                                />
+                                                <span className="text-xs text-blue-600 font-medium">%</span>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div>
-                                        <label className="text-xs font-medium text-blue-600 block mb-1">
-                                            FCR (Pakan per Kg Panen)
-                                            <span className="ml-1 text-xs text-blue-400 font-normal">± 1.0 - 1.2</span>
-                                        </label>
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="number"
-                                                step="0.1"
-                                                value={panenConfig.fcr}
-                                                onChange={(e) => setPanenConfig({ ...panenConfig, fcr: Number(e.target.value) })}
-                                                className="input bg-white border-blue-200 h-8 text-sm"
-                                            />
-                                            <span className="text-xs text-blue-600 font-medium">ratio</span>
+                                        <div>
+                                            <label className="text-xs font-medium text-blue-600 block mb-1">Target Bobot / Ekor</label>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="number"
+                                                    value={panenConfig.targetBobot}
+                                                    onChange={(e) => setPanenConfig({ ...panenConfig, targetBobot: Number(e.target.value) })}
+                                                    className="input bg-white border-blue-200 h-8 text-sm"
+                                                />
+                                                <span className="text-xs text-blue-600 font-medium">gram</span>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="pt-3 border-t border-blue-200 mt-2">
-                                        <div className="flex justify-between items-end">
-                                            <span className="text-sm text-blue-800 font-medium">Total Panen</span>
-                                            <div className="text-right">
-                                                <div className="text-xl font-bold text-blue-900">{formatNumber(totalPanenKg)} kg</div>
-                                                <div className="text-xs text-blue-600">({formatNumber(estimasiPopulasiHidup)} ekor hidup)</div>
+                                        <div>
+                                            <label className="text-xs font-medium text-blue-600 block mb-1">
+                                                FCR (Pakan per Kg Panen)
+                                                <span className="ml-1 text-xs text-blue-400 font-normal">± 1.0 - 1.2</span>
+                                            </label>
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="number"
+                                                    step="0.1"
+                                                    value={panenConfig.fcr}
+                                                    onChange={(e) => setPanenConfig({ ...panenConfig, fcr: Number(e.target.value) })}
+                                                    className="input bg-white border-blue-200 h-8 text-sm"
+                                                />
+                                                <span className="text-xs text-blue-600 font-medium">ratio</span>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-3 border-t border-blue-200 mt-2">
+                                            <div className="flex justify-between items-end">
+                                                <span className="text-sm text-blue-800 font-medium">Total Panen</span>
+                                                <div className="text-right">
+                                                    <div className="text-xl font-bold text-blue-900">{formatNumber(totalPanenKg)} kg</div>
+                                                    <div className="text-xs text-blue-600">({formatNumber(estimasiPopulasiHidup)} ekor hidup)</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
-                            {/* Hasil Keuangan */}
-                            <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                                <h3 className="text-sm font-semibold text-slate-700 mb-4 uppercase tracking-wider flex items-center gap-2">
-                                    <PieChart className="w-4 h-4" />
-                                    Hasil Estimasi
-                                </h3>
+                    {/* Hasil Keuangan - Bottom Full Width */}
+                    <div>
 
-                                <div className="space-y-4">
-                                    <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-                                        <div className="text-xs text-slate-500 mb-1">HPP per Kg (Break Even)</div>
-                                        <div className="text-2xl font-bold text-slate-900">{formatCurrency(calculatedHppPerKg)}</div>
-                                        <div className="text-xs text-slate-400 mt-1">Modal per kg lele</div>
+                        {/* Hasil Keuangan */}
+                        <div className="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                            <h3 className="text-sm font-semibold text-slate-700 mb-4 uppercase tracking-wider flex items-center gap-2">
+                                <PieChart className="w-4 h-4" />
+                                Hasil Estimasi
+                            </h3>
+
+                            <div className="space-y-4">
+                                <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                                    <div className="text-xs text-slate-500 mb-1">HPP per Kg (Break Even)</div>
+                                    <div className="text-2xl font-bold text-slate-900">{formatCurrency(calculatedHppPerKg)}</div>
+                                    <div className="text-xs text-slate-400 mt-1">Modal per kg lele</div>
+                                </div>
+
+                                <div>
+                                    <label className="text-xs font-medium text-slate-500 block mb-1">Rencana Harga Jual / Kg</label>
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            value={panenConfig.hargaJual}
+                                            onChange={(e) => setPanenConfig({ ...panenConfig, hargaJual: Number(e.target.value) })}
+                                            className="input bg-white border-slate-300 w-full font-semibold"
+                                        />
                                     </div>
+                                </div>
 
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-500 block mb-1">Rencana Harga Jual / Kg</label>
-                                        <div className="relative">
-                                            <input
-                                                type="number"
-                                                value={panenConfig.hargaJual}
-                                                onChange={(e) => setPanenConfig({ ...panenConfig, hargaJual: Number(e.target.value) })}
-                                                className="input bg-white border-slate-300 w-full font-semibold"
-                                            />
-                                        </div>
+                                <div className="pt-4 border-t border-slate-200 space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-slate-600">Pendapatan</span>
+                                        <span className="text-sm font-semibold text-slate-900 transition-all">{formatCurrency(totalPendapatan)}</span>
                                     </div>
-
-                                    <div className="pt-4 border-t border-slate-200 space-y-2">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm text-slate-600">Pendapatan</span>
-                                            <span className="text-sm font-semibold text-slate-900 transition-all">{formatCurrency(totalPendapatan)}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm text-slate-600">Modal</span>
-                                            <span className="text-sm font-medium text-red-500">({formatCurrency(totalBiayaProduksi)})</span>
-                                        </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-slate-600">Modal</span>
+                                        <span className="text-sm font-medium text-red-500">({formatCurrency(totalBiayaProduksi)})</span>
                                     </div>
+                                </div>
 
-                                    <div className={`p-4 rounded-lg border text-center transition-colors ${labaBersih >= 0 ? 'bg-emerald-100 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
-                                        <span className={`block text-xs font-bold uppercase tracking-wider mb-1 ${labaBersih >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                            {labaBersih >= 0 ? 'Estimasi Profit' : 'Estimasi Rugi'}
-                                        </span>
-                                        <span className={`text-2xl font-bold ${labaBersih >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
-                                            {formatCurrency(labaBersih)}
-                                        </span>
-                                        <div className="mt-2 text-xs font-medium opacity-80 flex justify-center gap-3">
-                                            <span>ROI: {roi.toFixed(1)}%</span>
-                                            <span>•</span>
-                                            <span>{formatCurrency(labaPerBulan)}/bln</span>
-                                        </div>
+                                <div className={`p-4 rounded-lg border text-center transition-colors ${labaBersih >= 0 ? 'bg-emerald-100 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
+                                    <span className={`block text-xs font-bold uppercase tracking-wider mb-1 ${labaBersih >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                                        {labaBersih >= 0 ? 'Estimasi Profit' : 'Estimasi Rugi'}
+                                    </span>
+                                    <span className={`text-2xl font-bold ${labaBersih >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+                                        {formatCurrency(labaBersih)}
+                                    </span>
+                                    <div className="mt-2 text-xs font-medium opacity-80 flex justify-center gap-3">
+                                        <span>ROI: {roi.toFixed(1)}%</span>
+                                        <span>•</span>
+                                        <span>{formatCurrency(labaPerBulan)}/bln</span>
                                     </div>
                                 </div>
                             </div>
@@ -472,8 +475,8 @@ export default function SimulasiKeuanganPage() {
                         </div>
                     </div>
 
-                    <div className="flex flex-col xl:flex-row gap-8 items-start">
-                        <div className="flex-1 w-full">
+                    <div className="flex flex-col gap-8">
+                        <div className="w-full">
                             <div className="flex items-center justify-between mb-2">
                                 <h3 className="text-sm font-semibold text-slate-700">Tabel Alokasi</h3>
                                 <span className={`text-xs font-bold px-2 py-1 rounded ${totalPersen === 100 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
@@ -523,7 +526,7 @@ export default function SimulasiKeuanganPage() {
                             )}
                         </div>
 
-                        <div className="w-full md:w-1/3 bg-slate-50 p-6 rounded-xl border border-slate-200 flex flex-col items-center justify-center text-center">
+                        <div className="w-full bg-slate-50 p-6 rounded-xl border border-slate-200 flex flex-col items-center justify-center text-center">
                             <span className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Total Laba Bersih</span>
                             <span className={`text-3xl font-bold mb-1 ${labaBersih >= 0 ? 'text-slate-900' : 'text-red-500'}`}>
                                 {formatCurrency(labaBersih)}
@@ -545,7 +548,6 @@ export default function SimulasiKeuanganPage() {
                         </div>
                     </div>
                 </div>
-
             </div>
         </DashboardLayout>
     );
