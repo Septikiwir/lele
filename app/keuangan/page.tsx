@@ -435,21 +435,29 @@ export default function KeuanganPage() {
 
                         {/* RIGHT COLUMN - Buyers */}
                         <div>
-                            <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                                <div className="px-4 md:px-6 py-4 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
-                                    <h3 className="font-semibold text-slate-800">Daftar Pembeli</h3>
-                                    <button onClick={() => setShowPembeliForm(true)} className="text-xs text-primary-600 font-medium hover:underline">
-                                        + Baru
+                            <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all duration-200">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center ${netProfit >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                                            <Banknote className="w-5 h-5 sm:w-6 sm:h-6" />
+                                        </div>
+                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Daftar Pembeli</p>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowPembeliForm(true)}
+                                        className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 font-medium text-sm hover:bg-slate-50 hover:border-slate-300 transition-all flex items-center gap-2"
+                                    >
+                                        <Plus className="w-4 h-4" /> Pembeli
                                     </button>
                                 </div>
-                                <div className="divide-y divide-slate-200 max-h-[300px] overflow-y-auto">
+                                <div className="grid grid-cols-1 gap-4 max-h-[300px] overflow-y-auto">
                                     {pembeli.length === 0 ? (
                                         <div className="p-6 text-center text-slate-400">Belum ada pembeli.</div>
                                     ) : (
                                         pembeli.map(p => {
                                             const tipe = tipePembeliOptions.find(t => t.value === p.tipe);
                                             return (
-                                                <div key={p.id} className="p-4 flex items-start justify-between hover:bg-slate-50 group">
+                                                <div key={p.id} className="p-4 rounded-lg border transition-all bg-white border-slate-200 flex items-center justify-between hover:bg-slate-50 group">
                                                     <div>
                                                         <h4 className="font-medium text-slate-900 text-sm">{p.nama}</h4>
                                                         <div className="flex items-center gap-2 mt-1">
@@ -459,7 +467,7 @@ export default function KeuanganPage() {
                                                             {p.kontak && <span className="text-xs text-slate-400">• {p.kontak}</span>}
                                                         </div>
                                                     </div>
-                                                    <button onClick={() => setDeleteModal({ type: 'pembeli', id: p.id })} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all px-2">
+                                                    <button onClick={() => setDeleteModal({ type: 'pembeli', id: p.id })} className="text-slate-300 hover:text-red-500 opacity-50 group-hover:opacity-100 transition-all px-2">
                                                         <Trash2 className="w-4 h-4" />
                                                     </button>
                                                 </div>
@@ -474,15 +482,20 @@ export default function KeuanganPage() {
 
                 {/* Section: Tabbed Transaction History */}
                 <div className="block p-6 bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-                    <div className="px-4 md:px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/50">
-                        <h3 className="font-semibold text-slate-800">Riwayat Transaksi</h3>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center ${netProfit >= 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                                <Banknote className="w-5 h-5 sm:w-6 sm:h-6" />
+                            </div>
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Riwayat Transaksi</p>
+                        </div>
 
-                        <div className="flex flex-wrap gap-2">
-                            <div className="inline-flex bg-white border border-slate-200 rounded-lg p-1">
+                        <div className="flex flex-wrap gap-3">
+                            <div className="inline-flex">
                                 <button
                                     onClick={() => setTransactionTab('penjualan')}
-                                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${transactionTab === 'penjualan'
-                                        ? 'bg-emerald-50 text-emerald-700 shadow-sm'
+                                    className={`px-4 py-2 text-slate-600 font-medium text-sm flex items-center gap-2 ${transactionTab === 'penjualan'
+                                        ? 'bg-emerald-50 text-emerald-700 shadow-sm border border-slate-200 rounded-lg'
                                         : 'text-slate-500 hover:text-slate-800'
                                         }`}
                                 >
@@ -490,8 +503,8 @@ export default function KeuanganPage() {
                                 </button>
                                 <button
                                     onClick={() => setTransactionTab('pengeluaran')}
-                                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${transactionTab === 'pengeluaran'
-                                        ? 'bg-red-50 text-red-700 shadow-sm'
+                                    className={`px-4 py-2 text-slate-600 font-medium text-sm flex items-center gap-2 ${transactionTab === 'pengeluaran'
+                                        ? 'bg-red-50 text-red-700 shadow-sm border border-slate-200 rounded-lg'
                                         : 'text-slate-500 hover:text-slate-800'
                                         }`}
                                 >
@@ -501,7 +514,7 @@ export default function KeuanganPage() {
                             <select
                                 value={transactionTab === 'penjualan' ? filterKolamPenjualan : filterKolamPengeluaran}
                                 onChange={(e) => transactionTab === 'penjualan' ? setFilterKolamPenjualan(e.target.value) : setFilterKolamPengeluaran(e.target.value)}
-                                className="bg-white border border-slate-200 text-xs rounded-lg px-2 py-1 focus:ring-0 focus:border-slate-300"
+                                className="bg-white border border-slate-200 text-xs rounded-lg px-2 py-1 focus:ring-0 focus:border-slate-300 w-[150px]"
                             >
                                 <option value="">Semua Kolam</option>
                                 {transactionTab === 'pengeluaran' && <option value="UMUM">Umum (Farm Level)</option>}
