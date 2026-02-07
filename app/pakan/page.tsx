@@ -47,7 +47,7 @@ export default function PakanPage() {
 
     const [formData, setFormData] = useState({
         kolamId: '',
-        tanggal: new Date().toISOString().split('T')[0],
+        tanggal: new Date().toLocaleDateString('en-CA'),
         jumlahKg: '',
         jenisPakan: '',
     });
@@ -56,7 +56,7 @@ export default function PakanPage() {
         jenisPakan: '',
         stokAwal: '',
         hargaPerKg: '',
-        tanggalTambah: new Date().toISOString().split('T')[0],
+        tanggalTambah: new Date().toLocaleDateString('en-CA'),
         keterangan: '',
     });
 
@@ -85,7 +85,7 @@ export default function PakanPage() {
 
             setFormData({
                 kolamId: '',
-                tanggal: new Date().toISOString().split('T')[0],
+                tanggal: new Date().toLocaleDateString('en-CA'),
                 jumlahKg: '',
                 jenisPakan: '',
             });
@@ -119,7 +119,7 @@ export default function PakanPage() {
                 jenisPakan: '',
                 stokAwal: '',
                 hargaPerKg: '',
-                tanggalTambah: new Date().toISOString().split('T')[0],
+                tanggalTambah: new Date().toLocaleDateString('en-CA'),
                 keterangan: '',
             });
             setShowStokForm(false);
@@ -198,8 +198,8 @@ export default function PakanPage() {
 
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
-            const todayStr = new Date().toISOString().split('T')[0];
-            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+            const todayStr = new Date().toLocaleDateString('en-CA');
+            const tomorrowStr = tomorrow.toLocaleDateString('en-CA');
 
             if (nextLabel.includes('Pagi Ini')) {
                 time = status.schedule.morning.time;
@@ -238,7 +238,7 @@ export default function PakanPage() {
     // Calculate Grid KPIs
     const totalStokKg = allJenisPakan.reduce((sum, jenis) => sum + getStokTersediaByJenis(jenis), 0);
     const pakanHariIni = pakan
-        .filter(p => p.tanggal === new Date().toISOString().split('T')[0])
+        .filter(p => p.tanggal === new Date().toLocaleDateString('en-CA'))
         .reduce((sum, p) => sum + p.jumlahKg, 0);
 
     // Sort schedules

@@ -34,7 +34,7 @@ export default function ProduksiPage() {
     const [isTebarModalOpen, setIsTebarModalOpen] = useState(false);
     const [tebarForm, setTebarForm] = useState({
         kolamId: '',
-        tanggal: new Date().toISOString().split('T')[0],
+        tanggal: new Date().toLocaleDateString('en-CA'),
         jumlah: '',
         beratPerEkor: '5',
         hargaPerEkor: ''
@@ -45,7 +45,7 @@ export default function ProduksiPage() {
     const [panenForm, setPanenForm] = useState({
         kolamId: '',
         pembeliId: '',
-        tanggal: new Date().toISOString().split('T')[0],
+        tanggal: new Date().toLocaleDateString('en-CA'),
         beratTotalKg: '',
         jumlahEkor: '',
         hargaPerKg: '25000',
@@ -154,7 +154,7 @@ export default function ProduksiPage() {
             currentBiomass: parseFloat(totalBiomass.toFixed(1)).toString(),
             targetWeight,
             progress: Math.min((currentWeight / targetWeight) * 100, 100),
-            estimatedHarvestDate: estimatedHarvestDate.toISOString().split('T')[0],
+            estimatedHarvestDate: estimatedHarvestDate.toLocaleDateString('en-CA'),
             estimatedRevenue,
             estimatedProfit: estimatedRevenue - feedCost,
             feedCost,

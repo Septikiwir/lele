@@ -27,7 +27,7 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
     const [panenForm, setPanenForm] = useState({
         kolamId: defaultKolamId || '',
         pembeliId: '',
-        tanggal: new Date().toISOString().split('T')[0],
+        tanggal: new Date().toLocaleDateString('en-CA'),
         beratTotalKg: '',
         jumlahEkor: '',
         hargaPerKg: '25000',
@@ -118,7 +118,7 @@ export default function PanenModal({ isOpen, onClose, defaultKolamId }: PanenMod
             setPanenForm({
                 kolamId: defaultKolamId || '',
                 pembeliId: '',
-                tanggal: new Date().toISOString().split('T')[0],
+                tanggal: new Date().toLocaleDateString('en-CA'),
                 beratTotalKg: '',
                 jumlahEkor: '',
                 hargaPerKg: '25000',

@@ -37,7 +37,7 @@ export default function PengeluaranPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         kolamId: '',
-        tanggal: new Date().toISOString().split('T')[0],
+        tanggal: new Date().toLocaleDateString('en-CA'),
         kategori: 'BIBIT' as KategoriPengeluaran,
         keterangan: '',
         jumlah: '',
@@ -64,7 +64,7 @@ export default function PengeluaranPage() {
 
             setFormData({
                 kolamId: '',
-                tanggal: new Date().toISOString().split('T')[0],
+                tanggal: new Date().toLocaleDateString('en-CA'),
                 kategori: 'BIBIT',
                 keterangan: '',
                 jumlah: '',

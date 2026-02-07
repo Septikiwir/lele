@@ -31,7 +31,7 @@ export default function DashboardPage() {
   const totalKolam = kolam.length;
   const totalIkan = kolam.reduce((sum, k) => sum + k.jumlahIkan, 0);
   const pakanHariIni = pakan
-    .filter(p => p.tanggal === new Date().toISOString().split('T')[0])
+    .filter(p => p.tanggal === new Date().toLocaleDateString('en-CA'))
     .reduce((sum, p) => sum + p.jumlahKg, 0);
 
   // Calculate Total Modal (all pengeluaran)

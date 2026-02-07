@@ -85,7 +85,7 @@ export default function KualitasAirPage() {
 
     const [formData, setFormData] = useState({
         kolamId: '',
-        tanggal: new Date().toISOString().split('T')[0],
+        tanggal: new Date().toLocaleDateString('en-CA'),
         warna: 'Hijau cerah',
         bau: 'Normal',
         ketinggian: '',
@@ -118,7 +118,7 @@ export default function KualitasAirPage() {
 
             setFormData({
                 kolamId: '',
-                tanggal: new Date().toISOString().split('T')[0],
+                tanggal: new Date().toLocaleDateString('en-CA'),
                 warna: 'Hijau cerah',
                 bau: 'Normal',
                 ketinggian: '',

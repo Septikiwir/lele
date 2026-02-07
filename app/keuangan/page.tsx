@@ -96,7 +96,7 @@ export default function KeuanganPage() {
     const [penjualanForm, setPenjualanForm] = useState({
         kolamId: '',
         pembeliId: '',
-        tanggal: new Date().toISOString().split('T')[0],
+        tanggal: new Date().toLocaleDateString('en-CA'),
         beratKg: '',
         hargaPerKg: '',
         jumlahIkan: '',
@@ -112,7 +112,7 @@ export default function KeuanganPage() {
 
     const [pengeluaranFormData, setPengeluaranFormData] = useState({
         kolamId: '',
-        tanggal: new Date().toISOString().split('T')[0],
+        tanggal: new Date().toLocaleDateString('en-CA'),
         kategori: 'LAINNYA' as KategoriPengeluaran,
         keterangan: '',
         jumlah: '',
@@ -138,7 +138,7 @@ export default function KeuanganPage() {
             setPenjualanForm({
                 kolamId: '',
                 pembeliId: '',
-                tanggal: new Date().toISOString().split('T')[0],
+                tanggal: new Date().toLocaleDateString('en-CA'),
                 beratKg: '',
                 hargaPerKg: '',
                 jumlahIkan: '',
@@ -193,7 +193,7 @@ export default function KeuanganPage() {
 
             setPengeluaranFormData({
                 kolamId: '',
-                tanggal: new Date().toISOString().split('T')[0],
+                tanggal: new Date().toLocaleDateString('en-CA'),
                 kategori: 'LAINNYA',
                 keterangan: '',
                 jumlah: '',

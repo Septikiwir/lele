@@ -2,7 +2,7 @@
 
 import DashboardLayout from '../components/layout/DashboardLayout';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useApp, KategoriPengeluaran } from '../context/AppContext';
 import { Download, Box, Fish, Calendar, Wallet, TrendingUp, Banknote, Container, Pill, Zap, User, Package } from 'lucide-react';
 import EmptyState from '../components/ui/EmptyState';
@@ -42,92 +42,99 @@ export default function LaporanPage() {
     // Pagination state
     const [limitLaporan, setLimitLaporan] = useState(10);
 
-    // Filter by period
-    const filterByPeriod = <T extends { tanggal: string }>(data: T[]): T[] => {
-        if (periode === 'semua') return data;
-
-        const now = new Date();
+    // Filter by period (Stable function)
+    const filteredPakan = useMemo(() => {
+        if (periode === 'semua') return pakan;
         const cutoff = new Date();
-        if (periode === 'minggu') cutoff.setDate(now.getDate() - 7);
-        if (periode === 'bulan') cutoff.setMonth(now.getMonth() - 1);
+        if (periode === 'minggu') cutoff.setDate(cutoff.getDate() - 7);
+        if (periode === 'bulan') cutoff.setMonth(cutoff.getMonth() - 1);
+        return pakan.filter(item => new Date(item.tanggal) >= cutoff);
+    }, [pakan, periode]);
 
+    const filteredPengeluaran = useMemo(() => {
+        let data = pengeluaran.filter(p => p.kategori !== 'MODAL');
+        if (periode === 'semua') return data;
+        const cutoff = new Date();
+        if (periode === 'minggu') cutoff.setDate(cutoff.getDate() - 7);
+        if (periode === 'bulan') cutoff.setMonth(cutoff.getMonth() - 1);
         return data.filter(item => new Date(item.tanggal) >= cutoff);
-    };
-
-    const filteredPakan = filterByPeriod(pakan);
-    const filteredPengeluaran = filterByPeriod(pengeluaran).filter(p => p.kategori !== 'MODAL');
+    }, [pengeluaran, periode]);
 
     // Total modal (pengeluaran) by kategori
-    const totalModalByKategori = (Object.keys(kategoriLabels) as KategoriPengeluaran[]).reduce((acc, kat) => {
-        acc[kat] = filteredPengeluaran.filter(p => p.kategori === kat).reduce((sum, p) => sum + p.jumlah, 0);
-        return acc;
-    }, {} as Record<KategoriPengeluaran, number>);
+    const totalModalByKategori = useMemo(() => {
+        return (Object.keys(kategoriLabels) as KategoriPengeluaran[]).reduce((acc, kat) => {
+            acc[kat] = filteredPengeluaran.filter(p => p.kategori === kat).reduce((sum, p) => sum + p.jumlah, 0);
+            return acc;
+        }, {} as Record<KategoriPengeluaran, number>);
+    }, [filteredPengeluaran]);
 
-    const totalModal = filteredPengeluaran
-        .filter(p => p.kategori !== 'MODAL')
-        .reduce((sum, p) => sum + p.jumlah, 0);
-    const totalPendapatan = getTotalPenjualan();
+    const totalModal = useMemo(() =>
+        filteredPengeluaran.reduce((sum, p) => sum + p.jumlah, 0), [filteredPengeluaran]);
 
-    // Generate report data per kolam
-    const reportData = kolam.map(k => {
-        const kolamPakan = filteredPakan.filter(p => p.kolamId === k.id);
-        const kolamPengeluaran = filteredPengeluaran.filter(p => p.kolamId === k.id);
-        const kolamPenjualan = penjualan.filter(p => p.kolamId === k.id);
+    const totalPendapatan = useMemo(() => getTotalPenjualan(), [getTotalPenjualan]);
 
-        const totalPakan = kolamPakan.reduce((sum, p) => sum + p.jumlahKg, 0);
-        const fcr = calculateFCR(k.id);
-        const kepadatan = calculateKepadatan(k);
+    // Generate report data per kolam (Heavy calculation)
+    const reportData = useMemo(() => {
+        return kolam.map(k => {
+            const kolamPakan = filteredPakan.filter(p => p.kolamId === k.id);
+            const kolamPengeluaran = filteredPengeluaran.filter(p => p.kolamId === k.id);
+            const kolamPenjualan = penjualan.filter(p => p.kolamId === k.id);
 
-        // Actual revenue from penjualan
-        const actualRevenue = kolamPenjualan.reduce((sum, p) => sum + (p.beratKg * p.hargaPerKg), 0);
-        const totalBeratTerjual = kolamPenjualan.reduce((sum, p) => sum + p.beratKg, 0);
+            const totalPakan = kolamPakan.reduce((sum, p) => sum + p.jumlahKg, 0);
+            const fcr = calculateFCR(k.id);
+            const kepadatan = calculateKepadatan(k);
 
-        // Estimate revenue for comparison
-        const survivalRate = 0.85;
-        const avgWeight = 150; // gram
-        const pricePerKg = 25000;
-        const estimatedFish = k.jumlahIkan * survivalRate;
-        const estimatedWeight = (estimatedFish * avgWeight) / 1000;
-        const estimatedRevenue = estimatedWeight * pricePerKg;
+            // Actual revenue from penjualan
+            const actualRevenue = kolamPenjualan.reduce((sum, p) => sum + (p.beratKg * p.hargaPerKg), 0);
+            const totalBeratTerjual = kolamPenjualan.reduce((sum, p) => sum + p.beratKg, 0);
 
-        // Total modal per kolam (from pengeluaran data)
-        const totalKolamModal = kolamPengeluaran.reduce((sum, p) => sum + p.jumlah, 0);
+            // Estimate revenue for comparison
+            const survivalRate = 0.85;
+            const avgWeight = 150; // gram
+            const pricePerKg = 25000;
+            const estimatedFish = k.jumlahIkan * survivalRate;
+            const estimatedWeight = (estimatedFish * avgWeight) / 1000;
+            const estimatedRevenue = estimatedWeight * pricePerKg;
 
-        // Modal breakdown
-        const modalBibit = kolamPengeluaran.filter(p => p.kategori === 'BIBIT').reduce((sum, p) => sum + p.jumlah, 0);
-        const modalPakan = kolamPengeluaran.filter(p => p.kategori === 'PAKAN').reduce((sum, p) => sum + p.jumlah, 0);
-        const modalObat = kolamPengeluaran.filter(p => p.kategori === 'OBAT').reduce((sum, p) => sum + p.jumlah, 0);
-        const modalLainnya = kolamPengeluaran.filter(p => !['BIBIT', 'PAKAN', 'OBAT'].includes(p.kategori)).reduce((sum, p) => sum + p.jumlah, 0);
+            // Total modal per kolam (from pengeluaran data)
+            const totalKolamModal = kolamPengeluaran.reduce((sum, p) => sum + p.jumlah, 0);
 
-        // Deaths (simplified)
-        const deaths = Math.floor(k.jumlahIkan * (1 - survivalRate));
+            // Modal breakdown
+            const modalBibit = kolamPengeluaran.filter(p => p.kategori === 'BIBIT').reduce((sum, p) => sum + p.jumlah, 0);
+            const modalPakan = kolamPengeluaran.filter(p => p.kategori === 'PAKAN').reduce((sum, p) => sum + p.jumlah, 0);
+            const modalObat = kolamPengeluaran.filter(p => p.kategori === 'OBAT').reduce((sum, p) => sum + p.jumlah, 0);
+            const modalLainnya = kolamPengeluaran.filter(p => !['BIBIT', 'PAKAN', 'OBAT'].includes(p.kategori)).reduce((sum, p) => sum + p.jumlah, 0);
 
-        // Use actual revenue if available, otherwise use estimate
-        const revenue = actualRevenue > 0 ? actualRevenue : estimatedRevenue;
-        const profit = revenue - totalKolamModal;
+            // Deaths (simplified)
+            const deaths = Math.floor(k.jumlahIkan * (1 - survivalRate));
 
-        return {
-            id: k.id,
-            nama: k.nama,
-            dimensi: `${k.panjang}×${k.lebar}×${k.kedalaman}m`,
-            jumlahIkan: k.jumlahIkan,
-            kepadatan: kepadatan.toFixed(1),
-            status: k.status,
-            totalPakan,
-            fcr: fcr === 0 ? '-' : fcr.toFixed(2),
-            deaths,
-            actualRevenue,
-            estimatedRevenue,
-            totalBeratTerjual,
-            totalModal: totalKolamModal,
-            modalBibit,
-            modalPakan,
-            modalObat,
-            modalLainnya,
-            profit,
-            hasActualSales: actualRevenue > 0,
-        };
-    });
+            // Use actual revenue if available, otherwise use estimate
+            const revenue = actualRevenue > 0 ? actualRevenue : estimatedRevenue;
+            const profit = revenue - totalKolamModal;
+
+            return {
+                id: k.id,
+                nama: k.nama,
+                dimensi: `${k.panjang}×${k.lebar}×${k.kedalaman}m`,
+                jumlahIkan: k.jumlahIkan,
+                kepadatan: kepadatan.toFixed(1),
+                status: k.status,
+                totalPakan,
+                fcr: fcr === 0 ? '-' : fcr.toFixed(2),
+                deaths,
+                actualRevenue,
+                estimatedRevenue,
+                totalBeratTerjual,
+                totalModal: totalKolamModal,
+                modalBibit,
+                modalPakan,
+                modalObat,
+                modalLainnya,
+                profit,
+                hasActualSales: actualRevenue > 0,
+            };
+        });
+    }, [kolam, filteredPakan, filteredPengeluaran, penjualan, calculateFCR, calculateKepadatan]);
 
     // Export to CSV
     const exportCSV = () => {
@@ -173,25 +180,28 @@ export default function LaporanPage() {
 
         const link = document.createElement('a');
         link.href = url;
-        link.download = `laporan-lele-${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `laporan-lele-${new Date().toLocaleDateString('en-CA')}.csv`;
         link.click();
 
         URL.revokeObjectURL(url);
     };
 
     // Totals
-    const totals = {
-        kolam: kolam.length,
-        ikan: kolam.reduce((sum, k) => sum + k.jumlahIkan, 0),
-        pakan: filteredPakan.reduce((sum, p) => sum + p.jumlahKg, 0),
-        actualRevenue: reportData.reduce((sum, r) => sum + r.actualRevenue, 0),
-        estimatedRevenue: reportData.reduce((sum, r) => sum + r.estimatedRevenue, 0),
-        modal: totalModal,
-        profit: reportData.reduce((sum, r) => sum + r.profit, 0),
-    };
+    const totals = useMemo(() => {
+        return {
+            kolam: kolam.length,
+            ikan: kolam.reduce((sum, k) => sum + k.jumlahIkan, 0),
+            pakan: filteredPakan.reduce((sum, p) => sum + p.jumlahKg, 0),
+            actualRevenue: reportData.reduce((sum, r) => sum + r.actualRevenue, 0),
+            estimatedRevenue: reportData.reduce((sum, r) => sum + r.estimatedRevenue, 0),
+            modal: totalModal,
+            profit: reportData.reduce((sum, r) => sum + r.profit, 0),
+        };
+    }, [kolam, filteredPakan, reportData, totalModal]);
 
     // Filtered report data for pagination
-    const filteredReportData = reportData.slice(0, limitLaporan);
+    const filteredReportData = useMemo(() =>
+        reportData.slice(0, limitLaporan), [reportData, limitLaporan]);
 
     return (
         <DashboardLayout>

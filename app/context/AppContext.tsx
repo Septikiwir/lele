@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useToast } from './ToastContext';
 
@@ -319,8 +319,8 @@ function mapKolam(dbKolam: Record<string, unknown>): Kolam {
         lebar: dbKolam.lebar as number,
         kedalaman: dbKolam.kedalaman as number,
         tanggalTebar: !dbKolam.tanggalTebar ? null : typeof dbKolam.tanggalTebar === 'string'
-            ? dbKolam.tanggalTebar.split('T')[0]
-            : new Date(dbKolam.tanggalTebar as string).toISOString().split('T')[0],
+            ? new Date(dbKolam.tanggalTebar as string).toLocaleDateString('en-CA')
+            : new Date(dbKolam.tanggalTebar as string).toLocaleDateString('en-CA'),
         jumlahIkan: dbKolam.jumlahIkan as number,
         status: mapStatus(dbKolam.status as string),
         position: dbKolam.positionX != null ? {
@@ -354,6 +354,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [hargaPasarPerKg, setHargaPasarPerKg] = useState(35000); // Default Rp 35.000/kg
+    const [historicalFeedUsage, setHistoricalFeedUsage] = useState<Record<string, number>>({});
 
     // Optimistic Update Helpers
     const pendingRequestIds = React.useRef<Record<string, number>>({});
@@ -398,111 +399,78 @@ export function AppProvider({ children }: { children: ReactNode }) {
         } finally {
             // Critical data loaded, unblock UI immediately
             setIsLoading(false);
-            // Trigger secondary fetch in background
-            fetchSecondaryData();
+            // Trigger bulk fetch in background
+            fetchBulkData();
         }
     }, [activeFarmId]);
 
-    // Fetch secondary data in background
-    const fetchSecondaryData = useCallback(async () => {
+    // Fetch all secondary data in a single request (Optimization)
+    const fetchBulkData = useCallback(async () => {
         if (!activeFarmId) return;
 
         try {
-            const [
-                pakanRes,
-                stokPakanRes,
-                kondisiAirRes,
-                pengeluaranRes,
-                pembeliRes,
-                penjualanRes,
-                jadwalRes,
-                panenRes,
-                riwayatIkanRes,
-                samplingRes
-            ] = await Promise.all([
-                fetch(`/api/farms/${activeFarmId}/pakan`),
-                fetch(`/api/farms/${activeFarmId}/stok-pakan`),
-                fetch(`/api/farms/${activeFarmId}/kondisi-air`),
-                fetch(`/api/farms/${activeFarmId}/pengeluaran`),
-                fetch(`/api/farms/${activeFarmId}/pembeli`),
-                fetch(`/api/farms/${activeFarmId}/penjualan`),
-                fetch(`/api/farms/${activeFarmId}/jadwal-pakan`),
-                fetch(`/api/farms/${activeFarmId}/riwayat-panen`),
-                fetch(`/api/farms/${activeFarmId}/riwayat-ikan`),
-                fetch(`/api/farms/${activeFarmId}/sampling`)
-            ]);
+            const res = await fetch(`/api/farms/${activeFarmId}/bulk-data`);
+            if (!res.ok) throw new Error('Failed to fetch bulk data');
 
-            if (pakanRes.ok) {
-                const data = await pakanRes.json();
-                setPakan(data.map((p: Record<string, unknown>) => ({
-                    ...p,
-                    tanggal: (p.tanggal as string).split('T')[0]
-                })));
+            const data = await res.json();
+
+            // Set all states with optimized ISO to local mapping (YYYY-MM-DD)
+            setPakan(data.pakan.map((p: any) => ({
+                ...p,
+                tanggal: new Date(p.tanggal).toLocaleDateString('en-CA')
+            })));
+
+            setStokPakan(data.stokPakan.map((s: any) => ({
+                ...s,
+                tanggalTambah: new Date(s.tanggalTambah).toLocaleDateString('en-CA')
+            })));
+
+            setKondisiAir(data.kondisiAir.map((k: any) => ({
+                ...k,
+                tanggal: new Date(k.tanggal).toLocaleDateString('en-CA')
+            })));
+
+            setPengeluaran(data.pengeluaran.map((p: any) => ({
+                ...p,
+                tanggal: new Date(p.tanggal).toLocaleDateString('en-CA')
+            })));
+
+            setPembeli(data.pembeli);
+
+            setPenjualan(data.penjualan.map((p: any) => ({
+                ...p,
+                tanggal: new Date(p.tanggal).toLocaleDateString('en-CA')
+            })));
+
+            setJadwalPakan(data.jadwalPakan);
+
+            setRiwayatPanen(data.riwayatPanen.map((p: any) => ({
+                ...p,
+                tanggal: p.tanggal, // ISO
+                tipe: p.tipe as TipePanen
+            })));
+
+            setRiwayatIkan(data.riwayatIkan.map((r: any) => ({
+                ...r,
+                tanggal: new Date(r.tanggal).toLocaleDateString('en-CA')
+            })));
+
+            setRiwayatSampling(data.riwayatSampling.map((s: any) => ({
+                ...s,
+                tanggal: s.tanggal // ISO
+            })));
+
+            // Map historical usage array to object map
+            const usageMap: Record<string, number> = {};
+            if (data.historicalFeedUsage) {
+                data.historicalFeedUsage.forEach((h: any) => {
+                    usageMap[h.jenisPakan] = h.jumlahKg;
+                });
             }
-            if (stokPakanRes.ok) {
-                const data = await stokPakanRes.json();
-                setStokPakan(data.map((s: any) => ({
-                    ...s,
-                    tanggalTambah: (s.tanggalTambah as string).split('T')[0],
-                    createdAt: s.createdAt
-                })));
-            }
-            if (kondisiAirRes.ok) {
-                const data = await kondisiAirRes.json();
-                setKondisiAir(data.map((k: Record<string, unknown>) => ({
-                    ...k,
-                    tanggal: (k.tanggal as string).split('T')[0]
-                })));
-            }
-            if (pengeluaranRes.ok) {
-                const data = await pengeluaranRes.json();
-                setPengeluaran(data.map((p: any) => ({
-                    ...p,
-                    tanggal: (p.tanggal as string).split('T')[0],
-                    kategori: p.kategori,
-                    createdAt: p.createdAt
-                })));
-            }
-            if (pembeliRes.ok) {
-                const data = await pembeliRes.json();
-                setPembeli(data);
-            }
-            if (penjualanRes.ok) {
-                const data = await penjualanRes.json();
-                setPenjualan(data.map((p: any) => ({
-                    ...p,
-                    tanggal: (p.tanggal as string).split('T')[0],
-                    createdAt: p.createdAt
-                })));
-            }
-            if (jadwalRes.ok) {
-                const data = await jadwalRes.json();
-                setJadwalPakan(data);
-            }
-            if (panenRes.ok) {
-                const data = await panenRes.json();
-                setRiwayatPanen(data.map((p: any) => ({
-                    ...p,
-                    tanggal: p.tanggal, // Keep full ISO string
-                    tipe: p.tipe
-                })));
-            }
-            if (riwayatIkanRes.ok) {
-                const data = await riwayatIkanRes.json();
-                setRiwayatIkan(data.map((r: any) => ({
-                    ...r,
-                    tanggal: new Date(r.tanggal).toISOString().split('T')[0]
-                })));
-            }
-            if (samplingRes.ok) {
-                const data = await samplingRes.json();
-                setRiwayatSampling(data.map((s: any) => ({
-                    ...s,
-                    tanggal: new Date(s.tanggal).toISOString()
-                })));
-            }
+            setHistoricalFeedUsage(usageMap);
+
         } catch (error) {
-            console.error('Failed to fetch secondary data:', error);
+            console.error('Failed to fetch bulk data:', error);
         }
     }, [activeFarmId]);
 
@@ -675,7 +643,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             });
             if (res.ok) {
                 const created = await res.json();
-                setPakan(prev => [...prev, { ...created, tanggal: created.tanggal.split('T')[0] }]);
+                setPakan(prev => [...prev, { ...created, tanggal: new Date(created.tanggal).toLocaleDateString('en-CA') }]);
                 showToast('Pakan berhasil dicatat', 'success');
 
                 // Tambahkan ke pengeluaran juga
@@ -711,7 +679,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             });
             if (res.ok) {
                 const created = await res.json();
-                setKondisiAir(prev => [...prev, { ...created, tanggal: created.tanggal.split('T')[0] }]);
+                setKondisiAir(prev => [...prev, { ...created, tanggal: new Date(created.tanggal).toLocaleDateString('en-CA') }]);
             }
         } catch (error) {
             console.error('Failed to add kondisi air:', error);
@@ -741,7 +709,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 const created = await res.json();
                 setPengeluaran(prev => [...prev, {
                     ...created,
-                    tanggal: created.tanggal.split('T')[0],
+                    tanggal: new Date(created.tanggal).toLocaleDateString('en-CA'),
                     kategori: created.kategori,
                     createdAt: created.createdAt
                 }]);
@@ -780,7 +748,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             });
             if (res.ok) {
                 const created = await res.json();
-                setStokPakan(prev => [...prev, { ...created, tanggalTambah: created.tanggalTambah.split('T')[0] }]);
+                setStokPakan(prev => [...prev, { ...created, tanggalTambah: new Date(created.tanggalTambah).toLocaleDateString('en-CA') }]);
 
                 // 2. Record Expense & Deduct logic (handled by addPengeluaran)
                 await addPengeluaran({
@@ -837,7 +805,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 const created = await res.json();
                 setPenjualan(prev => [...prev, {
                     ...created,
-                    tanggal: created.tanggal.split('T')[0],
+                    tanggal: new Date(created.tanggal).toLocaleDateString('en-CA'),
                     createdAt: created.createdAt
                 }]);
 
@@ -929,7 +897,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     ...result.history, // Assuming API returns history object in result or is the result
                     id: result.id,
                     kolamId: result.kolamId,
-                    tanggal: new Date(result.tanggal).toISOString().split('T')[0],
+                    tanggal: new Date(result.tanggal).toLocaleDateString('en-CA'),
                     jumlahPerubahan: result.jumlahPerubahan,
                     jumlahAkhir: result.jumlahAkhir,
                     keterangan: result.keterangan
@@ -953,10 +921,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const getRiwayatIkanByKolam = (kolamId: string) =>
-        riwayatIkan.filter(r => r.kolamId === kolamId).sort((a, b) =>
-            new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        );
 
     const addRiwayatSampling = async (newSampling: Omit<RiwayatSampling, 'id'>) => {
         if (!activeFarmId) return;
@@ -978,15 +942,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const getSamplingByKolam = (kolamId: string) =>
-        riwayatSampling.filter(s => s.kolamId === kolamId).sort((a, b) =>
-            new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        );
 
-    const getLatestSampling = (kolamId: string) => {
-        const samples = getSamplingByKolam(kolamId);
-        return samples.length > 0 ? samples[0] : undefined;
-    };
 
     const calculateBiomass = (kolamId: string) => {
         const kolam = getKolamById(kolamId);
@@ -1122,47 +1078,104 @@ export function AppProvider({ children }: { children: ReactNode }) {
         };
     };
 
-    // === Helper Functions ===
+    // === Indexed Data and Memoization (Performance Tier 1) ===
+
+    const pakanMap = useMemo(() => {
+        const map = new Map<string, DataPakan[]>();
+        pakan.forEach(p => {
+            if (!map.has(p.kolamId)) map.set(p.kolamId, []);
+            map.get(p.kolamId)!.push(p);
+        });
+        return map;
+    }, [pakan]);
+
+    const pengeluaranMap = useMemo(() => {
+        const map = new Map<string, Pengeluaran[]>();
+        pengeluaran.forEach(p => {
+            if (p.kolamId) {
+                if (!map.has(p.kolamId)) map.set(p.kolamId, []);
+                map.get(p.kolamId)!.push(p);
+            }
+        });
+        return map;
+    }, [pengeluaran]);
+
+    const riwayatIkanMap = useMemo(() => {
+        const map = new Map<string, RiwayatIkan[]>();
+        riwayatIkan.forEach(r => {
+            if (!map.has(r.kolamId)) map.set(r.kolamId, []);
+            map.get(r.kolamId)!.push(r);
+        });
+        return map;
+    }, [riwayatIkan]);
+
+    const riwayatPanenMap = useMemo(() => {
+        const map = new Map<string, RiwayatPanen[]>();
+        riwayatPanen.forEach(r => {
+            if (!map.has(r.kolamId)) map.set(r.kolamId, []);
+            map.get(r.kolamId)!.push(r);
+        });
+        return map;
+    }, [riwayatPanen]);
+
+    const penjualanMap = useMemo(() => {
+        const map = new Map<string, Penjualan[]>();
+        penjualan.forEach(p => {
+            if (!map.has(p.kolamId)) map.set(p.kolamId, []);
+            map.get(p.kolamId)!.push(p);
+        });
+        return map;
+    }, [penjualan]);
+
+    const feedPriceMap = useMemo(() => {
+        const map = new Map<string, number>();
+        const jenisPakanSet = new Set(stokPakan.map(s => s.jenisPakan));
+
+        jenisPakanSet.forEach(jenis => {
+            const stocks = stokPakan.filter(s => s.jenisPakan === jenis);
+            if (stocks.length > 0) {
+                const totalValue = stocks.reduce((sum, s) => sum + (s.stokAwal * s.hargaPerKg), 0);
+                const totalKg = stocks.reduce((sum, s) => sum + s.stokAwal, 0);
+                map.set(jenis, totalKg > 0 ? totalValue / totalKg : 0);
+            }
+        });
+        return map;
+    }, [stokPakan]);
+
+    // === Optimized Helper Functions ===
 
     const getKolamById = (id: string) => kolam.find(k => k.id === id);
 
-    const getPakanByKolam = (kolamId: string) =>
-        pakan.filter(p => p.kolamId === kolamId).sort((a, b) =>
+    const getPakanByKolam = useCallback((kolamId: string) =>
+        (pakanMap.get(kolamId) || []).sort((a: any, b: any) =>
             new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        );
+        ), [pakanMap]);
 
-    const getKondisiAirByKolam = (kolamId: string) =>
-        kondisiAir.filter(ka => ka.kolamId === kolamId).sort((a, b) =>
+    const getKondisiAirByKolam = useCallback((kolamId: string) =>
+        kondisiAir.filter(ka => ka.kolamId === kolamId).sort((a: any, b: any) =>
             new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        );
+        ), [kondisiAir]); // Kondisi air usually fewer records, but could also be indexed if needed
 
-    const getPengeluaranByKolam = (kolamId: string) =>
-        pengeluaran.filter(p => p.kolamId === kolamId).sort((a, b) =>
+    const getPengeluaranByKolam = useCallback((kolamId: string) =>
+        (pengeluaranMap.get(kolamId) || []).sort((a: any, b: any) =>
             new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        );
+        ), [pengeluaranMap]);
 
-    const getFeedPrice = useCallback((jenisPakan: string) => {
-        const stocks = stokPakan.filter(s => s.jenisPakan === jenisPakan);
-        if (stocks.length === 0) return 0;
-        const totalValue = stocks.reduce((sum, s) => sum + (s.stokAwal * s.hargaPerKg), 0);
-        const totalKg = stocks.reduce((sum, s) => sum + s.stokAwal, 0);
-        return totalKg > 0 ? totalValue / totalKg : 0;
-    }, [stokPakan]);
+    const getFeedPrice = useCallback((jenisPakan: string) =>
+        feedPriceMap.get(jenisPakan) || 0, [feedPriceMap]);
 
     const getTotalPengeluaranByKolam = useCallback((kolamId: string): number => {
-        // Source of truth is now the pengeluaran table only
-        // Feed costs are automatically added to pengeluaran when feed is logged
-        const specificExpenses = pengeluaran.filter(p => p.kolamId === kolamId);
+        const specificExpenses = pengeluaranMap.get(kolamId) || [];
         return specificExpenses.reduce((sum, p) => sum + p.jumlah, 0);
-    }, [pengeluaran]);
+    }, [pengeluaranMap]);
 
     const getTotalPengeluaranByKategori = useCallback((kolamId: string, kategori: KategoriPengeluaran): number => {
         const targetKat = kategori.toUpperCase();
         const knownCategories = ['PAKAN', 'BIBIT', 'LISTRIK', 'OBAT', 'TENAGA_KERJA', 'GAJI', 'MODAL'];
+        const kolamExpenses = pengeluaranMap.get(kolamId) || [];
 
-        return pengeluaran
+        return kolamExpenses
             .filter(p => {
-                if (p.kolamId !== kolamId) return false;
                 const pKat = p.kategori.toUpperCase();
                 if (targetKat === 'LAINNYA') {
                     return !knownCategories.includes(pKat);
@@ -1170,83 +1183,95 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 return pKat === targetKat;
             })
             .reduce((sum, p) => sum + p.jumlah, 0);
-    }, [pengeluaran]);
+    }, [pengeluaranMap]);
 
-    const getStokTersediaByJenis = (jenisPakan: string): number => {
+    const getStokTersediaByJenis = useCallback((jenisPakan: string): number => {
         const totalStok = stokPakan
             .filter(s => s.jenisPakan === jenisPakan)
             .reduce((sum, s) => sum + s.stokAwal, 0);
-        const totalUsed = pakan
+
+        const recentUsed = pakan
             .filter(p => p.jenisPakan === jenisPakan)
             .reduce((sum, p) => sum + p.jumlahKg, 0);
-        return totalStok - totalUsed;
-    };
 
+        const historicalUsed = historicalFeedUsage[jenisPakan] || 0;
 
-    const getAllJenisPakan = (): string[] => {
-        const fromStok = stokPakan.map(s => s.jenisPakan);
-        const fromPakan = pakan.map(p => p.jenisPakan);
-        return [...new Set([...fromStok, ...fromPakan])];
-    };
+        return totalStok - (recentUsed + historicalUsed);
+    }, [stokPakan, pakan, historicalFeedUsage]);
 
-    const getPenjualanByKolam = (kolamId: string) =>
-        penjualan.filter(p => p.kolamId === kolamId).sort((a, b) =>
+    const getPenjualanByKolam = useCallback((kolamId: string) =>
+        (penjualanMap.get(kolamId) || []).sort((a: any, b: any) =>
             new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        );
+        ), [penjualanMap]);
 
-    const getTotalPenjualanByKolam = (kolamId: string): number =>
-        penjualan.filter(p => p.kolamId === kolamId).reduce((sum, p) => sum + (p.beratKg * p.hargaPerKg), 0);
+    const getTotalPenjualanByKolam = useCallback((kolamId: string): number =>
+        (penjualanMap.get(kolamId) || []).reduce((sum, p) => sum + (p.beratKg * p.hargaPerKg), 0), [penjualanMap]);
 
-    const getTotalPenjualan = (): number =>
-        penjualan.reduce((sum, p) => sum + (p.beratKg * p.hargaPerKg), 0);
+    const getTotalPenjualan = useCallback((): number =>
+        penjualan.reduce((sum, p) => sum + (p.beratKg * p.hargaPerKg), 0), [penjualan]);
+
+    const getRiwayatIkanByKolam = useCallback((kolamId: string) =>
+        (riwayatIkanMap.get(kolamId) || []).sort((a, b) =>
+            new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
+        ), [riwayatIkanMap]);
+
 
     const getAvailableFunds = useCallback((): number => {
         if (!farm) return 0;
         const totalPenjualanVal = getTotalPenjualan();
-        // Total expense is sum of all pengeluaran (which includes feed costs)
-        const totalPengeluaranVal = pengeluaran.reduce((sum, p) => sum + p.jumlah, 0);
+        const totalPengeluaranVal = pengeluaran.reduce((sum: number, p: any) => sum + p.jumlah, 0);
         return farm.modalAwal + totalPenjualanVal - totalPengeluaranVal;
-    }, [farm, pengeluaran, penjualan]);
-    // Actually getTotalPenjualan is not wrapped in useCallback in the original code I saw?
-    // Let me check line 1168 in previous view.
-    // "const getTotalPenjualan = (): number => ..." - It's a standard arrow function, re-created every render.
-    // So adding it to deps is correct but it will cause re-renders. 
-    // However, the lint error was "block scoped variable used before declaration".
-    // Moving it here fixes that.
+    }, [farm, pengeluaran, getTotalPenjualan]);
 
-    const getJadwalByKolam = (kolamId: string) =>
-        jadwalPakan.filter(j => j.kolamId === kolamId).sort((a, b) =>
+    const getJadwalByKolam = useCallback((kolamId: string) =>
+        jadwalPakan.filter(j => j.kolamId === kolamId).sort((a: any, b: any) =>
             a.waktu.localeCompare(b.waktu)
-        );
+        ), [jadwalPakan]);
 
-    const getPanenByKolam = (kolamId: string) =>
-        riwayatPanen.filter(p => p.kolamId === kolamId).sort((a, b) =>
+    const getPanenByKolam = useCallback((kolamId: string) =>
+        (riwayatPanenMap.get(kolamId) || []).sort((a: any, b: any) =>
             new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        );
+        ), [riwayatPanenMap]);
 
-    const getProfitByKolam = (kolamId: string): number => {
+    const getSamplingByKolam = useCallback((kolamId: string) =>
+        riwayatSampling.filter((s: any) => s.kolamId === kolamId).sort((a: any, b: any) =>
+            new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
+        ), [riwayatSampling]);
+
+    const getLatestSampling = useCallback((kolamId: string) => {
+        const samples = getSamplingByKolam(kolamId);
+        return samples.length > 0 ? samples[0] : undefined;
+    }, [getSamplingByKolam]);
+
+    const getAllJenisPakan = useCallback(() => {
+        const fromStok = stokPakan.map(s => s.jenisPakan);
+        const fromPakan = pakan.map(p => p.jenisPakan);
+        return [...new Set([...fromStok, ...fromPakan])];
+    }, [stokPakan, pakan]);
+
+    const getProfitByKolam = useCallback((kolamId: string): number => {
         const pendapatan = getTotalPenjualanByKolam(kolamId);
         const pengeluaranTotal = getTotalPengeluaranByKolam(kolamId);
         return pendapatan - pengeluaranTotal;
-    };
+    }, [getTotalPenjualanByKolam, getTotalPengeluaranByKolam]);
 
-    const calculateKepadatan = (k: Kolam): number => {
+    const calculateKepadatan = useCallback((k: Kolam): number => {
         const volume = k.panjang * k.lebar * k.kedalaman;
         return volume > 0 ? k.jumlahIkan / volume : 0;
-    };
+    }, []);
 
-    const calculateFCR = (kolamId: string): number => {
+    const calculateFCR = useCallback((kolamId: string): number => {
         const pakanKolam = getPakanByKolam(kolamId);
-        const totalPakan = pakanKolam.reduce((sum, p) => sum + p.jumlahKg, 0);
+        const totalPakan = pakanKolam.reduce((sum: number, p: any) => sum + p.jumlahKg, 0);
         const k = getKolamById(kolamId);
         if (!k) return 0;
         const estimatedWeightGain = k.jumlahIkan * 0.05;
         return estimatedWeightGain > 0 ? totalPakan / estimatedWeightGain : 0;
-    };
+    }, [getPakanByKolam, getKolamById]);
 
 
     // Helper to calculate metrics for a specific date range
-    const calculateCycleMetrics = (kolamId: string, startDate: string, endDate: string, startTimestamp: string, endTimestamp?: string): Omit<CycleSummary, 'cycleNumber'> => {
+    const calculateCycleMetrics = useCallback((kolamId: string, startDate: string, endDate: string, startTimestamp: string, endTimestamp?: string): Omit<CycleSummary, 'cycleNumber'> => {
         const k = getKolamById(kolamId);
         const strictFilter = (d: { tanggal: string }) => {
             const itemTime = new Date((d as any).createdAt || d.tanggal).getTime();
@@ -1339,7 +1364,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             startId: '',
             lastInputTime // Added field
         };
-    };
+    }, [getKolamById, pakan, riwayatPanen, getFeedPrice, pengeluaran, getRiwayatIkanByKolam]);
 
     const getCycleSummary = (kolamId: string): CycleSummary | null => {
         const k = getKolamById(kolamId);
@@ -1374,7 +1399,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const toggleSidebar = () => setIsSidebarCollapsed(prev => !prev);
 
-    const getCycleHistory = (kolamId: string): CycleSummary[] => {
+    const getCycleHistory = useCallback((kolamId: string): CycleSummary[] => {
         // 1. Get all fish history sorted by CREATED AT (Ascending) for chronological processing
         const historyAsc = getRiwayatIkanByKolam(kolamId).sort((a, b) => {
             const timeA = new Date((a as any).createdAt || a.tanggal).getTime();
@@ -1440,7 +1465,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
 
         return cycles.reverse(); // Return Newest First
-    };
+    }, [getRiwayatIkanByKolam, riwayatPanen, getKolamById, calculateCycleMetrics]);
 
     // === Dashboard Helpers ===
 

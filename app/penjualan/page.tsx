@@ -41,7 +41,7 @@ export default function PenjualanPage() {
     const [penjualanForm, setPenjualanForm] = useState({
         kolamId: '',
         pembeliId: '',
-        tanggal: new Date().toISOString().split('T')[0],
+        tanggal: new Date().toLocaleDateString('en-CA'),
         beratKg: '',
         hargaPerKg: '',
         jumlahIkan: '',
@@ -75,7 +75,7 @@ export default function PenjualanPage() {
             setPenjualanForm({
                 kolamId: '',
                 pembeliId: '',
-                tanggal: new Date().toISOString().split('T')[0],
+                tanggal: new Date().toLocaleDateString('en-CA'),
                 beratKg: '',
                 hargaPerKg: '',
                 jumlahIkan: '',

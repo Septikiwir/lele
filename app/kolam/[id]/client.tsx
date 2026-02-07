@@ -112,7 +112,7 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
 
     // Use initialData as the kolam reference (already loaded from server)
     const kolam = initialData;
-    const cycleHistory = getCycleHistory(kolam.id);
+    const cycleHistory = useMemo(() => getCycleHistory(kolam.id), [kolam.id, getCycleHistory]);
 
     const handleUpdateFish = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -267,33 +267,35 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
     }, [kolam.id, samplingHistory[0]?.id]); // Only re-run if the latest sampling record changes
 
     // Filter, Sort, and Deduplicate Chart Data (Pick latest per day)
-    const processedData = samplingHistory
-        .filter(s => {
-            if (chartRange === 'all') return true;
-            const daysArr = { '7': 7, '30': 30, '90': 90 };
-            const limitDate = new Date();
-            limitDate.setDate(limitDate.getDate() - (daysArr[chartRange as keyof typeof daysArr] || 0));
-            return new Date(s.tanggal) >= limitDate;
-        })
-        .sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime());
+    const chartData = useMemo(() => {
+        const processed = samplingHistory
+            .filter(s => {
+                if (chartRange === 'all') return true;
+                const daysArr = { '7': 7, '30': 30, '90': 90 };
+                const limitDate = new Date();
+                limitDate.setDate(limitDate.getDate() - (daysArr[chartRange as keyof typeof daysArr] || 0));
+                return new Date(s.tanggal) >= limitDate;
+            })
+            .sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime());
 
-    // Deduplicate: If multiple samplings in one day, take the latest one
-    const deduplicatedMap = new Map();
-    processedData.forEach(s => {
-        const dateKey = new Date(s.tanggal).toLocaleDateString('en-CA'); // YYYY-MM-DD
-        deduplicatedMap.set(dateKey, s); // Overwrites previous, keeping latest because it's sorted
-    });
+        // Deduplicate: If multiple samplings in one day, take the latest one
+        const deduplicatedMap = new Map();
+        processed.forEach(s => {
+            const dateKey = new Date(s.tanggal).toLocaleDateString('en-CA'); // YYYY-MM-DD
+            deduplicatedMap.set(dateKey, s); // Overwrites previous, keeping latest because it's sorted
+        });
 
-    const chartData = Array.from(deduplicatedMap.values()).map((s: any) => {
-        const berat = s.bobotGram || (s.jumlahIkanPerKg > 0 ? 1000 / s.jumlahIkanPerKg : 0);
-        return {
-            id: s.id,
-            fullDate: s.tanggal,
-            tanggal: new Date(s.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
-            berat: Math.round(Number(berat)),
-            size: s.jumlahIkanPerKg
-        };
-    });
+        return Array.from(deduplicatedMap.values()).map((s: any) => {
+            const berat = s.bobotGram || (s.jumlahIkanPerKg > 0 ? 1000 / s.jumlahIkanPerKg : 0);
+            return {
+                id: s.id,
+                fullDate: s.tanggal,
+                tanggal: new Date(s.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
+                berat: Math.round(Number(berat)),
+                size: s.jumlahIkanPerKg
+            };
+        });
+    }, [samplingHistory, chartRange]);
 
     const kepadatan = calculateKepadatan(kolam as any);
     const volume = kolam.panjang * kolam.lebar * kolam.kedalaman;

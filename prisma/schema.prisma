@@ -115,6 +115,8 @@ model FarmMember {
   farm   Farm @relation(fields: [farmId], references: [id], onDelete: Cascade)
 
   @@unique([userId, farmId])
+  @@index([userId])
+  @@index([farmId])
 }
 
 // ============================================
@@ -160,6 +162,8 @@ model Kolam {
   penjualan     Penjualan[]
   riwayatIkan   RiwayatIkan[]
   riwayatSampling RiwayatSampling[]
+
+  @@index([farmId])
 }
 
 // ============================================
@@ -178,6 +182,9 @@ model StokPakan {
 
   farmId String
   farm   Farm   @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@index([farmId])
+  @@index([jenisPakan])
 }
 
 model DataPakan {
@@ -190,6 +197,8 @@ model DataPakan {
 
   kolamId String
   kolam   Kolam  @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+
+  @@index([kolamId])
 }
 
 model JadwalPakan {
@@ -202,6 +211,8 @@ model JadwalPakan {
 
   kolamId String
   kolam   Kolam  @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+
+  @@index([kolamId])
 }
 
 // ============================================
@@ -221,6 +232,9 @@ model KondisiAir {
 
   kolamId String
   kolam   Kolam  @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+
+  @@index([kolamId])
+  @@index([tanggal])
 }
 
 // ============================================
@@ -251,6 +265,10 @@ model Pengeluaran {
 
   farmId String
   farm   Farm   @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@index([kolamId])
+  @@index([farmId])
+  @@index([tanggal])
 }
 
 // ============================================
@@ -297,6 +315,10 @@ model Penjualan {
   kolam     Kolam   @relation(fields: [kolamId], references: [id], onDelete: Cascade)
   pembeliId String
   pembeli   Pembeli @relation(fields: [pembeliId], references: [id], onDelete: Cascade)
+
+  @@index([kolamId])
+  @@index([pembeliId])
+  @@index([tanggal])
 }
 
 // ============================================
@@ -321,6 +343,8 @@ model RiwayatPanen {
 
   kolamId String
   kolam   Kolam  @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+
+  @@index([kolamId])
 }
 
 // ============================================
@@ -338,6 +362,8 @@ model RiwayatIkan {
 
   kolamId String
   kolam   Kolam  @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+
+  @@index([kolamId])
 }
 
 // ============================================
@@ -356,4 +382,7 @@ model RiwayatSampling {
 
   kolamId String
   kolam   Kolam  @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+
+  @@index([kolamId])
+  @@index([tanggal])
 }
