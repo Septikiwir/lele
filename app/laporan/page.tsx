@@ -20,6 +20,7 @@ const kategoriLabels: Record<KategoriPengeluaran, string> = {
     LISTRIK: 'Listrik',
     TENAGA_KERJA: 'Tenaga Kerja',
     LAINNYA: 'Lainnya',
+    MODAL: 'Tarik Modal',
 };
 
 export default function LaporanPage() {
@@ -37,7 +38,7 @@ export default function LaporanPage() {
         getProfitByKolam,
     } = useApp();
     const [periode, setPeriode] = useState<'semua' | 'minggu' | 'bulan'>('semua');
-    
+
     // Pagination state
     const [limitLaporan, setLimitLaporan] = useState(10);
 
@@ -186,7 +187,7 @@ export default function LaporanPage() {
         modal: totalModal,
         profit: reportData.reduce((sum, r) => sum + r.profit, 0),
     };
-    
+
     // Filtered report data for pagination
     const filteredReportData = reportData.slice(0, limitLaporan);
 
@@ -304,30 +305,34 @@ export default function LaporanPage() {
                         Kelola Pengeluaran →
                     </Link>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-                    <div className="card p-4 border-l-4 border-l-teal-500">
-                        <p className="text-xs text-teal-600 font-medium flex items-center gap-1"><Fish className="w-3 h-3" /> Bibit</p>
-                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.BIBIT.toLocaleString('id-ID')}</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-7 gap-3 sm:gap-4">
+                    <div className="card p-3 sm:p-4 border-l-4 border-l-teal-500">
+                        <p className="text-xs text-teal-600 font-medium flex items-center gap-1 leading-tight"><Fish className="w-3 h-3" /> Bibit</p>
+                        <p className="text-sm sm:text-lg font-bold text-slate-900">Rp {totalModalByKategori.BIBIT.toLocaleString('id-ID')}</p>
                     </div>
-                    <div className="card p-4 border-l-4 border-l-amber-500">
-                        <p className="text-xs text-amber-600 font-medium flex items-center gap-1"><Container className="w-3 h-3" /> Pakan</p>
-                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.PAKAN.toLocaleString('id-ID')}</p>
+                    <div className="card p-3 sm:p-4 border-l-4 border-l-amber-500">
+                        <p className="text-xs text-amber-600 font-medium flex items-center gap-1 leading-tight"><Container className="w-3 h-3" /> Pakan</p>
+                        <p className="text-sm sm:text-lg font-bold text-slate-900">Rp {totalModalByKategori.PAKAN.toLocaleString('id-ID')}</p>
                     </div>
-                    <div className="card p-4 border-l-4 border-l-purple-500">
-                        <p className="text-xs text-purple-600 font-medium flex items-center gap-1"><Pill className="w-3 h-3" /> Obat</p>
-                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.OBAT.toLocaleString('id-ID')}</p>
+                    <div className="card p-3 sm:p-4 border-l-4 border-l-purple-500">
+                        <p className="text-xs text-purple-600 font-medium flex items-center gap-1 leading-tight"><Pill className="w-3 h-3" /> Obat</p>
+                        <p className="text-sm sm:text-lg font-bold text-slate-900">Rp {totalModalByKategori.OBAT.toLocaleString('id-ID')}</p>
                     </div>
-                    <div className="card p-4 border-l-4 border-l-yellow-500">
-                        <p className="text-xs text-yellow-600 font-medium flex items-center gap-1"><Zap className="w-3 h-3" /> Listrik</p>
-                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.LISTRIK.toLocaleString('id-ID')}</p>
+                    <div className="card p-3 sm:p-4 border-l-4 border-l-yellow-500">
+                        <p className="text-xs text-yellow-600 font-medium flex items-center gap-1 leading-tight"><Zap className="w-3 h-3" /> Listrik</p>
+                        <p className="text-sm sm:text-lg font-bold text-slate-900">Rp {totalModalByKategori.LISTRIK.toLocaleString('id-ID')}</p>
                     </div>
-                    <div className="card p-4 border-l-4 border-l-green-500">
-                        <p className="text-xs text-green-600 font-medium flex items-center gap-1"><User className="w-3 h-3" /> Tenaga Kerja</p>
-                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.TENAGA_KERJA.toLocaleString('id-ID')}</p>
+                    <div className="card p-3 sm:p-4 border-l-4 border-l-green-500">
+                        <p className="text-xs text-green-600 font-medium flex items-center gap-1 leading-tight"><User className="w-3 h-3" /> Pekerja</p>
+                        <p className="text-sm sm:text-lg font-bold text-slate-900">Rp {totalModalByKategori.TENAGA_KERJA.toLocaleString('id-ID')}</p>
                     </div>
-                    <div className="card p-4 border-l-4 border-l-slate-400">
-                        <p className="text-xs text-slate-600 font-medium flex items-center gap-1"><Package className="w-3 h-3" /> Lainnya</p>
-                        <p className="text-lg font-bold text-slate-900">Rp {totalModalByKategori.LAINNYA.toLocaleString('id-ID')}</p>
+                    <div className="card p-3 sm:p-4 border-l-4 border-l-orange-500">
+                        <p className="text-xs text-orange-600 font-medium flex items-center gap-1 leading-tight"><Wallet className="w-3 h-3" /> Modal</p>
+                        <p className="text-sm sm:text-lg font-bold text-slate-900">Rp {(totalModalByKategori.MODAL || 0).toLocaleString('id-ID')}</p>
+                    </div>
+                    <div className="card p-3 sm:p-4 border-l-4 border-l-slate-400">
+                        <p className="text-xs text-slate-600 font-medium flex items-center gap-1 leading-tight"><Package className="w-3 h-3" /> Lainnya</p>
+                        <p className="text-sm sm:text-lg font-bold text-slate-900">Rp {totalModalByKategori.LAINNYA.toLocaleString('id-ID')}</p>
                     </div>
                 </div>
                 <div className="mt-4 pt-4 border-t flex justify-between items-center">
@@ -354,7 +359,7 @@ export default function LaporanPage() {
                     </div>
                 ) : (
                     <>
-                    <table className="table table-compact">
+                        <table className="table table-compact">
                             <thead>
                                 <tr>
                                     <th>Kolam</th>
@@ -423,9 +428,9 @@ export default function LaporanPage() {
                             </p>
                             <div className="flex items-center gap-2">
                                 <label className="text-sm text-slate-600">Tampilkan:</label>
-                                <select 
-                                    value={limitLaporan} 
-                                    onChange={(e) => setLimitLaporan(Number(e.target.value))} 
+                                <select
+                                    value={limitLaporan}
+                                    onChange={(e) => setLimitLaporan(Number(e.target.value))}
                                     className="input py-1 px-2 text-sm"
                                 >
                                     <option value={10}>10</option>
@@ -436,9 +441,9 @@ export default function LaporanPage() {
                                 </select>
                             </div>
                         </div>
-                        </>
-                    )}
-                </div>
+                    </>
+                )}
+            </div>
         </DashboardLayout>
     );
 }

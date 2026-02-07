@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { useApp, KategoriPengeluaran } from '../context/AppContext';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 
-import { Plus, Trash2, Loader2, Banknote, Container, Fish, Pill, Zap, Users, Package } from 'lucide-react';
+import { Plus, Trash2, Loader2, Banknote, Container, Fish, Pill, Zap, Users, Package, Wallet } from 'lucide-react';
 import Modal from '../components/ui/Modal';
 import EmptyState from '../components/ui/EmptyState';
 
@@ -15,6 +15,7 @@ const kategoriOptions: { value: KategoriPengeluaran; label: string; icon: React.
     { value: 'OBAT', label: 'Obat & Probiotik', icon: <Pill className="w-4 h-4" /> },
     { value: 'LISTRIK', label: 'Listrik', icon: <Zap className="w-4 h-4" /> },
     { value: 'TENAGA_KERJA', label: 'Tenaga Kerja', icon: <Users className="w-4 h-4" /> },
+    { value: 'MODAL', label: 'Tarik Modal', icon: <Wallet className="w-4 h-4" /> },
     { value: 'LAINNYA', label: 'Lainnya', icon: <Package className="w-4 h-4" /> },
 ];
 
@@ -24,6 +25,7 @@ const kategoriColors: Record<KategoriPengeluaran, string> = {
     OBAT: 'badge-purple',
     LISTRIK: 'badge-warning',
     TENAGA_KERJA: 'badge-success',
+    MODAL: 'badge-danger',
     LAINNYA: 'badge-neutral',
 };
 
@@ -147,7 +149,7 @@ export default function PengeluaranPage() {
 
                 {/* Kategori Summary Cards */}
                 <div className="card p-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-7 gap-3 sm:gap-4">
                         {kategoriTotals.map((k, idx) => {
                             const colorClasses = [
                                 { card: 'bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50', label: 'text-blue-600', value: 'text-blue-900' },
@@ -155,13 +157,14 @@ export default function PengeluaranPage() {
                                 { card: 'bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/50', label: 'text-purple-600', value: 'text-purple-900' },
                                 { card: 'bg-gradient-to-br from-yellow-50 to-yellow-100/50 border border-yellow-200/50', label: 'text-yellow-600', value: 'text-yellow-900' },
                                 { card: 'bg-gradient-to-br from-cyan-50 to-cyan-100/50 border border-cyan-200/50', label: 'text-cyan-600', value: 'text-cyan-900' },
+                                { card: 'bg-gradient-to-br from-orange-50 to-orange-100/50 border border-orange-200/50', label: 'text-orange-600', value: 'text-orange-900' },
                                 { card: 'bg-gradient-to-br from-slate-50 to-slate-100/50 border border-slate-200/50', label: 'text-slate-600', value: 'text-slate-900' },
                             ];
                             const color = colorClasses[idx % colorClasses.length];
                             return (
-                                <div key={k.value} className={`${color.card} rounded-xl p-4`}>
-                                    <p className={`text-[11px] font-bold ${color.label} uppercase tracking-wider mb-2 flex items-center gap-1`}>{k.icon} {k.label}</p>
-                                    <p className={`text-base font-semibold ${color.value}`}>Rp {k.total.toLocaleString('id-ID')}</p>
+                                <div key={k.value} className={`${color.card} rounded-xl p-3 sm:p-4`}>
+                                    <p className={`text-[10px] sm:text-[11px] font-bold ${color.label} uppercase tracking-wider mb-2 flex items-center gap-1`}>{k.icon} {k.label}</p>
+                                    <p className={`text-sm sm:text-base font-semibold ${color.value}`}>Rp {k.total.toLocaleString('id-ID')}</p>
                                 </div>
                             );
                         })}
@@ -231,92 +234,92 @@ export default function PengeluaranPage() {
 
                 {/* Riwayat Pengeluaran */}
                 <div className="table-container">
-                <div className="px-6 py-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <span>📊</span>
-                        <span>Riwayat Pengeluaran</span>
-                    </h2>
-                    <select
-                        value={filterKolam}
-                        onChange={(e) => setFilterKolam(e.target.value)}
-                        className="input py-2 sm:max-w-xs w-full"
-                    >
-                        <option value="">Semua Kolam</option>
-                        {kolam.map(k => (
-                            <option key={k.id} value={k.id}>{k.nama}</option>
-                        ))}
-                    </select>
-                </div>
-                {filteredPengeluaran.length === 0 ? (
-                    <div className="p-6">
-                        <EmptyState
-                            title="Belum Ada Pengeluaran"
-                            description="Belum ada data pengeluaran yang tercatat."
-                            icon={<Banknote className="w-12 h-12 text-slate-300" />}
-                        />
+                    <div className="px-6 py-4 border-b border-slate-200 bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                            <span>📊</span>
+                            <span>Riwayat Pengeluaran</span>
+                        </h2>
+                        <select
+                            value={filterKolam}
+                            onChange={(e) => setFilterKolam(e.target.value)}
+                            className="input py-2 sm:max-w-xs w-full"
+                        >
+                            <option value="">Semua Kolam</option>
+                            {kolam.map(k => (
+                                <option key={k.id} value={k.id}>{k.nama}</option>
+                            ))}
+                        </select>
                     </div>
-                ) : (
-                    <table className="table">
-                        <thead>
-                            <tr>
-                                <th scope="col" className="p-4">
-                                    <div className="flex items-center">
-                                        <input id="pengeluaran-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
-                                        <label htmlFor="pengeluaran-checkbox-header" className="sr-only">Select all</label>
-                                    </div>
-                                </th>
-                                <th>Tanggal</th>
-                                <th>Kolam</th>
-                                <th>Kategori</th>
-                                <th>Keterangan</th>
-                                <th className="text-right">Jumlah</th>
-                                <th className="text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredPengeluaran.map(p => {
-                                const k = kolam.find(kol => kol.id === p.kolamId);
-                                const cat = kategoriOptions.find(c => c.value === p.kategori);
-                                return (
-                                    <tr key={p.id}>
-                                        <td className="w-4 p-4">
-                                            <div className="flex items-center">
-                                                <input id={`pengeluaran-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
-                                                <label htmlFor={`pengeluaran-checkbox-${p.id}`} className="sr-only">Checkbox</label>
-                                            </div>
-                                        </td>
-                                        <td className="text-sm text-body">{p.tanggal}</td>
-                                        <td className="font-medium text-heading">{k?.nama || 'Umum (Farm Level)'}</td>
-                                        <td>
-                                            <span className={`badge ${kategoriColors[p.kategori]} flex items-center gap-1`}>
-                                                {cat?.icon} {cat?.label}
-                                            </span>
-                                        </td>
-                                        <td className="text-body text-sm">{p.keterangan}</td>
-                                        <td className="text-right font-medium text-red-600">
-                                            Rp {p.jumlah.toLocaleString('id-ID')}
-                                        </td>
-                                        <td className="text-right">
-                                            <button
-                                                onClick={() => setDeleteModal(p.id)}
-                                                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                                            >
-                                                <Trash2 />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                )}
-            </div>
+                    {filteredPengeluaran.length === 0 ? (
+                        <div className="p-6">
+                            <EmptyState
+                                title="Belum Ada Pengeluaran"
+                                description="Belum ada data pengeluaran yang tercatat."
+                                icon={<Banknote className="w-12 h-12 text-slate-300" />}
+                            />
+                        </div>
+                    ) : (
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col" className="p-4">
+                                        <div className="flex items-center">
+                                            <input id="pengeluaran-checkbox-header" type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                            <label htmlFor="pengeluaran-checkbox-header" className="sr-only">Select all</label>
+                                        </div>
+                                    </th>
+                                    <th>Tanggal</th>
+                                    <th>Kolam</th>
+                                    <th>Kategori</th>
+                                    <th>Keterangan</th>
+                                    <th className="text-right">Jumlah</th>
+                                    <th className="text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredPengeluaran.map(p => {
+                                    const k = kolam.find(kol => kol.id === p.kolamId);
+                                    const cat = kategoriOptions.find(c => c.value === p.kategori);
+                                    return (
+                                        <tr key={p.id}>
+                                            <td className="w-4 p-4">
+                                                <div className="flex items-center">
+                                                    <input id={`pengeluaran-checkbox-${p.id}`} type="checkbox" className="w-4 h-4 border border-default-medium rounded bg-neutral-secondary-medium focus:ring-2 focus:ring-brand-soft" />
+                                                    <label htmlFor={`pengeluaran-checkbox-${p.id}`} className="sr-only">Checkbox</label>
+                                                </div>
+                                            </td>
+                                            <td className="text-sm text-body">{p.tanggal}</td>
+                                            <td className="font-medium text-heading">{k?.nama || 'Umum (Farm Level)'}</td>
+                                            <td>
+                                                <span className={`badge ${kategoriColors[p.kategori]} flex items-center gap-1`}>
+                                                    {cat?.icon} {cat?.label}
+                                                </span>
+                                            </td>
+                                            <td className="text-body text-sm">{p.keterangan}</td>
+                                            <td className="text-right font-medium text-red-600">
+                                                Rp {p.jumlah.toLocaleString('id-ID')}
+                                            </td>
+                                            <td className="text-right">
+                                                <button
+                                                    onClick={() => setDeleteModal(p.id)}
+                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                                                >
+                                                    <Trash2 />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    )}
+                </div>
             </div>
 
             {/* Form Modal */}
-            <Modal 
-                isOpen={showForm} 
-                onClose={() => setShowForm(false)} 
+            <Modal
+                isOpen={showForm}
+                onClose={() => setShowForm(false)}
                 title="Tambah Pengeluaran"
                 footer={
                     <>
