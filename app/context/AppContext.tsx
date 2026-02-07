@@ -228,6 +228,7 @@ interface AppContextType {
 
     // Riwayat Ikan (Fish History)
     addRiwayatIkan: (history: Omit<RiwayatIkan, 'id' | 'jumlahAkhir'>) => Promise<void>;
+    addStokIkan: (data: { kolamId: string; tanggal: string; jumlah: number; beratPerEkor: number; hargaPerEkor: number }) => Promise<void>;
     getRiwayatIkanByKolam: (kolamId: string) => RiwayatIkan[];
 
     // Sampling (Biomass)
@@ -727,10 +728,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
 
         try {
+            const normalizedPengeluaran = {
+                ...newPengeluaran,
+                kategori: newPengeluaran.kategori.toUpperCase() as KategoriPengeluaran
+            };
             const res = await fetch(`/api/farms/${activeFarmId}/pengeluaran`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newPengeluaran)
+                body: JSON.stringify(normalizedPengeluaran)
             });
             if (res.ok) {
                 const created = await res.json();
@@ -1000,13 +1005,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
 
         // Calculate days since last sampling
-        const samplingDate = new Date(sampling.tanggal);
-        const today = new Date();
-        const daysSinceSampling = Math.max(0, Math.floor((today.getTime() - samplingDate.getTime()) / (1000 * 60 * 60 * 24)));
+        // Parse sampling date robustly. If it's a simple YYYY-MM-DD, parse as local midnight.
+        // If it's a full ISO string (from our new tebar logic), parse normally.
+        // Calculate growth based on 01:00 AM transitions
+        const dateStr = sampling.tanggal;
+        const samplingDate = dateStr.includes('T') ? new Date(dateStr) : new Date(dateStr.replace(/-/g, '/'));
+        const now = new Date();
 
-        // Apply growth: +2 grams per day
+        const getEffective01AM = (date: Date) => {
+            const d = new Date(date);
+            if (d.getHours() < 1) d.setDate(d.getDate() - 1);
+            d.setHours(1, 0, 0, 0);
+            return d;
+        };
+
+        const daysPassed = Math.max(0, Math.floor((getEffective01AM(now).getTime() - getEffective01AM(samplingDate).getTime()) / (1000 * 60 * 60 * 24)));
+
+        // Apply growth: +2 grams per day (Production)
         const GROWTH_RATE_PER_DAY_GRAMS = 2;
-        const currentWeightGram = baseWeightGram + (daysSinceSampling * GROWTH_RATE_PER_DAY_GRAMS);
+        const currentWeightGram = baseWeightGram + (daysPassed * GROWTH_RATE_PER_DAY_GRAMS);
         const averageWeight = currentWeightGram / 1000; // convert to kg
 
         const totalBiomass = kolam.jumlahIkan * averageWeight; // kg
@@ -1140,8 +1157,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }, [pengeluaran]);
 
     const getTotalPengeluaranByKategori = useCallback((kolamId: string, kategori: KategoriPengeluaran): number => {
+        const targetKat = kategori.toUpperCase();
+        const knownCategories = ['PAKAN', 'BIBIT', 'LISTRIK', 'OBAT', 'TENAGA_KERJA', 'GAJI', 'MODAL'];
+
         return pengeluaran
-            .filter(p => p.kolamId === kolamId && p.kategori === kategori)
+            .filter(p => {
+                if (p.kolamId !== kolamId) return false;
+                const pKat = p.kategori.toUpperCase();
+                if (targetKat === 'LAINNYA') {
+                    return !knownCategories.includes(pKat);
+                }
+                return pKat === targetKat;
+            })
             .reduce((sum, p) => sum + p.jumlah, 0);
     }, [pengeluaran]);
 
@@ -1244,8 +1271,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const totalHarvestRevenue = cycleHarvest.reduce((sum, p) => sum + (p.beratTotalKg * p.hargaPerKg), 0);
         const finalFish = cycleHarvest.reduce((sum, p) => sum + p.jumlahEkor, 0);
 
-        // Expenses
-        const cycleExpenses = pengeluaran.filter(p => p.kolamId === kolamId && p.kategori !== 'PAKAN' && rangeFilterInclusive(p));
+        // Expenses (Normalize category for comparison)
+        const cycleExpenses = pengeluaran.filter(p =>
+            p.kolamId === kolamId &&
+            p.kategori.toUpperCase() !== 'PAKAN' &&
+            rangeFilterInclusive(p)
+        );
         const totalExpenses = cycleExpenses.reduce((sum, p) => sum + p.jumlah, 0);
 
         // Initial Fish (Sum of all positive additions in this cycle, EXCLUDING the start of the next cycle)
@@ -1503,6 +1534,53 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
 
 
+    const addStokIkan = async (data: { kolamId: string; tanggal: string; jumlah: number; beratPerEkor: number; hargaPerEkor: number }) => {
+        if (!activeFarmId) return;
+
+        // 1. Validation Check
+        const totalHarga = data.jumlah * data.hargaPerEkor;
+        const available = getAvailableFunds();
+        if (available < totalHarga) {
+            throw new Error('Uang tersedia tidak mencukupi untuk penambahan bibit');
+        }
+
+        try {
+            // Update Population History
+            await addRiwayatIkan({
+                kolamId: data.kolamId,
+                tanggal: data.tanggal,
+                jumlahPerubahan: data.jumlah,
+                keterangan: 'Penebaran Bibit Tambahan'
+            });
+
+            // Update Sampling/Weight History
+            if (data.beratPerEkor > 0) {
+                const jumlahIkanPerKg = 1000 / data.beratPerEkor;
+                await addRiwayatSampling({
+                    kolamId: data.kolamId,
+                    tanggal: data.tanggal,
+                    bobotGram: data.beratPerEkor,
+                    jumlahIkanPerKg,
+                    catatan: `Bibit tambahan: ${data.beratPerEkor} gram/ekor`
+                });
+            }
+
+            // Record Expense
+            if (totalHarga > 0) {
+                await addPengeluaran({
+                    tanggal: data.tanggal,
+                    kategori: 'BIBIT',
+                    keterangan: `Pembelian bibit tambahan ${data.jumlah} ekor @ Rp${data.hargaPerEkor.toLocaleString('id-ID')}`,
+                    jumlah: totalHarga,
+                    kolamId: data.kolamId
+                });
+            }
+        } catch (error) {
+            console.error('Failed to add stok ikan:', error);
+            throw error;
+        }
+    };
+
     const tebarBibit = async (kolamId: string, data: { tanggal: string; jumlah: number; beratPerEkor: number; hargaPerEkor: number }) => {
         if (!activeFarmId) return;
 
@@ -1519,6 +1597,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 status: 'aman'
             });
 
+            const isToday = new Date(data.tanggal).toDateString() === new Date().toDateString();
+            const samplingTime = isToday ? new Date().toISOString() : new Date(data.tanggal).toISOString();
+
             await addRiwayatIkan({
                 kolamId,
                 tanggal: data.tanggal,
@@ -1530,9 +1611,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 const jumlahIkanPerKg = 1000 / data.beratPerEkor;
                 await addRiwayatSampling({
                     kolamId,
-                    tanggal: data.tanggal,
-                    jumlahIkanPerKg,
+                    tanggal: samplingTime,
                     bobotGram: data.beratPerEkor,
+                    jumlahIkanPerKg,
                     catatan: `Bibit awal: ${data.beratPerEkor} gram/ekor`
                 });
             }
@@ -1557,8 +1638,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // === Predictive Analytics Implementation ===
 
     // Constants
-    const GROWTH_RATE_PER_DAY = 0.002; // 2 grams per day (kg) -> 0.002 kg
-    const TARGET_WEIGHT_KG = 0.15; // 150 grams
+    const GROWTH_RATE_PER_DAY = 0.002; // 2 grams per day (kg)
+    const TARGET_WEIGHT_KG = 0.15; // 150 grams target (Production)
     const ESTIMATED_FEED_PRICE = 13000; // Rp/kg (fallback)
 
     const predictHarvestDate = (kolamId: string) => {
@@ -1793,6 +1874,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             addRiwayatSampling,
             getSamplingByKolam,
             getLatestSampling,
+            addStokIkan,
             calculateBiomass,
             getUnifiedStatus,
             getKolamById,

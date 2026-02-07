@@ -1,11 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import Link from 'next/link';
 import { useApp } from '../../context/AppContext';
 import Modal from '../../components/ui/Modal';
-import { Edit, Loader2, Fish, ArrowLeft, Bookmark, X, Clock, Calendar } from 'lucide-react';
+import {
+    ChevronLeft,
+    Edit,
+    Fish,
+    Calendar,
+    Info,
+    Clock,
+    TrendingUp,
+    Scale,
+    Edit2,
+    Check,
+    ArrowRight,
+    Plus,
+    Loader2,
+    ArrowLeft,
+    Bookmark,
+    X
+} from 'lucide-react';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -57,14 +74,15 @@ interface KolamDetailClientProps {
 
 export default function KolamDetailClient({ initialData }: KolamDetailClientProps) {
     const {
+        calculateBiomass,
         calculateKepadatan,
         getUnifiedStatus,
-        calculateBiomass,
-        addRiwayatIkan,
         addRiwayatSampling,
-        getCycleHistory,
-        getFeedRecommendation,
+        addRiwayatIkan,
+        addStokIkan,
         getSamplingByKolam,
+        getCycleHistory,
+        getAvailableFunds,
     } = useApp();
 
     const [gridScale, setGridScale] = useState<number>(1);
@@ -75,6 +93,9 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
     // Edit Fish Count State
     const [isEditFishOpen, setIsEditFishOpen] = useState(false);
     const [editFishCount, setEditFishCount] = useState('');
+    const [addFishCount, setAddFishCount] = useState('');
+    const [hargaBibit, setHargaBibit] = useState('');
+    const [beratBibit, setBeratBibit] = useState('');
     const [editReason, setEditReason] = useState('Koreksi / Hitung Ulang');
 
     // Sampling State
@@ -86,6 +107,7 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
     // History View State
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
     const [chartRange, setChartRange] = useState<'7' | '30' | '90' | 'all'>('30');
 
     // Use initialData as the kolam reference (already loaded from server)
@@ -98,24 +120,44 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
 
         setIsSubmitting(true);
         try {
-            const newCount = parseInt(parseCurrencyInput(editFishCount));
-            if (!isNaN(newCount) && newCount >= 0) {
-                const currentCount = kolam.jumlahIkan;
-                const delta = newCount - currentCount;
+            if (editReason === 'Bibit Baru') {
+                const countToAdd = parseInt(parseCurrencyInput(addFishCount));
+                const price = parseInt(parseCurrencyInput(hargaBibit));
+                const weight = parseFloat(beratBibit);
 
-                if (delta === 0) {
-                    setIsEditFishOpen(false);
-                    return;
-                }
+                if (isNaN(countToAdd) || countToAdd <= 0) throw new Error("Jumlah ikan tidak valid");
 
-                await addRiwayatIkan({
+                await addStokIkan({
                     kolamId: kolam.id,
                     tanggal: new Date().toISOString(),
-                    jumlahPerubahan: delta,
-                    keterangan: editReason
+                    jumlah: countToAdd,
+                    beratPerEkor: weight || 0,
+                    hargaPerEkor: price || 0
                 });
-                setIsEditFishOpen(false);
+            } else {
+                const newCount = parseInt(parseCurrencyInput(editFishCount));
+                if (!isNaN(newCount) && newCount >= 0) {
+                    const currentCount = kolam.jumlahIkan;
+                    const delta = newCount - currentCount;
+
+                    if (delta === 0) {
+                        setIsEditFishOpen(false);
+                        return;
+                    }
+
+                    await addRiwayatIkan({
+                        kolamId: kolam.id,
+                        tanggal: new Date().toISOString(),
+                        jumlahPerubahan: delta,
+                        keterangan: editReason
+                    });
+                }
             }
+            setIsEditFishOpen(false);
+            // Reset fields
+            setAddFishCount('');
+            setHargaBibit('');
+            setBeratBibit('');
         } catch (error) {
             console.error("Failed to update fish count:", error);
             alert("Gagal mengupdate jumlah ikan.");
@@ -166,27 +208,92 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
         }
     };
 
-    // Filter and Process Chart Data
+    // Auto-Sync Growth Logic
     const samplingHistory = getSamplingByKolam(kolam.id);
-    const chartData = samplingHistory
+    const syncRef = useRef(false);
+
+    useEffect(() => {
+        const syncMissingGrowth = async () => {
+            if (!kolam.id || syncRef.current || isSyncing || samplingHistory.length === 0) return;
+
+            const lastSampling = samplingHistory[0];
+            const lastDateDate = new Date(lastSampling.tanggal);
+            const now = new Date();
+
+            const getEffective01AM = (date: Date) => {
+                const d = new Date(date);
+                if (d.getHours() < 1) d.setDate(d.getDate() - 1);
+                d.setHours(1, 0, 0, 0);
+                return d;
+            };
+
+            const start01AM = getEffective01AM(lastDateDate);
+            const end01AM = getEffective01AM(now);
+            const missedDays = Math.max(0, Math.floor((end01AM.getTime() - start01AM.getTime()) / (1000 * 60 * 60 * 24)));
+
+            if (missedDays > 0) {
+                syncRef.current = true;
+                setIsSyncing(true);
+                try {
+                    // Start recording from the next day's 01:00 AM
+                    const startMs = start01AM.getTime();
+                    const dayMs = 1000 * 60 * 60 * 24;
+
+                    for (let i = 1; i <= missedDays; i++) {
+                        const syncTime = new Date(startMs + (i * dayMs));
+
+                        const baseWeight = lastSampling.bobotGram || (1000 / lastSampling.jumlahIkanPerKg);
+                        const newWeight = Math.round(baseWeight + (i * 2)); // +2g every day
+                        const sizePerKg = Math.round(1000 / newWeight);
+
+                        await addRiwayatSampling({
+                            kolamId: kolam.id,
+                            tanggal: syncTime.toISOString(),
+                            bobotGram: newWeight,
+                            jumlahIkanPerKg: sizePerKg,
+                            catatan: 'Pertumbuhan Otomatis Harian (+2g)'
+                        });
+                    }
+                } catch (err) {
+                    console.error("Auto-sync growth failed:", err);
+                } finally {
+                    setIsSyncing(false);
+                    setTimeout(() => { syncRef.current = false; }, 2000);
+                }
+            }
+        };
+
+        syncMissingGrowth();
+    }, [kolam.id, samplingHistory[0]?.id]); // Only re-run if the latest sampling record changes
+
+    // Filter, Sort, and Deduplicate Chart Data (Pick latest per day)
+    const processedData = samplingHistory
         .filter(s => {
             if (chartRange === 'all') return true;
             const daysArr = { '7': 7, '30': 30, '90': 90 };
             const limitDate = new Date();
-            limitDate.setDate(limitDate.getDate() - daysArr[chartRange as keyof typeof daysArr]);
+            limitDate.setDate(limitDate.getDate() - (daysArr[chartRange as keyof typeof daysArr] || 0));
             return new Date(s.tanggal) >= limitDate;
         })
-        .sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime())
-        .map(s => {
-            const berat = s.bobotGram || (s.jumlahIkanPerKg > 0 ? 1000 / s.jumlahIkanPerKg : 0);
-            return {
-                id: s.id,
-                fullDate: s.tanggal,
-                tanggal: new Date(s.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
-                berat: Math.round(Number(berat)),
-                size: s.jumlahIkanPerKg
-            };
-        });
+        .sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime());
+
+    // Deduplicate: If multiple samplings in one day, take the latest one
+    const deduplicatedMap = new Map();
+    processedData.forEach(s => {
+        const dateKey = new Date(s.tanggal).toLocaleDateString('en-CA'); // YYYY-MM-DD
+        deduplicatedMap.set(dateKey, s); // Overwrites previous, keeping latest because it's sorted
+    });
+
+    const chartData = Array.from(deduplicatedMap.values()).map((s: any) => {
+        const berat = s.bobotGram || (s.jumlahIkanPerKg > 0 ? 1000 / s.jumlahIkanPerKg : 0);
+        return {
+            id: s.id,
+            fullDate: s.tanggal,
+            tanggal: new Date(s.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
+            berat: Math.round(Number(berat)),
+            size: s.jumlahIkanPerKg
+        };
+    });
 
     const kepadatan = calculateKepadatan(kolam as any);
     const volume = kolam.panjang * kolam.lebar * kolam.kedalaman;
@@ -367,38 +474,118 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
                 </div>
 
                 {/* Modals */}
-                <Modal isOpen={isEditFishOpen} onClose={() => setIsEditFishOpen(false)} title="Update Jumlah Ikan">
-                    <form onSubmit={handleUpdateFish} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Jumlah Ikan Terbaru</label>
-                            <input
-                                type="number"
-                                value={editFishCount}
-                                onChange={(e) => setEditFishCount(e.target.value)}
-                                className="w-full px-4 py-2 border border-slate-200 rounded-lg"
-                                required
-                            />
+                <Modal
+                    isOpen={isEditFishOpen}
+                    onClose={() => setIsEditFishOpen(false)}
+                    title="Update Jumlah Ikan"
+                    footer={
+                        <>
+                            <button type="button" onClick={() => setIsEditFishOpen(false)} className="btn btn-secondary" disabled={isSubmitting}>Batal</button>
+                            <button type="submit" form="update-fish-form" className="btn btn-primary" disabled={isSubmitting}>
+                                {isSubmitting ? <Loader2 className="w-4 h-4 me-1.5 -ms-0.5 animate-spin" /> : null}
+                                {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+                            </button>
+                        </>
+                    }
+                >
+                    <form id="update-fish-form" onSubmit={handleUpdateFish} className="space-y-4">
+                        <div className="p-3 bg-blue-50 rounded-xl mb-4">
+                            <p className="text-xs text-blue-600 mb-1">Status Kolam Sekarang</p>
+                            <p className="text-lg font-bold text-blue-900">
+                                {kolam.jumlahIkan.toLocaleString('id-ID')} <span className="text-sm font-normal">ekor</span>
+                            </p>
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-2">Alasan</label>
+
+                        <div className="form-group">
+                            <label className="form-label">Alasan Perubahan</label>
                             <select
                                 value={editReason}
                                 onChange={(e) => setEditReason(e.target.value)}
-                                className="w-full px-4 py-2 border border-slate-200 rounded-lg"
+                                className="input"
                             >
                                 <option>Koreksi / Hitung Ulang</option>
                                 <option>Kematian</option>
                                 <option>Bibit Baru</option>
-                                <option>Panen Parsial</option>
+                                <option>Pindah Kolam</option>
                             </select>
                         </div>
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                        >
-                            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
-                        </button>
+
+                        {editReason === 'Bibit Baru' ? (
+                            <div className="space-y-4 animate-in fade-in duration-300">
+                                <div className="form-group">
+                                    <label className="form-label">Tambah Jumlah Ikan (ekor)</label>
+                                    <input
+                                        type="text"
+                                        value={addFishCount}
+                                        onChange={(e) => setAddFishCount(formatCurrencyInput(e.target.value))}
+                                        className="input"
+                                        placeholder="Contoh: 1,000"
+                                        required
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="form-group">
+                                        <label className="form-label">Harga per Ekor</label>
+                                        <div className="relative">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium text-sm">Rp</span>
+                                            <input
+                                                type="text"
+                                                style={{ paddingLeft: '40px' }}
+                                                value={hargaBibit}
+                                                onChange={(e) => setHargaBibit(formatCurrencyInput(e.target.value))}
+                                                className="input"
+                                                placeholder="0"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label">Bobot (g/ekor)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={beratBibit}
+                                            onChange={(e) => setBeratBibit(e.target.value)}
+                                            className="input"
+                                            placeholder="5"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-orange-50 rounded-xl border border-orange-100 space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-orange-700 font-medium">Dana Saat Ini</span>
+                                        <span className="font-bold text-slate-700">Rp {getAvailableFunds().toLocaleString('id-ID')}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-orange-700 font-medium">Total Biaya</span>
+                                        <span className="font-bold text-red-600">
+                                            - Rp {(parseInt(parseCurrencyInput(addFishCount) || '0') * parseInt(parseCurrencyInput(hargaBibit) || '0')).toLocaleString('id-ID')}
+                                        </span>
+                                    </div>
+                                    <div className="pt-2 border-t border-orange-200 flex justify-between font-bold text-sm">
+                                        <span className="text-orange-800 uppercase tracking-wider text-[10px]">Sisa Dana</span>
+                                        <span className={getAvailableFunds() - (parseInt(parseCurrencyInput(addFishCount) || '0') * parseInt(parseCurrencyInput(hargaBibit) || '0')) < 0 ? 'text-red-600' : 'text-emerald-600'}>
+                                            Rp {(getAvailableFunds() - (parseInt(parseCurrencyInput(addFishCount) || '0') * parseInt(parseCurrencyInput(hargaBibit) || '0'))).toLocaleString('id-ID')}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="form-group animate-in fade-in duration-300">
+                                <label className="form-label">Jumlah Ikan Terbaru</label>
+                                <input
+                                    type="text"
+                                    value={editFishCount}
+                                    onChange={(e) => setEditFishCount(formatCurrencyInput(e.target.value))}
+                                    className="input"
+                                    placeholder={kolam.jumlahIkan.toLocaleString('id-ID')}
+                                    required
+                                />
+                                <p className="form-hint">Masukkan angka populasi terakhir yang valid</p>
+                            </div>
+                        )}
                     </form>
                 </Modal>
 

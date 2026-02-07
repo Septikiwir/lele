@@ -12,9 +12,24 @@ export default function ProfitabilityWidget() {
     // ATAU estimasi dari stok pakan yang berkurang.
     // Tapi karena 'pengeluaran' mencatat pembelian, kita pakai data pengeluaran real saja.
 
-    // Group pengeluaran by kategori
+    // Kategori Config
+    const kategoriConfig: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
+        'PAKAN': { label: 'Pakan', color: 'text-amber-600', bg: 'bg-amber-500', icon: <Container className="w-5 h-5" /> },
+        'BIBIT': { label: 'Bibit', color: 'text-cyan-600', bg: 'bg-cyan-500', icon: <Fish className="w-5 h-5" /> },
+        'LISTRIK': { label: 'Listrik', color: 'text-yellow-600', bg: 'bg-yellow-500', icon: <Zap className="w-5 h-5" /> },
+        'OBAT': { label: 'Obat/Vitamin', color: 'text-emerald-600', bg: 'bg-emerald-500', icon: <Pill className="w-5 h-5" /> },
+        'TENAGA_KERJA': { label: 'Tenaga Kerja', color: 'text-emerald-600', bg: 'bg-emerald-500', icon: <Users className="w-5 h-5" /> },
+        'GAJI': { label: 'Gaji', color: 'text-purple-600', bg: 'bg-purple-500', icon: <Users className="w-5 h-5" /> },
+        'MODAL': { label: 'Penarikan Modal', color: 'text-violet-600', bg: 'bg-violet-500', icon: <Wallet className="w-5 h-5" /> },
+        'LAINNYA': { label: 'Lainnya', color: 'text-slate-600', bg: 'bg-slate-500', icon: <FileText className="w-5 h-5" /> },
+    };
+
+    // Group pengeluaran by kategori (Normalize to uppercase and bucket unknown to LAINNYA)
     const kategoriStats = pengeluaran.reduce((acc, curr) => {
-        const kat = curr.kategori || 'LAINNYA';
+        let kat = (curr.kategori || 'LAINNYA').toUpperCase();
+        if (!kategoriConfig[kat]) {
+            kat = 'LAINNYA';
+        }
         acc[kat] = (acc[kat] || 0) + curr.jumlah;
         return acc;
     }, {} as Record<string, number>);
@@ -22,22 +37,12 @@ export default function ProfitabilityWidget() {
     // Total Pengeluaran
     const totalPengeluaran = Object.values(kategoriStats).reduce((a, b) => a + b, 0);
 
-    // Kategori Config
-    const kategoriConfig: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
-        'PAKAN': { label: 'Pakan', color: 'text-amber-600', bg: 'bg-amber-500', icon: <Container className="w-5 h-5" /> },
-        'BIBIT': { label: 'Bibit', color: 'text-cyan-600', bg: 'bg-cyan-500', icon: <Fish className="w-5 h-5" /> },
-        'LISTRIK': { label: 'Listrik', color: 'text-yellow-600', bg: 'bg-yellow-500', icon: <Zap className="w-5 h-5" /> },
-        'OBAT': { label: 'Obat/Vitamin', color: 'text-emerald-600', bg: 'bg-emerald-500', icon: <Pill className="w-5 h-5" /> },
-        'GAJI': { label: 'Gaji', color: 'text-purple-600', bg: 'bg-purple-500', icon: <Users className="w-5 h-5" /> },
-        'LAINNYA': { label: 'Lainnya', color: 'text-slate-600', bg: 'bg-slate-500', icon: <FileText className="w-5 h-5" /> },
-    };
-
     const categories = Object.keys(kategoriStats)
         .map(key => ({
             key,
             total: kategoriStats[key],
             percentage: totalPengeluaran > 0 ? (kategoriStats[key] / totalPengeluaran) * 100 : 0,
-            config: kategoriConfig[key] || kategoriConfig['LAINNYA']
+            config: kategoriConfig[key]
         }))
         .sort((a, b) => b.total - a.total);
 

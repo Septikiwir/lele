@@ -32,6 +32,7 @@ const kategoriOptions: { value: KategoriPengeluaran; label: string; icon: React.
     { value: 'OBAT', label: 'Obat & Probiotik', icon: <Pill className="w-5 h-5" /> },
     { value: 'LISTRIK', label: 'Listrik', icon: <Zap className="w-5 h-5" /> },
     { value: 'TENAGA_KERJA', label: 'Tenaga Kerja', icon: <Users className="w-5 h-5" /> },
+    { value: 'MODAL', label: 'Penarikan Modal', icon: <Wallet className="w-5 h-5" /> },
     { value: 'LAINNYA', label: 'Lainnya', icon: <Package className="w-5 h-5" /> },
 ];
 
@@ -261,9 +262,19 @@ export default function KeuanganPage() {
         .slice(0, limitPengeluaran);
 
     const kategoriTotals = kategoriOptions.map(k => {
+        const targetKat = k.value.toUpperCase();
+        const knownCategories = kategoriOptions.filter(ko => ko.value !== 'LAINNYA').map(ko => ko.value.toUpperCase());
+
         const totalFromKolams = kolam.reduce((sum, col) => sum + getTotalPengeluaranByKategori(col.id, k.value), 0);
         const totalGeneral = pengeluaran
-            .filter(p => !p.kolamId && p.kategori === k.value)
+            .filter(p => {
+                if (p.kolamId) return false;
+                const pKat = p.kategori.toUpperCase();
+                if (targetKat === 'LAINNYA') {
+                    return !knownCategories.includes(pKat);
+                }
+                return pKat === targetKat;
+            })
             .reduce((sum, p) => sum + p.jumlah, 0);
 
         return {

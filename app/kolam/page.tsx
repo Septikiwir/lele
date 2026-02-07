@@ -71,7 +71,7 @@ export default function KolamPage() {
     const [isFeedModalOpen, setIsFeedModalOpen] = useState(false);
     const [feedForm, setFeedForm] = useState({
         kolamId: '',
-        tanggal: new Date().toISOString().split('T')[0],
+        tanggal: new Date().toLocaleDateString('en-CA'),
         jumlahKg: '',
         jenisPakan: '',
     });
@@ -84,7 +84,7 @@ export default function KolamPage() {
     const [isTebarModalOpen, setIsTebarModalOpen] = useState(false);
     const [tebarForm, setTebarForm] = useState({
         kolamId: '',
-        tanggal: new Date().toISOString().split('T')[0],
+        tanggal: new Date().toLocaleDateString('en-CA'),
         jumlah: '',
         beratPerEkor: '5', // Default 5g
         hargaPerEkor: '' // Harga per ekor bibit
@@ -128,7 +128,7 @@ export default function KolamPage() {
         setFeedForm(prev => ({
             ...prev,
             kolamId,
-            tanggal: new Date().toISOString().split('T')[0],
+            tanggal: new Date().toLocaleDateString('en-CA'),
             jumlahKg: '',
             jenisPakan: '' // Could pre-fill if we had shared logic easily accessible here without rendering
         }));
