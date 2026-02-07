@@ -1,3 +1,4 @@
+// Forced recompile to update Prisma Client types
 import { PrismaClient } from '@prisma/client'
 
 const prismaClientSingleton = () => {

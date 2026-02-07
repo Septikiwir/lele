@@ -8,6 +8,7 @@ import { TrendingUp, TrendingDown, Wallet, Calendar, AlertCircle, FileText } fro
 interface CashFlowTransaction {
     id: string;
     tanggal: string;
+    waktu: string;
     keterangan: string;
     kasMasuk: number;
     kasKeluar: number;
@@ -25,12 +26,23 @@ export default function ArusKasPage() {
     const allTransactions = useMemo(() => {
         const transactions: CashFlowTransaction[] = [];
 
+        // Helper to extract time
+        const getTime = (isoString?: string) => {
+            if (!isoString) return '00:00';
+            try {
+                return new Date(isoString).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                return '00:00';
+            }
+        };
+
         // 1. Modal Awal (use earliest date from any transaction or today)
         if (farm) {
             const modalDate = new Date().toISOString().split('T')[0];
             transactions.push({
                 id: 'modal-awal',
                 tanggal: modalDate,
+                waktu: '00:00',
                 keterangan: 'Modal Awal',
                 kasMasuk: farm.modalAwal,
                 kasKeluar: 0,
@@ -46,6 +58,7 @@ export default function ArusKasPage() {
             transactions.push({
                 id: p.id,
                 tanggal: p.tanggal,
+                waktu: getTime(p.createdAt),
                 keterangan: `Penjualan ${p.beratKg}kg dari ${kolamName}`,
                 kasMasuk: totalPendapatan,
                 kasKeluar: 0,
@@ -62,39 +75,33 @@ export default function ArusKasPage() {
                 case 'PAKAN': kategoriLabel = 'Pembelian Pakan'; break;
                 case 'OBAT': kategoriLabel = 'Pembelian Obat'; break;
                 case 'LISTRIK': kategoriLabel = 'Biaya Listrik'; break;
-                case 'TENAGA_KERJA': kategoriLabel = 'Tenaga Kerja'; break;
+                case 'TENAGA_KERJA': kategoriLabel = 'Biaya Tenaga Kerja'; break;
                 case 'LAINNYA': kategoriLabel = 'Lainnya'; break;
+                case 'MODAL': kategoriLabel = p.jumlah < 0 ? 'Setoran Modal (Deposit)' : 'Penarikan Modal (Withdraw)'; break;
             }
 
             transactions.push({
                 id: p.id,
                 tanggal: p.tanggal,
-                keterangan: `${kategoriLabel} - ${p.keterangan}`,
-                kasMasuk: 0,
-                kasKeluar: p.jumlah,
+                waktu: getTime(p.createdAt),
+                keterangan: p.kategori === 'MODAL' ? kategoriLabel : `${kategoriLabel} - ${p.keterangan}`,
+                kasMasuk: p.kategori === 'MODAL' && p.jumlah < 0 ? Math.abs(p.jumlah) : 0,
+                kasKeluar: p.kategori === 'MODAL' ? (p.jumlah > 0 ? p.jumlah : 0) : p.jumlah,
                 saldo: 0,
                 tipe: p.kategori
             });
         });
 
-        // 4. Stok Pakan (Kas Keluar)
-        stokPakan.forEach(s => {
-            const totalBiaya = s.stokAwal * s.hargaPerKg;
-            transactions.push({
-                id: s.id,
-                tanggal: s.tanggalTambah,
-                keterangan: `Pembelian Pakan ${s.jenisPakan} (${s.stokAwal}kg × Rp${s.hargaPerKg.toLocaleString('id-ID')})`,
-                kasMasuk: 0,
-                kasKeluar: totalBiaya,
-                saldo: 0,
-                tipe: 'PAKAN'
-            });
+        // Finally, sort by date and time (oldest first) for display
+        transactions.sort((a, b) => {
+            const timeA = a.waktu.replace(/\./g, ':');
+            const timeB = b.waktu.replace(/\./g, ':');
+            const dateA = new Date(`${a.tanggal}T${timeA}`);
+            const dateB = new Date(`${b.tanggal}T${timeB}`);
+            return dateA.getTime() - dateB.getTime();
         });
 
-        // Sort by date (oldest first)
-        transactions.sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime());
-
-        // Calculate running balance
+        // Calculate running balance sequentially
         let runningBalance = 0;
         transactions.forEach(t => {
             runningBalance += t.kasMasuk - t.kasKeluar;
@@ -173,8 +180,8 @@ export default function ArusKasPage() {
                                 key={option.value}
                                 onClick={() => setPeriodFilter(option.value as PeriodFilter)}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${periodFilter === option.value
-                                        ? 'bg-blue-600 text-white shadow-sm'
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                     }`}
                             >
                                 {option.label}
@@ -251,6 +258,7 @@ export default function ArusKasPage() {
                             <thead className="bg-slate-50 border-b border-slate-200">
                                 <tr>
                                     <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Tanggal</th>
+                                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Waktu</th>
                                     <th className="px-4 py-3 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Keterangan</th>
                                     <th className="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider">Kas Masuk</th>
                                     <th className="px-4 py-3 text-right text-xs font-bold text-slate-600 uppercase tracking-wider">Kas Keluar</th>
@@ -260,7 +268,7 @@ export default function ArusKasPage() {
                             <tbody className="divide-y divide-slate-100">
                                 {filteredTransactions.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
+                                        <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
                                             <FileText className="w-12 h-12 mx-auto mb-3 text-slate-300" />
                                             <p>Belum ada transaksi</p>
                                         </td>
@@ -275,6 +283,11 @@ export default function ArusKasPage() {
                                                         month: 'short',
                                                         year: 'numeric'
                                                     })}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 whitespace-nowrap">
+                                                <span className="text-sm text-slate-500 font-mono">
+                                                    {tx.waktu}
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3">

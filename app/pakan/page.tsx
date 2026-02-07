@@ -26,7 +26,8 @@ export default function PakanPage() {
         getStokTersediaByJenis,
         getAllJenisPakan,
         getDailyFeedStatus,
-        farm
+        farm,
+        getAvailableFunds,
     } = useApp();
 
 
@@ -684,7 +685,7 @@ export default function PakanPage() {
                     <div className="p-3 bg-blue-50 rounded-xl mb-4">
                         <p className="text-xs text-blue-600 mb-1">Uang Tersedia</p>
                         <p className="text-lg font-bold text-blue-900">
-                            Rp {farm?.modalAwal.toLocaleString('id-ID') || 0}
+                            Rp {getAvailableFunds().toLocaleString('id-ID')}
                         </p>
                     </div>
                     <div className="form-group">
@@ -754,8 +755,8 @@ export default function PakanPage() {
                             </div>
                             <div className="flex justify-between text-sm pt-2 border-t border-orange-200">
                                 <span className="text-orange-700">Sisa Dana:</span>
-                                <span className={`font-bold ${(farm?.modalAwal || 0) >= (parseFloat(stokFormData.stokAwal) * parseFloat(stokFormData.hargaPerKg)) ? 'text-green-600' : 'text-red-600'}`}>
-                                    Rp {((farm?.modalAwal || 0) - (parseFloat(stokFormData.stokAwal) * parseFloat(stokFormData.hargaPerKg))).toLocaleString('id-ID')}
+                                <span className={`font-bold ${getAvailableFunds() >= (parseFloat(stokFormData.stokAwal) * parseFloat(stokFormData.hargaPerKg)) ? 'text-green-600' : 'text-red-600'}`}>
+                                    Rp {(getAvailableFunds() - (parseFloat(stokFormData.stokAwal) * parseFloat(stokFormData.hargaPerKg))).toLocaleString('id-ID')}
                                 </span>
                             </div>
                         </div>

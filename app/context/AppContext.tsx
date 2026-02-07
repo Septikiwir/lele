@@ -49,7 +49,7 @@ export interface KondisiAir {
     suhu?: number;
 }
 
-export type KategoriPengeluaran = 'BIBIT' | 'PAKAN' | 'OBAT' | 'LISTRIK' | 'TENAGA_KERJA' | 'LAINNYA';
+export type KategoriPengeluaran = 'BIBIT' | 'PAKAN' | 'OBAT' | 'LISTRIK' | 'TENAGA_KERJA' | 'LAINNYA' | 'MODAL';
 
 export interface Pengeluaran {
     id: string;
@@ -58,6 +58,7 @@ export interface Pengeluaran {
     kategori: KategoriPengeluaran;
     keterangan: string;
     jumlah: number;
+    createdAt?: string;
 }
 
 export interface StokPakan {
@@ -67,6 +68,7 @@ export interface StokPakan {
     hargaPerKg: number;
     tanggalTambah: string;
     keterangan?: string;
+    createdAt?: string;
 }
 
 export type TipePembeli = 'TENGKULAK' | 'PASAR' | 'RESTORAN' | 'LAINNYA';
@@ -88,6 +90,7 @@ export interface Penjualan {
     hargaPerKg: number;
     jumlahIkan?: number;
     keterangan?: string;
+    createdAt?: string;
 }
 
 export interface JadwalPakan {
@@ -249,6 +252,7 @@ interface AppContextType {
     getProfitByKolam: (kolamId: string) => number;
     calculateKepadatan: (kolam: Kolam) => number;
     calculateFCR: (kolamId: string) => number;
+    getAvailableFunds: () => number;
 
     // UI State
     isSidebarCollapsed: boolean;
@@ -436,9 +440,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
             }
             if (stokPakanRes.ok) {
                 const data = await stokPakanRes.json();
-                setStokPakan(data.map((s: Record<string, unknown>) => ({
+                setStokPakan(data.map((s: any) => ({
                     ...s,
-                    tanggalTambah: (s.tanggalTambah as string).split('T')[0]
+                    tanggalTambah: (s.tanggalTambah as string).split('T')[0],
+                    createdAt: s.createdAt
                 })));
             }
             if (kondisiAirRes.ok) {
@@ -453,7 +458,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 setPengeluaran(data.map((p: any) => ({
                     ...p,
                     tanggal: (p.tanggal as string).split('T')[0],
-                    kategori: p.kategori
+                    kategori: p.kategori,
+                    createdAt: p.createdAt
                 })));
             }
             if (pembeliRes.ok) {
@@ -462,9 +468,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
             }
             if (penjualanRes.ok) {
                 const data = await penjualanRes.json();
-                setPenjualan(data.map((p: Record<string, unknown>) => ({
+                setPenjualan(data.map((p: any) => ({
                     ...p,
-                    tanggal: (p.tanggal as string).split('T')[0]
+                    tanggal: (p.tanggal as string).split('T')[0],
+                    createdAt: p.createdAt
                 })));
             }
             if (jadwalRes.ok) {
@@ -714,7 +721,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (!activeFarmId) return;
 
         // 1. Validation: Check available funds
-        if (farm && farm.modalAwal < newPengeluaran.jumlah) {
+        const available = getAvailableFunds();
+        if (available < newPengeluaran.jumlah) {
             throw new Error('Uang tersedia tidak mencukupi untuk pengeluaran ini');
         }
 
@@ -729,17 +737,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 setPengeluaran(prev => [...prev, {
                     ...created,
                     tanggal: created.tanggal.split('T')[0],
-                    kategori: created.kategori
+                    kategori: created.kategori,
+                    createdAt: created.createdAt
                 }]);
 
-                // 2. Deduction: Decrease available funds
-                if (farm) {
-                    const newModal = farm.modalAwal - newPengeluaran.jumlah;
-                    await updateFarm({ modalAwal: newModal });
-                }
+                // 2. Deduction: Removed (Modal Awal should be static)
             } else {
                 const errData = await res.json().catch(() => ({}));
-                throw new Error(errData.error || 'Gagal menyimpan pengeluaran');
+                const msg = errData.details ? `${errData.error}: ${errData.details}` : (errData.error || 'Gagal menyimpan pengeluaran');
+                throw new Error(msg);
             }
         } catch (error) {
             console.error('Failed to add pengeluaran:', error);
@@ -756,7 +762,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         // 1. Validation
         const totalBiaya = newStok.stokAwal * newStok.hargaPerKg;
-        if (farm && farm.modalAwal < totalBiaya) {
+        const available = getAvailableFunds();
+        if (available < totalBiaya) {
             throw new Error('Uang tersedia tidak mencukupi untuk pembelian pakan ini');
         }
 
@@ -823,14 +830,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
             });
             if (res.ok) {
                 const created = await res.json();
-                setPenjualan(prev => [...prev, { ...created, tanggal: created.tanggal.split('T')[0] }]);
+                setPenjualan(prev => [...prev, {
+                    ...created,
+                    tanggal: created.tanggal.split('T')[0],
+                    createdAt: created.createdAt
+                }]);
 
-                // Add revenue to available funds
-                const revenue = newPenjualan.beratKg * newPenjualan.hargaPerKg;
-                if (farm && revenue > 0) {
-                    const newModal = farm.modalAwal + revenue;
-                    await updateFarm({ modalAwal: newModal });
-                }
+                // Add revenue to available funds: Removed (Calculated dynamically)
             }
         } catch (error) {
             console.error('Failed to add penjualan:', error);
@@ -1149,6 +1155,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return totalStok - totalUsed;
     };
 
+
     const getAllJenisPakan = (): string[] => {
         const fromStok = stokPakan.map(s => s.jenisPakan);
         const fromPakan = pakan.map(p => p.jenisPakan);
@@ -1165,6 +1172,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const getTotalPenjualan = (): number =>
         penjualan.reduce((sum, p) => sum + (p.beratKg * p.hargaPerKg), 0);
+
+    const getAvailableFunds = useCallback((): number => {
+        if (!farm) return 0;
+        const totalPenjualanVal = getTotalPenjualan();
+        // Total expense is sum of all pengeluaran (which includes feed costs)
+        const totalPengeluaranVal = pengeluaran.reduce((sum, p) => sum + p.jumlah, 0);
+        return farm.modalAwal + totalPenjualanVal - totalPengeluaranVal;
+    }, [farm, pengeluaran, penjualan]);
+    // Actually getTotalPenjualan is not wrapped in useCallback in the original code I saw?
+    // Let me check line 1168 in previous view.
+    // "const getTotalPenjualan = (): number => ..." - It's a standard arrow function, re-created every render.
+    // So adding it to deps is correct but it will cause re-renders. 
+    // However, the lint error was "block scoped variable used before declaration".
+    // Moving it here fixes that.
 
     const getJadwalByKolam = (kolamId: string) =>
         jadwalPakan.filter(j => j.kolamId === kolamId).sort((a, b) =>
@@ -1487,7 +1508,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         // 1. Validation Check
         const totalHarga = data.jumlah * data.hargaPerEkor;
-        if (farm && farm.modalAwal < totalHarga) {
+        const available = getAvailableFunds();
+        if (available < totalHarga) {
             throw new Error('Uang tersedia tidak mencukupi untuk tebar bibit');
         }
 
@@ -1803,6 +1825,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             calculateProjectedProfit,
             detectAppetiteDrop,
             getDailyFeedStatus,
+            getAvailableFunds,
         }}>
             {children}
         </AppContext.Provider>

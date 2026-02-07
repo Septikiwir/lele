@@ -234,6 +234,7 @@ enum KategoriPengeluaran {
   LISTRIK
   TENAGA_KERJA
   LAINNYA
+  MODAL
 }
 
 model Pengeluaran {

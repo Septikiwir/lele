@@ -42,6 +42,7 @@ const kategoriColors: Record<KategoriPengeluaran, string> = {
     LISTRIK: 'badge-warning',
     TENAGA_KERJA: 'badge-success',
     LAINNYA: 'badge-neutral',
+    MODAL: 'badge-purple',
 };
 
 const kategoriThemes: Record<KategoriPengeluaran, { bg: string; border: string; bar: string; iconBg: string; text: string }> = {
@@ -51,6 +52,7 @@ const kategoriThemes: Record<KategoriPengeluaran, { bg: string; border: string; 
     LISTRIK: { bg: 'hover:bg-blue-50/30', border: 'hover:border-blue-200', bar: 'bg-blue-500', iconBg: 'bg-blue-50', text: 'text-blue-700' },
     TENAGA_KERJA: { bg: 'hover:bg-emerald-50/30', border: 'hover:border-emerald-200', bar: 'bg-emerald-500', iconBg: 'bg-emerald-50', text: 'text-emerald-700' },
     LAINNYA: { bg: 'hover:bg-slate-50/30', border: 'hover:border-slate-200', bar: 'bg-slate-500', iconBg: 'bg-slate-50', text: 'text-slate-700' },
+    MODAL: { bg: 'hover:bg-violet-50/30', border: 'hover:border-violet-200', bar: 'bg-violet-500', iconBg: 'bg-violet-50', text: 'text-violet-700' },
 };
 
 export default function KeuanganPage() {
@@ -61,7 +63,7 @@ export default function KeuanganPage() {
         addPengeluaran, deletePengeluaran,
         getTotalPenjualan, getTotalPenjualanByKolam, getProfitByKolam,
         getTotalPengeluaranByKolam, getTotalPengeluaranByKategori,
-        farm, updateFarm
+        farm, updateFarm, getAvailableFunds
     } = useApp();
     const { showToast } = useToast();
 
@@ -70,6 +72,8 @@ export default function KeuanganPage() {
     const [isEditingModal, setIsEditingModal] = useState(false);
     const [tempModal, setTempModal] = useState<number>(0);
     const [transactionTab, setTransactionTab] = useState<'penjualan' | 'pengeluaran'>('penjualan');
+
+    const totalAvailable = getAvailableFunds();
 
     // Sync modalAwal from farm data
     useEffect(() => {
@@ -308,7 +312,6 @@ export default function KeuanganPage() {
                         </button>
                     </div>
                 </div>
-
                 {/* KPI Cards Row */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     {/* 0. Uang Tersedia */}
@@ -335,12 +338,32 @@ export default function KeuanganPage() {
                                 <div className="flex items-center gap-1">
                                     <button
                                         onClick={async () => {
-                                            if (updateFarm) {
+                                            if (addPengeluaran) {
                                                 try {
-                                                    await updateFarm({ modalAwal: tempModal });
+                                                    const currentAvailable = getAvailableFunds();
+                                                    const diff = currentAvailable - tempModal;
+
+                                                    if (diff === 0) {
+                                                        setIsEditingModal(false);
+                                                        return;
+                                                    }
+
+                                                    // If currentAvailable > tempModal (diff > 0) -> Withdrawal (Expense)
+                                                    // If currentAvailable < tempModal (diff < 0) -> Deposit (Negative Expense)
+                                                    await addPengeluaran({
+                                                        tanggal: new Date().toISOString(),
+                                                        kategori: 'MODAL',
+                                                        keterangan: diff > 0 ? 'Penarikan Modal (Withdraw)' : 'Setoran Modal (Deposit)',
+                                                        jumlah: diff,
+                                                        kolamId: null
+                                                    });
+
                                                     setIsEditingModal(false);
-                                                } catch (error) {
-                                                    // Error handled by updateFarm toast
+                                                    showToast(diff > 0 ? 'Berhasil menarik modal' : 'Berhasil menambah modal', 'success');
+                                                } catch (error: any) {
+                                                    const errMsg = error?.message || 'Gagal memproses penyesuaian modal';
+                                                    showToast(errMsg, 'error');
+                                                    console.error('Capital adjustment error:', error);
                                                 }
                                             }
                                         }}
@@ -379,12 +402,12 @@ export default function KeuanganPage() {
                                 />
                             ) : (
                                 <span className="text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">
-                                    {modalAwal ? formatCurrencyInput(modalAwal) : '0'}
+                                    {formatCurrencyInput(totalAvailable)}
                                 </span>
                             )}
                         </div>
-                        <p className="mb-3 text-sm text-slate-600">
-                            Modal awal / Kas ditangan
+                        <p className="mb-3 text-xs sm:text-sm text-slate-600">
+                            (Modal: Rp {farm?.modalAwal.toLocaleString('id-ID')} {netProfit >= 0 ? '+' : '-'} {netProfit >= 0 ? 'Profit' : 'Defisit'}: Rp {Math.abs(netProfit).toLocaleString('id-ID')})
                         </p>
                     </div>
 
@@ -864,7 +887,7 @@ export default function KeuanganPage() {
                     <div className="p-3 bg-blue-50 rounded-xl mb-4">
                         <p className="text-xs text-blue-600 mb-1">Uang Tersedia</p>
                         <p className="text-lg font-bold text-blue-900">
-                            Rp {farm?.modalAwal.toLocaleString('id-ID') || 0}
+                            Rp {getAvailableFunds().toLocaleString('id-ID')}
                         </p>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -977,8 +1000,8 @@ export default function KeuanganPage() {
                             </div>
                             <div className="flex justify-between text-sm pt-2 border-t border-orange-200">
                                 <span className="text-orange-700">Sisa Dana:</span>
-                                <span className={`font-bold ${(farm?.modalAwal || 0) >= parseFloat(pengeluaranFormData.jumlah) ? 'text-green-600' : 'text-red-600'}`}>
-                                    Rp {((farm?.modalAwal || 0) - parseFloat(pengeluaranFormData.jumlah)).toLocaleString('id-ID')}
+                                <span className={`font-bold ${getAvailableFunds() >= parseFloat(pengeluaranFormData.jumlah) ? 'text-green-600' : 'text-red-600'}`}>
+                                    Rp {(getAvailableFunds() - parseFloat(pengeluaranFormData.jumlah)).toLocaleString('id-ID')}
                                 </span>
                             </div>
                         </div>

@@ -1,3 +1,4 @@
+// Forced recompile to update Prisma Client types
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
@@ -65,9 +66,11 @@ export async function POST(
         const { farmId } = await params
         // const member = await checkFarmAccess(farmId, session.user.id)
 
-        const { kolamId, tanggal, kategori, keterangan, jumlah } = await request.json()
+        const body = await request.json()
+        const { kolamId, tanggal, kategori, keterangan, jumlah } = body
+        console.log('Incoming pengeluaran payload:', body)
 
-        if (!tanggal || !kategori || !keterangan || !jumlah) {
+        if (!tanggal || !kategori || !keterangan || jumlah === undefined || jumlah === null || jumlah === '') {
             return NextResponse.json({ error: 'Field wajib diisi' }, { status: 400 })
         }
 
@@ -76,7 +79,7 @@ export async function POST(
                 farmId,
                 kolamId: kolamId || null,
                 tanggal: new Date(tanggal),
-                kategori: kategori.toUpperCase(),
+                kategori: kategori.toUpperCase() as any,
                 keterangan,
                 jumlah: parseFloat(jumlah)
             },
@@ -84,8 +87,12 @@ export async function POST(
         })
 
         return NextResponse.json(pengeluaran, { status: 201 })
-    } catch (error) {
+    } catch (error: any) {
         console.error('Create pengeluaran error:', error)
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+        return NextResponse.json({
+            error: 'Internal server error',
+            details: error.message,
+            code: error.code
+        }, { status: 500 })
     }
 }
