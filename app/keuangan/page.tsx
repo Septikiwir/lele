@@ -68,19 +68,15 @@ export default function KeuanganPage() {
     const { showToast } = useToast();
 
     // Transaction tab state
-    const [modalAwal, setModalAwal] = useState<number>(0);
-    const [isEditingModal, setIsEditingModal] = useState(false);
+    // Capital editing states
+    const [isModalEditOpen, setIsModalEditOpen] = useState(false);
+    const [isModalConfirmOpen, setIsModalConfirmOpen] = useState(false);
     const [tempModal, setTempModal] = useState<number>(0);
+    const [isSubmittingCapital, setIsSubmittingCapital] = useState(false);
     const [transactionTab, setTransactionTab] = useState<'penjualan' | 'pengeluaran'>('penjualan');
 
     const totalAvailable = getAvailableFunds();
 
-    // Sync modalAwal from farm data
-    useEffect(() => {
-        if (farm?.modalAwal !== undefined) {
-            setModalAwal(farm.modalAwal);
-        }
-    }, [farm]);
 
     // Penjualan state
     const [showPenjualanForm, setShowPenjualanForm] = useState(false);
@@ -316,95 +312,33 @@ export default function KeuanganPage() {
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     {/* 0. Uang Tersedia */}
                     <div className="block p-4 sm:p-6 bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-violet-50 flex items-center justify-center text-violet-600">
+                        <div className="flex items-start justify-between mb-4 gap-2">
+                            <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-violet-50 flex-shrink-0 flex items-center justify-center text-violet-600">
                                     <Wallet className="w-5 h-5 sm:w-6 sm:h-6" />
                                 </div>
-                                <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">Uang Tersedia</p>
+                                <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest leading-tight">Uang Tersedia</p>
                             </div>
 
-                            {!isEditingModal ? (
+                            {!isModalEditOpen ? (
                                 <button
                                     onClick={() => {
-                                        setTempModal(modalAwal);
-                                        setIsEditingModal(true);
+                                        setTempModal(totalAvailable);
+                                        setIsModalEditOpen(true);
                                     }}
-                                    className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
+                                    className="p-2 text-slate-400 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors flex-shrink-0"
+                                    title="Sesuaikan Modal"
                                 >
                                     <Pencil className="w-4 h-4" />
                                 </button>
-                            ) : (
-                                <div className="flex items-center gap-1">
-                                    <button
-                                        onClick={async () => {
-                                            if (addPengeluaran) {
-                                                try {
-                                                    const currentAvailable = getAvailableFunds();
-                                                    const diff = currentAvailable - tempModal;
-
-                                                    if (diff === 0) {
-                                                        setIsEditingModal(false);
-                                                        return;
-                                                    }
-
-                                                    // If currentAvailable > tempModal (diff > 0) -> Withdrawal (Expense)
-                                                    // If currentAvailable < tempModal (diff < 0) -> Deposit (Negative Expense)
-                                                    await addPengeluaran({
-                                                        tanggal: new Date().toISOString(),
-                                                        kategori: 'MODAL',
-                                                        keterangan: diff > 0 ? 'Penarikan Modal (Withdraw)' : 'Setoran Modal (Deposit)',
-                                                        jumlah: diff,
-                                                        kolamId: null
-                                                    });
-
-                                                    setIsEditingModal(false);
-                                                    showToast(diff > 0 ? 'Berhasil menarik modal' : 'Berhasil menambah modal', 'success');
-                                                } catch (error: any) {
-                                                    const errMsg = error?.message || 'Gagal memproses penyesuaian modal';
-                                                    showToast(errMsg, 'error');
-                                                    console.error('Capital adjustment error:', error);
-                                                }
-                                            }
-                                        }}
-                                        className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                                        title="Simpan"
-                                    >
-                                        <Check className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => setIsEditingModal(false)}
-                                        className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                        title="Batal"
-                                    >
-                                        <X className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            )}
+                            ) : null}
                         </div>
 
                         <div className="flex items-center gap-1 mb-2">
                             <span className="text-lg sm:text-2xl font-semibold text-slate-400">Rp</span>
-                            {isEditingModal ? (
-                                <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    value={tempModal ? formatCurrencyInput(tempModal) : ''}
-                                    onChange={(e) => {
-                                        const val = parseCurrencyInput(e.target.value);
-                                        if (val === '' || /^\d+$/.test(val)) {
-                                            setTempModal(Number(val));
-                                        }
-                                    }}
-                                    autoFocus
-                                    placeholder="0"
-                                    className="text-lg sm:text-2xl font-semibold tracking-tight text-slate-900 w-full border-b border-violet-200 focus:border-violet-500 p-0 focus:ring-0 placeholder:text-slate-300 bg-transparent"
-                                />
-                            ) : (
-                                <span className="text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">
-                                    {formatCurrencyInput(totalAvailable)}
-                                </span>
-                            )}
+                            <span className="text-lg sm:text-2xl font-semibold tracking-tight text-slate-900">
+                                {formatCurrencyInput(totalAvailable)}
+                            </span>
                         </div>
                         <p className="mb-3 text-xs sm:text-sm text-slate-600">
                             (Modal: Rp {farm?.modalAwal.toLocaleString('id-ID')} {netProfit >= 0 ? '+' : '-'} {netProfit >= 0 ? 'Profit' : 'Defisit'}: Rp {Math.abs(netProfit).toLocaleString('id-ID')})
@@ -1009,7 +943,133 @@ export default function KeuanganPage() {
                 </form>
             </Modal>
 
-            {/* Delete Confirmation Modal */}
+            {/* Modal Edit Modal Awal */}
+            <Modal
+                isOpen={isModalEditOpen}
+                onClose={() => setIsModalEditOpen(false)}
+                title="Sesuaikan Modal Awal"
+                footer={
+                    <>
+                        <button type="button" onClick={() => setIsModalEditOpen(false)} className="btn btn-secondary">Batal</button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (tempModal < 0) {
+                                    showToast('Modal tidak boleh negatif', 'error');
+                                    return;
+                                }
+                                setIsModalConfirmOpen(true);
+                            }}
+                            className="btn btn-primary"
+                        >
+                            Lanjut
+                        </button>
+                    </>
+                }
+            >
+                <div className="space-y-4">
+                    <div className="p-4 bg-violet-50 rounded-xl mb-4 border border-violet-100">
+                        <p className="text-xs text-violet-600 mb-1 font-bold uppercase tracking-wider">Uang Tersedia</p>
+                        <p className="text-2xl font-bold text-violet-900">
+                            Rp {totalAvailable.toLocaleString('id-ID')}
+                        </p>
+                    </div>
+
+                    <div className="form-group">
+                        <label className="form-label font-bold text-slate-700">Penyesuaian Modal Baru (Tanpa Profit)</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                value={formatCurrencyInput(tempModal)}
+                                onChange={(e) => {
+                                    const val = parseCurrencyInput(e.target.value);
+                                    if (val === '' || /^\d+$/.test(val)) {
+                                        setTempModal(Number(val));
+                                    }
+                                }}
+                                className="input w-full text-lg font-semibold"
+                                placeholder="Contoh: 15.000.000"
+                            />
+                        </div>
+                        <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                            Masukkan total modal awal baru. Sistem akan otomatis mencatat selisihnya sebagai transaksi setoran/penarikan modal agar saldo akhir sesuai.
+                        </p>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Modal Konfirmasi Penyesuaian */}
+            <Modal
+                isOpen={isModalConfirmOpen}
+                onClose={() => setIsModalConfirmOpen(false)}
+                title="Konfirmasi Perubahan"
+                footer={
+                    <>
+                        <button type="button" onClick={() => setIsModalConfirmOpen(false)} className="btn btn-secondary" disabled={isSubmittingCapital}>Batal</button>
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                if (addPengeluaran) {
+                                    setIsSubmittingCapital(true);
+                                    try {
+                                        const currentAvailable = getAvailableFunds();
+                                        const diff = currentAvailable - tempModal;
+
+                                        if (diff === 0) {
+                                            setIsModalConfirmOpen(false);
+                                            setIsModalEditOpen(false);
+                                            return;
+                                        }
+
+                                        await addPengeluaran({
+                                            tanggal: new Date().toISOString(),
+                                            kategori: 'MODAL',
+                                            keterangan: diff > 0 ? 'Penarikan Modal (Withdraw)' : 'Setoran Modal (Deposit)',
+                                            jumlah: diff,
+                                            kolamId: null
+                                        });
+
+                                        setIsModalConfirmOpen(false);
+                                        setIsModalEditOpen(false);
+                                        showToast('Kapasitas dana berhasil diperbarui', 'success');
+                                    } catch (error) {
+                                        showToast('Gagal memperbarui dana', 'error');
+                                    } finally {
+                                        setIsSubmittingCapital(false);
+                                    }
+                                }
+                            }}
+                            className="btn btn-primary"
+                            disabled={isSubmittingCapital}
+                        >
+                            {isSubmittingCapital ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
+                            {isSubmittingCapital ? 'Memproses...' : 'Ya, Perbarui Modal'}
+                        </button>
+                    </>
+                }
+            >
+                <div className="space-y-4">
+                    <p className="text-slate-600">Apakah Anda yakin ingin mengubah modal awal?</p>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                            <p className="text-[10px] text-slate-400 uppercase font-bold mb-1">Sebelumnya</p>
+                            <p className="font-bold text-slate-700">Rp {totalAvailable.toLocaleString('id-ID')}</p>
+                        </div>
+                        <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                            <p className="text-[10px] text-emerald-600 uppercase font-bold mb-1">Menjadi</p>
+                            <p className="font-bold text-emerald-700">Rp {tempModal.toLocaleString('id-ID')}</p>
+                        </div>
+                    </div>
+
+                    <div className="p-3 bg-amber-50 rounded-lg border border-amber-100 flex gap-3">
+                        <PieChart className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-amber-800 leading-relaxed">
+                            Aksi ini akan mencatat transaksi penyesuaian modal sebesar <strong>Rp {Math.abs(getAvailableFunds() - tempModal).toLocaleString('id-ID')}</strong> untuk menyeimbangkan saldo kas.
+                        </p>
+                    </div>
+                </div>
+            </Modal>
             <Modal
                 isOpen={!!deleteModal}
                 onClose={() => setDeleteModal(null)}
