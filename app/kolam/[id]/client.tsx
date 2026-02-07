@@ -5,8 +5,9 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import Link from 'next/link';
 import { useApp } from '../../context/AppContext';
 import Modal from '../../components/ui/Modal';
-import { Edit, Loader2, Fish, ArrowLeft, Bookmark, X, Clock } from 'lucide-react';
+import { Edit, Loader2, Fish, ArrowLeft, Bookmark, X, Clock, Calendar } from 'lucide-react';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface GridCell {
     row: number;
@@ -63,6 +64,7 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
         addRiwayatSampling,
         getCycleHistory,
         getFeedRecommendation,
+        getSamplingByKolam,
     } = useApp();
 
     const [gridScale, setGridScale] = useState<number>(1);
@@ -84,6 +86,7 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
     // History View State
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [chartRange, setChartRange] = useState<'7' | '30' | '90' | 'all'>('30');
 
     // Use initialData as the kolam reference (already loaded from server)
     const kolam = initialData;
@@ -162,6 +165,23 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
             setIsSubmitting(false);
         }
     };
+
+    // Filter and Process Chart Data
+    const samplingHistory = getSamplingByKolam(kolam.id);
+    const chartData = samplingHistory
+        .filter(s => {
+            if (chartRange === 'all') return true;
+            const daysArr = { '7': 7, '30': 30, '90': 90 };
+            const limitDate = new Date();
+            limitDate.setDate(limitDate.getDate() - daysArr[chartRange as keyof typeof daysArr]);
+            return new Date(s.tanggal) >= limitDate;
+        })
+        .sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime())
+        .map(s => ({
+            tanggal: new Date(s.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
+            berat: s.bobotGram || 0,
+            size: s.jumlahIkanPerKg
+        }));
 
     const kepadatan = calculateKepadatan(kolam as any);
     const volume = kolam.panjang * kolam.lebar * kolam.kedalaman;
@@ -242,6 +262,80 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
                                     <p className="text-sm text-slate-600">Volume</p>
                                     <p className="text-lg font-semibold">{volume.toFixed(2)} m³</p>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Pertumbuhan Ikan Chart */}
+                        <div className="bg-white p-6 rounded-lg border border-slate-200">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                                <div>
+                                    <h2 className="text-xl font-bold text-slate-900">Pertumbuhan Ikan</h2>
+                                    <p className="text-sm text-slate-500">Tren berat rata-rata per ekor (gram)</p>
+                                </div>
+                                <div className="flex bg-slate-100 p-1 rounded-lg">
+                                    {[
+                                        { label: '7H', value: '7' },
+                                        { label: '30H', value: '30' },
+                                        { label: '90H', value: '90' },
+                                        { label: 'Semua', value: 'all' },
+                                    ].map((range) => (
+                                        <button
+                                            key={range.value}
+                                            onClick={() => setChartRange(range.value as any)}
+                                            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${chartRange === range.value
+                                                ? 'bg-white text-blue-600 shadow-sm'
+                                                : 'text-slate-500 hover:text-slate-700'
+                                                }`}
+                                        >
+                                            {range.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="h-[300px] w-full">
+                                {chartData.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                            <XAxis
+                                                dataKey="tanggal"
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fontSize: 10, fill: '#64748b' }}
+                                                dy={10}
+                                            />
+                                            <YAxis
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fontSize: 10, fill: '#64748b' }}
+                                            />
+                                            <Tooltip
+                                                contentStyle={{
+                                                    borderRadius: '12px',
+                                                    border: 'none',
+                                                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                                    fontSize: '12px'
+                                                }}
+                                                labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
+                                            />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="berat"
+                                                name="Berat (g)"
+                                                stroke="#2563eb"
+                                                strokeWidth={3}
+                                                dot={{ r: 4, fill: '#2563eb', strokeWidth: 2, stroke: '#fff' }}
+                                                activeDot={{ r: 6, strokeWidth: 0 }}
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-2 border-2 border-dashed border-slate-100 rounded-xl">
+                                        <Calendar className="w-8 h-8 opacity-20" />
+                                        <p className="text-sm">Belum ada data sampling dalam rentang ini</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
