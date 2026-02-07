@@ -1252,6 +1252,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
             const itemTime = new Date((d as any).createdAt || d.tanggal).getTime();
             const minTime = new Date(startTimestamp || startDate).getTime();
             const maxTime = endTimestamp ? new Date(endTimestamp).getTime() : Infinity;
+
+            // Primary condition: Must match business date range (tanggal) to prevent "leaking" 
+            // of late-entered data from previous cycles.
+            if (d.tanggal < startDate) return false;
+            if (endTimestamp && d.tanggal > endDate) return false; // Optional safety
+
             if ((d as any).createdAt && startTimestamp) {
                 return itemTime >= minTime && itemTime < maxTime;
             } else {
@@ -1347,10 +1353,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         if (!startEvent) return null;
 
+        const today = new Date();
+        const localToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         const startDate = startEvent.tanggal;
         const startId = startEvent.id;
-
-        let endDate = new Date().toISOString().split('T')[0];
+        let endDate = localToday;
         let isActive = k.jumlahIkan > 0;
 
         if (!isActive && historyDesc.length > 0) {
@@ -1389,7 +1396,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             const startTimestamp = (startEvent as any).createdAt || startEvent.tanggal;
 
             let endTimestamp: string | undefined = undefined;
-            let endDate = new Date().toISOString().split('T')[0];
+            const today = new Date();
+            const localToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            let endDate = localToday;
             let isActive = true;
 
             if (i < tebarEvents.length - 1) {
@@ -1400,10 +1409,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 // For display, EndDate is the date of the last relevant event (Harvest)
                 const lastHarvest = riwayatPanen.filter(p => {
                     const t = new Date((p as any).createdAt || p.tanggal).getTime();
-                    return t >= new Date(startTimestamp).getTime() && t < new Date(endTimestamp!).getTime();
+                    return p.kolamId === kolamId &&
+                        p.tanggal >= startEvent.tanggal && // Business Date must be after cycle start
+                        t >= new Date(startTimestamp).getTime() &&
+                        t < new Date(endTimestamp!).getTime();
                 }).sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime())[0];
 
-                endDate = lastHarvest ? lastHarvest.tanggal : startEvent.tanggal;
+                endDate = lastHarvest ? (lastHarvest.tanggal < startEvent.tanggal ? startEvent.tanggal : lastHarvest.tanggal) : startEvent.tanggal;
                 isActive = false;
             } else {
                 // Latest cycle
@@ -1439,7 +1451,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         for (let i = days - 1; i >= 0; i--) {
             const d = new Date(today);
             d.setDate(today.getDate() - i);
-            const dateStr = d.toISOString().split('T')[0];
+            const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
             // Sum feed for this date
             const amount = pakan
@@ -1648,7 +1660,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const currentWeight = sampling ? (1 / sampling.jumlahIkanPerKg) : 0.005;
 
         if (currentWeight >= TARGET_WEIGHT_KG) {
-            return { daysRemaining: 0, date: new Date().toISOString().split('T')[0], currentWeight, targetReached: true };
+            const today = new Date();
+            const localToday = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            return { daysRemaining: 0, date: localToday, currentWeight, targetReached: true };
         }
 
         const weightDiff = TARGET_WEIGHT_KG - currentWeight;
@@ -1659,7 +1673,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         return {
             daysRemaining,
-            date: date.toISOString().split('T')[0],
+            date: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`,
             currentWeight,
             targetReached: false
         };
@@ -1771,7 +1785,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const dailyTarget = biomass * feedRate; // kg
 
         // 2. Calculate Actual (Today)
-        const todayStr = new Date().toISOString().split('T')[0];
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
         const todayFeed = pakan
             .filter(p => p.kolamId === kolamId && p.tanggal === todayStr)
             .reduce((sum, p) => sum + p.jumlahKg, 0);

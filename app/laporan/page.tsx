@@ -55,7 +55,7 @@ export default function LaporanPage() {
     };
 
     const filteredPakan = filterByPeriod(pakan);
-    const filteredPengeluaran = filterByPeriod(pengeluaran);
+    const filteredPengeluaran = filterByPeriod(pengeluaran).filter(p => p.kategori !== 'MODAL');
 
     // Total modal (pengeluaran) by kategori
     const totalModalByKategori = (Object.keys(kategoriLabels) as KategoriPengeluaran[]).reduce((acc, kat) => {
@@ -63,7 +63,9 @@ export default function LaporanPage() {
         return acc;
     }, {} as Record<KategoriPengeluaran, number>);
 
-    const totalModal = filteredPengeluaran.reduce((sum, p) => sum + p.jumlah, 0);
+    const totalModal = filteredPengeluaran
+        .filter(p => p.kategori !== 'MODAL')
+        .reduce((sum, p) => sum + p.jumlah, 0);
     const totalPendapatan = getTotalPenjualan();
 
     // Generate report data per kolam
@@ -305,7 +307,7 @@ export default function LaporanPage() {
                         Kelola Pengeluaran →
                     </Link>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-7 gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
                     <div className="card p-3 sm:p-4 border-l-4 border-l-teal-500">
                         <p className="text-xs text-teal-600 font-medium flex items-center gap-1 leading-tight"><Fish className="w-3 h-3" /> Bibit</p>
                         <p className="text-sm sm:text-lg font-bold text-slate-900">Rp {totalModalByKategori.BIBIT.toLocaleString('id-ID')}</p>
@@ -325,10 +327,6 @@ export default function LaporanPage() {
                     <div className="card p-3 sm:p-4 border-l-4 border-l-green-500">
                         <p className="text-xs text-green-600 font-medium flex items-center gap-1 leading-tight"><User className="w-3 h-3" /> Pekerja</p>
                         <p className="text-sm sm:text-lg font-bold text-slate-900">Rp {totalModalByKategori.TENAGA_KERJA.toLocaleString('id-ID')}</p>
-                    </div>
-                    <div className="card p-3 sm:p-4 border-l-4 border-l-orange-500">
-                        <p className="text-xs text-orange-600 font-medium flex items-center gap-1 leading-tight"><Wallet className="w-3 h-3" /> Modal</p>
-                        <p className="text-sm sm:text-lg font-bold text-slate-900">Rp {(totalModalByKategori.MODAL || 0).toLocaleString('id-ID')}</p>
                     </div>
                     <div className="card p-3 sm:p-4 border-l-4 border-l-slate-400">
                         <p className="text-xs text-slate-600 font-medium flex items-center gap-1 leading-tight"><Package className="w-3 h-3" /> Lainnya</p>

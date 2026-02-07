@@ -99,9 +99,10 @@ export default function PengeluaranPage() {
 
     const grandTotal = totalFeedCostAllKolam + totalGeneralExpenses;
 
-    const filteredPengeluaran = filterKolam
+    const filteredPengeluaran = (filterKolam
         ? pengeluaran.filter(p => p.kolamId === filterKolam)
-        : pengeluaran;
+        : pengeluaran)
+        .filter(p => p.kategori !== 'MODAL');
 
     // Group by kategori for summary
     const kategoriTotals = kategoriOptions.map(k => {
@@ -361,7 +362,7 @@ export default function PengeluaranPage() {
                     <div className="form-group">
                         <label className="form-label">Kategori</label>
                         <div className="grid grid-cols-3 gap-2">
-                            {kategoriOptions.map(k => (
+                            {kategoriOptions.filter(k => k.value !== 'MODAL').map(k => (
                                 <button
                                     key={k.value}
                                     type="button"

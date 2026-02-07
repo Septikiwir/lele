@@ -38,6 +38,7 @@ export default function ProfitabilityWidget() {
     const totalPengeluaran = Object.values(kategoriStats).reduce((a, b) => a + b, 0);
 
     const categories = Object.keys(kategoriStats)
+        .filter(key => key !== 'MODAL')
         .map(key => ({
             key,
             total: kategoriStats[key],

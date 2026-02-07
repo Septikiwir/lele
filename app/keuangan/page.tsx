@@ -254,6 +254,7 @@ export default function KeuanganPage() {
         : filterKolamPengeluaran
             ? pengeluaran.filter(p => p.kolamId === filterKolamPengeluaran)
             : pengeluaran)
+        .filter(p => p.kategori !== 'MODAL')
         .sort((a, b) => {
             const dateCompare = new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime();
             if (dateCompare !== 0) return dateCompare;
@@ -413,7 +414,7 @@ export default function KeuanganPage() {
                             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Komposisi Pengeluaran</h3>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {kategoriTotals.sort((a, b) => b.total - a.total).map((k) => {
+                            {kategoriTotals.filter(k => k.value !== 'MODAL').sort((a, b) => b.total - a.total).map((k) => {
                                 const percentage = grandTotalPengeluaran > 0 ? (k.total / grandTotalPengeluaran) * 100 : 0;
                                 const theme = kategoriThemes[k.value];
                                 return (
@@ -864,7 +865,7 @@ export default function KeuanganPage() {
                     <div className="form-group">
                         <label className="form-label">Kategori</label>
                         <div className="grid grid-cols-2 gap-2">
-                            {kategoriOptions.filter(k => k.value !== 'BIBIT' && k.value !== 'PAKAN').map(k => {
+                            {kategoriOptions.filter(k => k.value !== 'BIBIT' && k.value !== 'PAKAN' && k.value !== 'MODAL').map(k => {
                                 const isSelected = pengeluaranFormData.kategori === k.value;
                                 let activeClass = '';
                                 let iconColor = '';
