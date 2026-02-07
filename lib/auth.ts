@@ -16,32 +16,48 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 password: { label: "Password", type: "password" },
             },
             async authorize(credentials) {
+                console.log("[AUTH_DEBUG] Attempting login for:", credentials?.email);
+
                 if (!credentials?.email || !credentials?.password) {
+                    console.log("[AUTH_DEBUG] Missing credentials");
                     return null
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: { email: credentials.email as string },
-                })
+                try {
+                    const user = await prisma.user.findUnique({
+                        where: { email: credentials.email as string },
+                    })
 
-                if (!user || !user.password) {
-                    return null
-                }
+                    if (!user) {
+                        console.log("[AUTH_DEBUG] User not found");
+                        return null;
+                    }
 
-                const isPasswordValid = await bcrypt.compare(
-                    credentials.password as string,
-                    user.password
-                )
+                    if (!user.password) {
+                        console.log("[AUTH_DEBUG] User has no password set");
+                        return null;
+                    }
 
-                if (!isPasswordValid) {
-                    return null
-                }
+                    const isPasswordValid = await bcrypt.compare(
+                        credentials.password as string,
+                        user.password
+                    )
 
-                return {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    image: user.image,
+                    if (!isPasswordValid) {
+                        console.log("[AUTH_DEBUG] Invalid password");
+                        return null
+                    }
+
+                    console.log("[AUTH_DEBUG] Login successful");
+                    return {
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        image: user.image,
+                    }
+                } catch (error) {
+                    console.error("[AUTH_DEBUG] Error in authorize:", error);
+                    return null;
                 }
             },
         }),
