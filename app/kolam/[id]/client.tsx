@@ -177,11 +177,16 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
             return new Date(s.tanggal) >= limitDate;
         })
         .sort((a, b) => new Date(a.tanggal).getTime() - new Date(b.tanggal).getTime())
-        .map(s => ({
-            tanggal: new Date(s.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
-            berat: s.bobotGram || 0,
-            size: s.jumlahIkanPerKg
-        }));
+        .map(s => {
+            const berat = s.bobotGram || (s.jumlahIkanPerKg > 0 ? 1000 / s.jumlahIkanPerKg : 0);
+            return {
+                id: s.id,
+                fullDate: s.tanggal,
+                tanggal: new Date(s.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
+                berat: Math.round(Number(berat)),
+                size: s.jumlahIkanPerKg
+            };
+        });
 
     const kepadatan = calculateKepadatan(kolam as any);
     const volume = kolam.panjang * kolam.lebar * kolam.kedalaman;
@@ -299,10 +304,11 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
                                         <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                             <XAxis
-                                                dataKey="tanggal"
+                                                dataKey="fullDate"
                                                 axisLine={false}
                                                 tickLine={false}
                                                 tick={{ fontSize: 10, fill: '#64748b' }}
+                                                tickFormatter={(val) => new Date(val).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
                                                 dy={10}
                                             />
                                             <YAxis
@@ -311,6 +317,7 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
                                                 tick={{ fontSize: 10, fill: '#64748b' }}
                                             />
                                             <Tooltip
+                                                labelFormatter={(val) => new Date(val).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                 contentStyle={{
                                                     borderRadius: '12px',
                                                     border: 'none',
