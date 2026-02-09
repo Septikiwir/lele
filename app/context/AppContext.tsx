@@ -135,6 +135,26 @@ export interface RiwayatSampling {
     catatan?: string;
 }
 
+export interface RiwayatSortir {
+    id: string;
+    kolamId: string;
+    tanggal: string;
+    periode: number; // 1, 2, 3, or 4
+    jumlahIkanSebelum: number;
+    jumlahIkanSesudah: number;
+    mortalitas: number;
+    bobotRataRata?: number;
+    catatan?: string;
+}
+
+export interface SortingAlert {
+    kolamId: string;
+    kolamNama: string;
+    periode: number; // 1, 2, 3, or 4
+    reason: 'week' | 'weight';
+    value: number; // week number or weight in grams
+}
+
 export interface CycleSummary {
     kolamId: string;
     cycleNumber: number; // Added: Order of the cycle (1, 2, 3...)
@@ -237,6 +257,14 @@ interface AppContextType {
     getLatestSampling: (kolamId: string) => RiwayatSampling | undefined;
     calculateBiomass: (kolamId: string) => { totalBiomass: number; density: number; averageWeight: number };
     getUnifiedStatus: (kolamId: string) => { status: 'aman' | 'waspada' | 'berisiko'; kepadatanEkor: number; kepadatanBerat: number; source: 'ekor' | 'berat' };
+
+    // Sorting (Sortir)
+    riwayatSortir: RiwayatSortir[];
+    addRiwayatSortir: (sortir: Omit<RiwayatSortir, 'id'>) => Promise<void>;
+    getSortirByKolam: (kolamId: string) => RiwayatSortir[];
+    getSortingAlerts: () => SortingAlert[];
+    getWeeksSinceTebar: (kolamId: string) => number;
+    getCurrentWeight: (kolamId: string) => number;
 
     // Helper functions
     getKolamById: (id: string) => Kolam | undefined;
@@ -351,6 +379,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [riwayatPanen, setRiwayatPanen] = useState<RiwayatPanen[]>([]);
     const [riwayatIkan, setRiwayatIkan] = useState<RiwayatIkan[]>([]);
     const [riwayatSampling, setRiwayatSampling] = useState<RiwayatSampling[]>([]);
+    const [riwayatSortir, setRiwayatSortir] = useState<RiwayatSortir[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [hargaPasarPerKg, setHargaPasarPerKg] = useState(35000); // Default Rp 35.000/kg
@@ -459,6 +488,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 ...s,
                 tanggal: s.tanggal // ISO
             })));
+
+            setRiwayatSortir(data.riwayatSortir?.map((s: any) => ({
+                ...s,
+                tanggal: s.tanggal // ISO
+            })) || []);
 
             // Map historical usage array to object map
             const usageMap: Record<string, number> = {};
@@ -942,6 +976,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const addRiwayatSortir = async (newSortir: Omit<RiwayatSortir, 'id'>) => {
+        if (!activeFarmId) return;
+        try {
+            const res = await fetch(`/api/farms/${activeFarmId}/kolam/${newSortir.kolamId}/sortir`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newSortir)
+            });
+            if (res.ok) {
+                const created = await res.json();
+                setRiwayatSortir(prev => [...prev, {
+                    ...created,
+                    tanggal: new Date(created.tanggal).toISOString()
+                }]);
+                
+                // Update kolam fish count with the new count after sorting
+                setKolam(prev => prev.map(k => {
+                    if (k.id === newSortir.kolamId) {
+                        return { ...k, jumlahIkan: newSortir.jumlahIkanSesudah };
+                    }
+                    return k;
+                }));
+                
+                showToast('Data sortir berhasil disimpan', 'success');
+            }
+        } catch (error) {
+            console.error('Failed to add sortir:', error);
+            showToast('Gagal menyimpan data sortir', 'error');
+        }
+    };
+
 
 
     const calculateBiomass = (kolamId: string) => {
@@ -1242,6 +1307,70 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const samples = getSamplingByKolam(kolamId);
         return samples.length > 0 ? samples[0] : undefined;
     }, [getSamplingByKolam]);
+
+    // Sorting Helper Functions
+    const getSortirByKolam = useCallback((kolamId: string) =>
+        riwayatSortir.filter((s: any) => s.kolamId === kolamId).sort((a: any, b: any) =>
+            new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
+        ), [riwayatSortir]);
+
+    const getWeeksSinceTebar = useCallback((kolamId: string): number => {
+        const kolam = getKolamById(kolamId);
+        if (!kolam?.tanggalTebar) return 0;
+        
+        const tebarDate = new Date(kolam.tanggalTebar);
+        const today = new Date();
+        const daysPassed = Math.floor((today.getTime() - tebarDate.getTime()) / (1000 * 60 * 60 * 24));
+        return Math.floor(daysPassed / 7);
+    }, [getKolamById]);
+
+    const getCurrentWeight = useCallback((kolamId: string): number => {
+        const { averageWeight } = calculateBiomass(kolamId);
+        return averageWeight * 1000; // Convert kg to grams
+    }, [calculateBiomass]);
+
+    const getSortingAlerts = useCallback((): SortingAlert[] => {
+        const alerts: SortingAlert[] = [];
+        
+        // Periode sortir dengan kondisi: [periode, minggu minimum, bobot min (gram), bobot max (gram)]
+        const sortingPeriods: [number, number, number, number][] = [
+            [1, 2, 15, 25],
+            [2, 4, 40, 55],
+            [3, 6, 70, 90],
+            [4, 8, 100, 125],
+        ];
+
+        for (const k of kolam) {
+            if (!k.tanggalTebar) continue;
+
+            const weeks = getWeeksSinceTebar(k.id);
+            const currentWeight = getCurrentWeight(k.id);
+            const sortirHistory = getSortirByKolam(k.id);
+
+            for (const [periode, minWeek, minWeight, maxWeight] of sortingPeriods) {
+                // Cek apakah periode ini sudah di-sortir
+                const alreadySorted = sortirHistory.some(s => s.periode === periode);
+                if (alreadySorted) continue;
+
+                // Cek kondisi: minggu ATAU bobot
+                const weekCondition = weeks >= minWeek;
+                const weightCondition = currentWeight >= minWeight && currentWeight <= maxWeight;
+
+                if (weekCondition || weightCondition) {
+                    alerts.push({
+                        kolamId: k.id,
+                        kolamNama: k.nama,
+                        periode,
+                        reason: weekCondition ? 'week' : 'weight',
+                        value: weekCondition ? weeks : Math.round(currentWeight),
+                    });
+                    break; // Only show the first matching period alert
+                }
+            }
+        }
+
+        return alerts;
+    }, [kolam, getWeeksSinceTebar, getCurrentWeight, getSortirByKolam]);
 
     const getAllJenisPakan = useCallback(() => {
         const fromStok = stokPakan.map(s => s.jenisPakan);
@@ -1917,6 +2046,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
             addStokIkan,
             calculateBiomass,
             getUnifiedStatus,
+            riwayatSortir,
+            addRiwayatSortir,
+            getSortirByKolam,
+            getSortingAlerts,
+            getWeeksSinceTebar,
+            getCurrentWeight,
             getKolamById,
             getPakanByKolam,
             getKondisiAirByKolam,

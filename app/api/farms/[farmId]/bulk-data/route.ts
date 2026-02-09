@@ -44,7 +44,8 @@ export async function GET(
             jadwalPakan,
             riwayatPanen,
             riwayatIkan,
-            riwayatSampling
+            riwayatSampling,
+            riwayatSortir
         ] = await Promise.all([
             prisma.dataPakan.findMany({
                 where: {
@@ -95,6 +96,10 @@ export async function GET(
                     tanggal: { gte: dateLimit }
                 },
                 orderBy: { tanggal: 'desc' }
+            }),
+            prisma.riwayatSortir.findMany({
+                where: { kolamId: { in: kolamIds } },
+                orderBy: { tanggal: 'desc' }
             })
         ])
 
@@ -122,6 +127,7 @@ export async function GET(
             riwayatPanen,
             riwayatIkan,
             riwayatSampling,
+            riwayatSortir,
             historicalFeedUsage: historicalFeedUsage.map(h => ({
                 jenisPakan: h.jenisPakan,
                 jumlahKg: h._sum.jumlahKg || 0

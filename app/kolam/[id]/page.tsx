@@ -32,6 +32,9 @@ export default async function KolamDetailPage({ params }: Props) {
             },
             riwayatPanen: {
                 orderBy: { tanggal: 'desc' }
+            },
+            riwayatSortir: {
+                orderBy: { tanggal: 'desc' }
             }
         }
     });
@@ -103,6 +106,17 @@ export default async function KolamDetailPage({ params }: Props) {
             hargaPerKg: p.hargaPerKg,
             tipe: p.tipe.toLowerCase() as 'parsial' | 'total',
             catatan: p.catatan || undefined
+        })),
+        riwayatSortir: kolam.riwayatSortir.map(s => ({
+            id: s.id,
+            kolamId: s.kolamId,
+            tanggal: s.tanggal.toISOString(),
+            periode: s.periode,
+            jumlahIkanSebelum: s.jumlahIkanSebelum,
+            jumlahIkanSesudah: s.jumlahIkanSesudah,
+            mortalitas: s.mortalitas,
+            bobotRataRata: s.bobotRataRata || undefined,
+            catatan: s.catatan || undefined
         }))
     };
 

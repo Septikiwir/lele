@@ -1,10 +1,14 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useApp } from '../../context/AppContext';
-import { AlertTriangle, ArrowRight, Package, Fish, Check, TrendingDown } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Package, Fish, Check, TrendingDown, ArrowUpDown } from 'lucide-react';
+import SortirModal from '../modals/SortirModal';
 
 export default function AlertCenter() {
-    const { getStokTersediaByJenis, getAllJenisPakan, kolam, getUnifiedStatus, detectAppetiteDrop } = useApp();
+    const { getStokTersediaByJenis, getAllJenisPakan, kolam, getUnifiedStatus, detectAppetiteDrop, getSortingAlerts } = useApp();
+    const [isSortirModalOpen, setIsSortirModalOpen] = useState(false);
+    const [selectedKolam, setSelectedKolam] = useState<{ id: string; periode: number } | null>(null);
 
     // 1. Check Low Stock
     const allJenisPakan = getAllJenisPakan();
@@ -23,7 +27,20 @@ export default function AlertCenter() {
         .map(k => ({ ...k, ...detectAppetiteDrop(k.id) }))
         .filter(k => k.hasDrop);
 
-    const hasAlerts = lowStockItems.length > 0 || riskyPonds.length > 0 || appetiteAlerts.length > 0;
+    // 3. Check Sorting Alerts
+    const sortingAlerts = getSortingAlerts();
+
+    const hasAlerts = lowStockItems.length > 0 || riskyPonds.length > 0 || appetiteAlerts.length > 0 || sortingAlerts.length > 0;
+
+    const handleQuickSortir = (kolamId: string, periode: number) => {
+        setSelectedKolam({ id: kolamId, periode });
+        setIsSortirModalOpen(true);
+    };
+
+    const handleModalClose = () => {
+        setIsSortirModalOpen(false);
+        setSelectedKolam(null);
+    };
 
     if (!hasAlerts) {
         return (
@@ -49,11 +66,44 @@ export default function AlertCenter() {
                     Perlu Perhatian
                 </h3>
                 <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-1 rounded-full">
-                    {lowStockItems.length + riskyPonds.length + appetiteAlerts.length} ISU
+                    {lowStockItems.length + riskyPonds.length + appetiteAlerts.length + sortingAlerts.length} ISU
                 </span>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar pr-1">
+                {/* Sorting Alerts Section */}
+                {sortingAlerts.length > 0 && (
+                    <div className="space-y-3">
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                            <ArrowUpDown className="w-3 h-3" /> Perlu Sortir
+                        </p>
+                        {sortingAlerts.map(alert => (
+                            <div 
+                                key={`${alert.kolamId}-${alert.periode}`} 
+                                className="flex items-center justify-between p-3 bg-white rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all group"
+                            >
+                                <Link href={`/kolam/${alert.kolamId}`} className="flex items-center gap-3 flex-1">
+                                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+                                        <ArrowUpDown className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-900 group-hover:text-blue-700">{alert.kolamNama}</p>
+                                        <p className="text-xs text-slate-500">
+                                            Periode {alert.periode} • {alert.reason === 'week' ? `Minggu ${alert.value}` : `${alert.value}g`}
+                                        </p>
+                                    </div>
+                                </Link>
+                                <button
+                                    onClick={() => handleQuickSortir(alert.kolamId, alert.periode)}
+                                    className="ml-2 text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                                >
+                                    Tandai
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
                 {/* Appetite Drop Section */}
                 {appetiteAlerts.length > 0 && (
                     <div className="space-y-3">
@@ -126,6 +176,16 @@ export default function AlertCenter() {
                     </div>
                 )}
             </div>
+
+            {/* Sortir Modal */}
+            {selectedKolam && (
+                <SortirModal
+                    isOpen={isSortirModalOpen}
+                    onClose={handleModalClose}
+                    defaultKolamId={selectedKolam.id}
+                    defaultPeriode={selectedKolam.periode}
+                />
+            )}
         </div>
     );
 }

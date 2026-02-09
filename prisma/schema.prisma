@@ -162,6 +162,7 @@ model Kolam {
   penjualan     Penjualan[]
   riwayatIkan   RiwayatIkan[]
   riwayatSampling RiwayatSampling[]
+  riwayatSortir RiwayatSortir[]
 
   @@index([farmId])
 }
@@ -384,5 +385,30 @@ model RiwayatSampling {
   kolam   Kolam  @relation(fields: [kolamId], references: [id], onDelete: Cascade)
 
   @@index([kolamId])
+  @@index([tanggal])
+}
+
+// ============================================
+// SORTING HISTORY / RIWAYAT SORTIR
+// ============================================
+
+model RiwayatSortir {
+  id                 String   @id @default(cuid())
+  tanggal            DateTime
+  periode            Int      // 1, 2, 3, or 4
+  jumlahIkanSebelum  Int      // Jumlah ikan sebelum sortir
+  jumlahIkanSesudah  Int      // Jumlah ikan setelah sortir
+  mortalitas         Int      // jumlahIkanSebelum - jumlahIkanSesudah
+  bobotRataRata      Float?   // Average weight in grams
+  catatan            String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  kolamId String
+  kolam   Kolam  @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+
+  @@index([kolamId])
+  @@index([periode])
   @@index([tanggal])
 }

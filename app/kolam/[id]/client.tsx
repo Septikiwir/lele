@@ -5,6 +5,7 @@ import DashboardLayout from '../../components/layout/DashboardLayout';
 import Link from 'next/link';
 import { useApp } from '../../context/AppContext';
 import Modal from '../../components/ui/Modal';
+import SortirModal from '../../components/modals/SortirModal';
 import {
     ChevronLeft,
     Edit,
@@ -21,7 +22,8 @@ import {
     Loader2,
     ArrowLeft,
     Bookmark,
-    X
+    X,
+    ArrowUpDown
 } from 'lucide-react';
 import { formatCurrencyInput, parseCurrencyInput } from '@/lib/utils';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -66,6 +68,7 @@ interface InitialData {
     riwayatSampling: any[];
     penjualan: any[];
     riwayatPanen: any[];
+    riwayatSortir: any[];
 }
 
 interface KolamDetailClientProps {
@@ -74,6 +77,7 @@ interface KolamDetailClientProps {
 
 export default function KolamDetailClient({ initialData }: KolamDetailClientProps) {
     const {
+        kolam: allKolam,
         calculateBiomass,
         calculateKepadatan,
         getUnifiedStatus,
@@ -83,6 +87,10 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
         getSamplingByKolam,
         getCycleHistory,
         getAvailableFunds,
+        getSortirByKolam,
+        getSortingAlerts,
+        getWeeksSinceTebar,
+        getCurrentWeight,
     } = useApp();
 
     const [gridScale, setGridScale] = useState<number>(1);
@@ -92,11 +100,14 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
 
     // Edit Fish Count State
     const [isEditFishOpen, setIsEditFishOpen] = useState(false);
+    const [isSortirModalOpen, setIsSortirModalOpen] = useState(false);
     const [editFishCount, setEditFishCount] = useState('');
     const [addFishCount, setAddFishCount] = useState('');
     const [hargaBibit, setHargaBibit] = useState('');
     const [beratBibit, setBeratBibit] = useState('');
     const [editReason, setEditReason] = useState('Koreksi / Hitung Ulang');
+    const [targetKolamId, setTargetKolamId] = useState('');
+    const [pindahJumlah, setPindahJumlah] = useState('');
 
     // Sampling State
     const [isSamplingOpen, setIsSamplingOpen] = useState(false);
@@ -134,6 +145,29 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
                     beratPerEkor: weight || 0,
                     hargaPerEkor: price || 0
                 });
+            } else if (editReason === 'Pindah Kolam') {
+                const jumlahPindah = parseInt(parseCurrencyInput(pindahJumlah));
+                if (!targetKolamId) throw new Error("Kolam tujuan harus dipilih");
+                if (isNaN(jumlahPindah) || jumlahPindah <= 0) throw new Error("Jumlah ikan yang dipindah tidak valid");
+                if (jumlahPindah > kolam.jumlahIkan) throw new Error("Jumlah ikan yang dipindah tidak boleh melebihi populasi");
+
+                const targetKolamInfo = allKolam.find(k => k.id === targetKolamId);
+                
+                // Record for source pond (reduce)
+                await addRiwayatIkan({
+                    kolamId: kolam.id,
+                    tanggal: new Date().toISOString(),
+                    jumlahPerubahan: -jumlahPindah,
+                    keterangan: `Pindah Kolam ke ${targetKolamInfo?.nama || 'Kolam Lain'}`
+                });
+
+                // Record for target pond (add)
+                await addRiwayatIkan({
+                    kolamId: targetKolamId,
+                    tanggal: new Date().toISOString(),
+                    jumlahPerubahan: jumlahPindah,
+                    keterangan: `Terima dari ${kolam.nama}`
+                });
             } else {
                 const newCount = parseInt(parseCurrencyInput(editFishCount));
                 if (!isNaN(newCount) && newCount >= 0) {
@@ -158,6 +192,8 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
             setAddFishCount('');
             setHargaBibit('');
             setBeratBibit('');
+            setTargetKolamId('');
+            setPindahJumlah('');
         } catch (error) {
             console.error("Failed to update fish count:", error);
             alert("Gagal mengupdate jumlah ikan.");
@@ -210,6 +246,8 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
 
     // Auto-Sync Growth Logic
     const samplingHistory = getSamplingByKolam(kolam.id);
+    const sortirHistory = getSortirByKolam(kolam.id);
+    const sortingAlerts = getSortingAlerts().filter(alert => alert.kolamId === kolam.id);
     const syncRef = useRef(false);
 
     useEffect(() => {
@@ -458,6 +496,21 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
 
                     {/* Action Buttons */}
                     <div className="space-y-2">
+                        {sortingAlerts.length > 0 && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-2">
+                                <p className="text-xs font-semibold text-blue-800 mb-1">Perlu Sortir!</p>
+                                <p className="text-xs text-blue-600">
+                                    Periode {sortingAlerts[0].periode} • {sortingAlerts[0].reason === 'week' ? `Minggu ${sortingAlerts[0].value}` : `${sortingAlerts[0].value}g`}
+                                </p>
+                            </div>
+                        )}
+                        <button
+                            onClick={() => setIsSortirModalOpen(true)}
+                            className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                            <ArrowUpDown className="w-4 h-4 inline mr-2" />
+                            Catat Sortir
+                        </button>
                         <button
                             onClick={() => setIsEditFishOpen(true)}
                             className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
@@ -474,6 +527,79 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
                         </button>
                     </div>
                 </div>
+
+                {/* Riwayat Sortir Section */}
+                {sortirHistory.length > 0 && (
+                    <div className="bg-white p-6 rounded-lg border border-slate-200">
+                        <h2 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                            <ArrowUpDown className="w-5 h-5 text-blue-600" />
+                            Riwayat Sortir
+                        </h2>
+                        <div className="overflow-x-auto">
+                            <table className="w-full">
+                                <thead className="bg-slate-50">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Tanggal</th>
+                                        <th className="px-4 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Periode</th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Sebelum</th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Sesudah</th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Mortalitas</th>
+                                        <th className="px-4 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Bobot</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200">
+                                    {sortirHistory.map((sortir: any) => {
+                                        const mortalitasPercent = sortir.jumlahIkanSebelum > 0
+                                            ? ((sortir.mortalitas / sortir.jumlahIkanSebelum) * 100).toFixed(1)
+                                            : '0';
+                                        
+                                        return (
+                                            <tr key={sortir.id} className="hover:bg-slate-50">
+                                                <td className="px-4 py-3 text-sm text-slate-900">
+                                                    {new Date(sortir.tanggal).toLocaleDateString('id-ID', { 
+                                                        day: '2-digit', 
+                                                        month: 'short', 
+                                                        year: 'numeric' 
+                                                    })}
+                                                </td>
+                                                <td className="px-4 py-3 text-sm">
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                                        Periode {sortir.periode}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-sm text-right text-slate-900 font-medium">
+                                                    {sortir.jumlahIkanSebelum.toLocaleString()}
+                                                </td>
+                                                <td className="px-4 py-3 text-sm text-right text-slate-900 font-medium">
+                                                    {sortir.jumlahIkanSesudah.toLocaleString()}
+                                                </td>
+                                                <td className="px-4 py-3 text-sm text-right">
+                                                    <div>
+                                                        <div className="font-semibold text-amber-900">{sortir.mortalitas.toLocaleString()}</div>
+                                                        <div className="text-xs text-amber-600">({mortalitasPercent}%)</div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3 text-sm text-right text-slate-700">
+                                                    {sortir.bobotRataRata ? `${sortir.bobotRataRata.toFixed(1)}g` : '-'}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                        {sortirHistory.some((s: any) => s.catatan) && (
+                            <div className="mt-4 pt-4 border-t border-slate-200">
+                                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">Catatan:</p>
+                                {sortirHistory.filter((s: any) => s.catatan).map((sortir: any) => (
+                                    <div key={sortir.id} className="text-sm text-slate-600 mb-1">
+                                        <span className="font-medium">P{sortir.periode}:</span> {sortir.catatan}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* Modals */}
                 <Modal
@@ -511,6 +637,45 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
                                 <option>Pindah Kolam</option>
                             </select>
                         </div>
+
+                        {/* Pindah Kolam Section */}
+                        {editReason === 'Pindah Kolam' && (
+                            <div className="space-y-4 animate-in fade-in duration-300">
+                                <div className="form-group">
+                                    <label className="form-label">Pindah Ke Kolam</label>
+                                    <select
+                                        value={targetKolamId}
+                                        onChange={(e) => setTargetKolamId(e.target.value)}
+                                        className="input"
+                                        required
+                                    >
+                                        <option value="">-- Pilih Kolam Tujuan --</option>
+                                        {allKolam.map(k => (
+                                            k.id !== kolam.id && (
+                                                <option key={k.id} value={k.id}>
+                                                    {k.nama} ({k.jumlahIkan.toLocaleString()} ekor)
+                                                </option>
+                                            )
+                                        ))}
+                                    </select>
+                                    {allKolam.filter(k => k.id !== kolam.id).length === 0 && (
+                                        <p className="text-xs text-red-500 mt-1">Tidak ada kolam lain yang tersedia</p>
+                                    )}
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Jumlah Ikan yang Dipindah</label>
+                                    <input
+                                        type="text"
+                                        value={pindahJumlah}
+                                        onChange={(e) => setPindahJumlah(formatCurrencyInput(e.target.value))}
+                                        className="input"
+                                        placeholder="Contoh: 500"
+                                        required
+                                    />
+                                    <p className="form-hint">Maksimal: {kolam.jumlahIkan.toLocaleString()} ekor</p>
+                                </div>
+                            </div>
+                        )}
 
                         {editReason === 'Bibit Baru' ? (
                             <div className="space-y-4 animate-in fade-in duration-300">
@@ -574,7 +739,7 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
                                     </div>
                                 </div>
                             </div>
-                        ) : (
+                        ) : editReason !== 'Pindah Kolam' ? (
                             <div className="form-group animate-in fade-in duration-300">
                                 <label className="form-label">Jumlah Ikan Terbaru</label>
                                 <input
@@ -587,7 +752,7 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
                                 />
                                 <p className="form-hint">Masukkan angka populasi terakhir yang valid</p>
                             </div>
-                        )}
+                        ) : null}
                     </form>
                 </Modal>
 
@@ -645,6 +810,13 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
                         </button>
                     </form>
                 </Modal>
+
+                <SortirModal
+                    isOpen={isSortirModalOpen}
+                    onClose={() => setIsSortirModalOpen(false)}
+                    defaultKolamId={kolam.id}
+                    defaultPeriode={sortingAlerts.length > 0 ? sortingAlerts[0].periode : undefined}
+                />
             </div>
         </DashboardLayout>
     );

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useApp } from '../context/AppContext';
 import { useState } from 'react';
 
-import { Plus, Edit, Trash2, Eye, Loader2, ChevronLeft, ChevronRight, X, Calendar, DollarSign, Scale, Box, Fish, Container, Banknote, ShoppingCart, ClipboardList, AlertTriangle } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Loader2, ChevronLeft, ChevronRight, X, Calendar, DollarSign, Scale, Box, Fish, Container, Banknote, ShoppingCart, ClipboardList, AlertTriangle, ArrowUpDown } from 'lucide-react';
 import EmptyState from '../components/ui/EmptyState';
 import Modal from '../components/ui/Modal'; import PanenModal from '../components/modals/PanenModal'; import { useToast } from '../context/ToastContext'; // Import Toast
 import { TipePembeli, CycleSummary } from '../context/AppContext';
@@ -30,6 +30,7 @@ export default function KolamPage() {
         getLatestSampling, getFeedRecommendation,
         addPakan, addRiwayatPanen, addPenjualan, pembeli, getAllJenisPakan, tebarBibit,
         hargaPasarPerKg, getCycleHistory, riwayatPanen, farm, getAvailableFunds,
+        getSortingAlerts,
     } = useApp();
     const { showToast } = useToast();
     const [deleteModal, setDeleteModal] = useState<string | null>(null);
@@ -393,6 +394,7 @@ export default function KolamPage() {
                                                 const isEmpty = k.jumlahIkan === 0;
                                                 const unifiedStatus = getUnifiedStatus(k.id);
                                                 const displayStatus = isEmpty ? 'kosong' : unifiedStatus.status;
+                                                const sortingAlerts = getSortingAlerts().filter(a => a.kolamId === k.id);
 
                                                 const volume = k.panjang * k.lebar * k.kedalaman;
                                                 const luas = k.panjang * k.lebar;
@@ -445,9 +447,17 @@ export default function KolamPage() {
                                                                     )}
                                                                 </div>
                                                             </div>
-                                                            <span className={`badge ${badgeClass} border-none text-xs font-medium px-1.5 py-0.5`}>
-                                                                {statusLabels[displayStatus as keyof typeof statusLabels]}
-                                                            </span>
+                                                            <div className="flex flex-col gap-2 items-end">
+                                                                <span className={`badge ${badgeClass} border-none text-xs font-medium px-1.5 py-0.5`}>
+                                                                    {statusLabels[displayStatus as keyof typeof statusLabels]}
+                                                                </span>
+                                                                {sortingAlerts.length > 0 && (
+                                                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-100 text-blue-700 text-xs font-semibold">
+                                                                        <ArrowUpDown className="w-3 h-3" />
+                                                                        Sortir P{sortingAlerts[0].periode}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
 
                                                         {/* Stats List */}

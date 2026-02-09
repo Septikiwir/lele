@@ -1,0 +1,39 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Body -->
+  <ellipse cx="100" cy="110" rx="50" ry="55" fill="#14b8a6" opacity="0.9"/>
+  
+  <!-- Head -->
+  <circle cx="100" cy="60" r="40" fill="#14b8a6"/>
+  
+  <!-- Left Eye -->
+  <circle cx="85" cy="50" r="8" fill="white"/>
+  <circle cx="85" cy="50" r="5" fill="#1e293b"/>
+  <circle cx="87" cy="48" r="2" fill="white"/>
+  
+  <!-- Right Eye -->
+  <circle cx="115" cy="50" r="8" fill="white"/>
+  <circle cx="115" cy="50" r="5" fill="#1e293b"/>
+  <circle cx="117" cy="48" r="2" fill="white"/>
+  
+  <!-- Sad expression line -->
+  <path d="M 90 70 Q 100 75 110 70" stroke="#1e293b" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- Left Fin -->
+  <ellipse cx="55" cy="110" rx="15" ry="35" fill="#0d9488" transform="rotate(-30 55 110)"/>
+  
+  <!-- Right Fin -->
+  <ellipse cx="145" cy="110" rx="15" ry="35" fill="#0d9488" transform="rotate(30 145 110)"/>
+  
+  <!-- Tail -->
+  <path d="M 150 120 Q 180 100 185 140 Q 180 150 160 140 Z" fill="#0d9488"/>
+  
+  <!-- Belly -->
+  <ellipse cx="100" cy="120" rx="35" ry="40" fill="#a7f3d0" opacity="0.6"/>
+  
+  <!-- Tears -->
+  <circle cx="80" cy="68" r="3" fill="#3b82f6" opacity="0.7"/>
+  <path d="M 80 71 L 78 80" stroke="#3b82f6" stroke-width="1.5" opacity="0.7"/>
+  
+  <circle cx="120" cy="68" r="3" fill="#3b82f6" opacity="0.7"/>
+  <path d="M 120 71 L 122 80" stroke="#3b82f6" stroke-width="1.5" opacity="0.7"/>
+</svg>
