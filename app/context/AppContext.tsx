@@ -145,6 +145,7 @@ export interface RiwayatSortir {
     mortalitas: number;
     bobotRataRata?: number;
     catatan?: string;
+    distributions?: Array<{ kolamId: string; jumlah: number }>; // Optional: multi-pond distribution
 }
 
 export interface SortingAlert {
@@ -481,7 +482,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
             setRiwayatIkan(data.riwayatIkan.map((r: any) => ({
                 ...r,
-                tanggal: new Date(r.tanggal).toLocaleDateString('en-CA')
+                tanggal: r.tanggal // Keep full ISO string with time
             })));
 
             setRiwayatSampling(data.riwayatSampling.map((s: any) => ({
@@ -677,7 +678,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             });
             if (res.ok) {
                 const created = await res.json();
-                setPakan(prev => [...prev, { ...created, tanggal: new Date(created.tanggal).toLocaleDateString('en-CA') }]);
+                // Keep the full ISO string for the date to preserve time
+                setPakan(prev => [...prev, created]);
                 showToast('Pakan berhasil dicatat', 'success');
 
                 // Tambahkan ke pengeluaran juga
@@ -928,10 +930,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
                 // Add to history
                 setRiwayatIkan(prev => [{
-                    ...result.history, // Assuming API returns history object in result or is the result
+                    ...result, // Keep all fields from API response
                     id: result.id,
                     kolamId: result.kolamId,
-                    tanggal: new Date(result.tanggal).toLocaleDateString('en-CA'),
+                    tanggal: result.tanggal, // Keep full ISO string with time
                     jumlahPerubahan: result.jumlahPerubahan,
                     jumlahAkhir: result.jumlahAkhir,
                     keterangan: result.keterangan
@@ -991,13 +993,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     tanggal: new Date(created.tanggal).toISOString()
                 }]);
                 
-                // Update kolam fish count with the new count after sorting
+                // Update kolam fish counts
                 setKolam(prev => prev.map(k => {
+                    // Source kolam: reduce by total distributed amount (remaining fish stay)
                     if (k.id === newSortir.kolamId) {
-                        return { ...k, jumlahIkan: newSortir.jumlahIkanSesudah };
+                        let finalCount = newSortir.jumlahIkanSesudah; // Survivors after mortality
+                        
+                        if (newSortir.distributions && newSortir.distributions.length > 0) {
+                            const totalDistributed = newSortir.distributions.reduce((sum, d) => sum + d.jumlah, 0);
+                            finalCount = newSortir.jumlahIkanSesudah - totalDistributed; // Remaining in source
+                        }
+                        
+                        return { ...k, jumlahIkan: finalCount };
                     }
+                    
+                    // Target kolam(s): add distributed fish
+                    if (newSortir.distributions && newSortir.distributions.length > 0) {
+                        const distForThisKolam = newSortir.distributions.find(d => d.kolamId === k.id);
+                        if (distForThisKolam) {
+                            return { ...k, jumlahIkan: k.jumlahIkan + distForThisKolam.jumlah };
+                        }
+                    }
+                    
                     return k;
                 }));
+                
+                // Refresh RiwayatIkan to show auto-created mortality and transfer records
+                await loadRiwayatIkan();
                 
                 showToast('Data sortir berhasil disimpan', 'success');
             }
@@ -1012,25 +1034,45 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const calculateBiomass = (kolamId: string) => {
         const kolam = getKolamById(kolamId);
         const sampling = getLatestSampling(kolamId);
+        const sortir = getLatestSortirWithWeight(kolamId);
 
-        if (!kolam || !sampling || sampling.jumlahIkanPerKg <= 0) {
+        // Determine the most recent weight source
+        let baseWeightGram = 0;
+        let baseDate: Date | null = null;
+        let hasWeightData = false;
+
+        // Check sortir data (if available)
+        if (sortir && sortir.bobotRataRata && sortir.bobotRataRata > 0) {
+            const sortirDate = sortir.tanggal.includes('T') 
+                ? new Date(sortir.tanggal) 
+                : new Date(sortir.tanggal.replace(/-/g, '/'));
+            
+            baseWeightGram = sortir.bobotRataRata;
+            baseDate = sortirDate;
+            hasWeightData = true;
+        }
+
+        // Check if sampling is more recent or if no sortir data
+        if (sampling && sampling.jumlahIkanPerKg > 0) {
+            const samplingDate = sampling.tanggal.includes('T')
+                ? new Date(sampling.tanggal)
+                : new Date(sampling.tanggal.replace(/-/g, '/'));
+            
+            const samplingWeight = sampling.bobotGram || (1000 / sampling.jumlahIkanPerKg);
+            
+            // Use sampling if it's more recent or if no sortir data
+            if (!hasWeightData || (baseDate && samplingDate > baseDate)) {
+                baseWeightGram = samplingWeight;
+                baseDate = samplingDate;
+                hasWeightData = true;
+            }
+        }
+
+        if (!kolam || !hasWeightData || !baseDate) {
             return { totalBiomass: 0, density: 0, averageWeight: 0 };
         }
 
-        // Get base weight from sampling, then add growth (+2g per day)
-        let baseWeightGram = 0;
-        if (sampling.bobotGram) {
-            baseWeightGram = sampling.bobotGram;
-        } else {
-            baseWeightGram = 1000 / sampling.jumlahIkanPerKg;
-        }
-
-        // Calculate days since last sampling
-        // Parse sampling date robustly. If it's a simple YYYY-MM-DD, parse as local midnight.
-        // If it's a full ISO string (from our new tebar logic), parse normally.
-        // Calculate growth based on 01:00 AM transitions
-        const dateStr = sampling.tanggal;
-        const samplingDate = dateStr.includes('T') ? new Date(dateStr) : new Date(dateStr.replace(/-/g, '/'));
+        // Calculate days since last weight measurement
         const now = new Date();
 
         const getEffective01AM = (date: Date) => {
@@ -1040,7 +1082,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             return d;
         };
 
-        const daysPassed = Math.max(0, Math.floor((getEffective01AM(now).getTime() - getEffective01AM(samplingDate).getTime()) / (1000 * 60 * 60 * 24)));
+        const daysPassed = Math.max(0, Math.floor(
+            (getEffective01AM(now).getTime() - getEffective01AM(baseDate).getTime()) / (1000 * 60 * 60 * 24)
+        ));
 
         // Apply growth: +2 grams per day (Production)
         const GROWTH_RATE_PER_DAY_GRAMS = 2;
@@ -1211,28 +1255,54 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const getKolamById = (id: string) => kolam.find(k => k.id === id);
 
-    const getPakanByKolam = useCallback((kolamId: string) =>
-        (pakanMap.get(kolamId) || []).sort((a: any, b: any) =>
-            new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        ), [pakanMap]);
+    const getPakanByKolam = useCallback((kolamId: string) => {
+        const k = getKolamById(kolamId);
+        const records = pakanMap.get(kolamId) || [];
+        // Filter by current cycle date if exists
+        const filtered = k?.tanggalTebar 
+            ? records.filter(p => new Date(p.tanggal) >= new Date(k.tanggalTebar!))
+            : []; // If no cycle date, pond is empty/inactive in terms of current cycle
 
-    const getKondisiAirByKolam = useCallback((kolamId: string) =>
-        kondisiAir.filter(ka => ka.kolamId === kolamId).sort((a: any, b: any) =>
+        return filtered.sort((a: any, b: any) =>
             new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        ), [kondisiAir]); // Kondisi air usually fewer records, but could also be indexed if needed
+        );
+    }, [pakanMap, getKolamById]);
 
-    const getPengeluaranByKolam = useCallback((kolamId: string) =>
-        (pengeluaranMap.get(kolamId) || []).sort((a: any, b: any) =>
+    const getKondisiAirByKolam = useCallback((kolamId: string) => {
+        const k = getKolamById(kolamId);
+        const records = kondisiAir.filter(ka => ka.kolamId === kolamId);
+        const filtered = k?.tanggalTebar 
+            ? records.filter(ka => new Date(ka.tanggal) >= new Date(k.tanggalTebar!))
+            : [];
+
+        return filtered.sort((a: any, b: any) =>
             new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        ), [pengeluaranMap]);
+        );
+    }, [kondisiAir, getKolamById]);
+
+    const getPengeluaranByKolam = useCallback((kolamId: string) => {
+        const k = getKolamById(kolamId);
+        const records = pengeluaranMap.get(kolamId) || [];
+        const filtered = k?.tanggalTebar 
+            ? records.filter(p => new Date(p.tanggal) >= new Date(k.tanggalTebar!))
+            : [];
+
+        return filtered.sort((a: any, b: any) =>
+            new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
+        );
+    }, [pengeluaranMap, getKolamById]);
 
     const getFeedPrice = useCallback((jenisPakan: string) =>
         feedPriceMap.get(jenisPakan) || 0, [feedPriceMap]);
 
     const getTotalPengeluaranByKolam = useCallback((kolamId: string): number => {
+        const k = getKolamById(kolamId);
         const specificExpenses = pengeluaranMap.get(kolamId) || [];
-        return specificExpenses.reduce((sum, p) => sum + p.jumlah, 0);
-    }, [pengeluaranMap]);
+        const filtered = k?.tanggalTebar 
+            ? specificExpenses.filter(p => new Date(p.tanggal) >= new Date(k.tanggalTebar!))
+            : [];
+        return filtered.reduce((sum, p) => sum + p.jumlah, 0);
+    }, [pengeluaranMap, getKolamById]);
 
     const getTotalPengeluaranByKategori = useCallback((kolamId: string, kategori: KategoriPengeluaran): number => {
         const targetKat = kategori.toUpperCase();
@@ -1264,21 +1334,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return totalStok - (recentUsed + historicalUsed);
     }, [stokPakan, pakan, historicalFeedUsage]);
 
-    const getPenjualanByKolam = useCallback((kolamId: string) =>
-        (penjualanMap.get(kolamId) || []).sort((a: any, b: any) =>
+    const getPenjualanByKolam = useCallback((kolamId: string) => {
+        const k = getKolamById(kolamId);
+        const records = penjualanMap.get(kolamId) || [];
+        const filtered = k?.tanggalTebar 
+            ? records.filter(p => new Date(p.tanggal) >= new Date(k.tanggalTebar!))
+            : [];
+        return filtered.sort((a: any, b: any) =>
             new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        ), [penjualanMap]);
+        );
+    }, [penjualanMap, getKolamById]);
 
-    const getTotalPenjualanByKolam = useCallback((kolamId: string): number =>
-        (penjualanMap.get(kolamId) || []).reduce((sum, p) => sum + (p.beratKg * p.hargaPerKg), 0), [penjualanMap]);
+    const getTotalPenjualanByKolam = useCallback((kolamId: string): number => {
+        const k = getKolamById(kolamId);
+        const records = penjualanMap.get(kolamId) || [];
+        const filtered = k?.tanggalTebar 
+            ? records.filter(p => new Date(p.tanggal) >= new Date(k.tanggalTebar!))
+            : [];
+        return filtered.reduce((sum, p) => sum + (p.beratKg * p.hargaPerKg), 0);
+    }, [penjualanMap, getKolamById]);
 
     const getTotalPenjualan = useCallback((): number =>
         penjualan.reduce((sum, p) => sum + (p.beratKg * p.hargaPerKg), 0), [penjualan]);
 
-    const getRiwayatIkanByKolam = useCallback((kolamId: string) =>
-        (riwayatIkanMap.get(kolamId) || []).sort((a, b) =>
+    const getRiwayatIkanByKolam = useCallback((kolamId: string) => {
+        const k = getKolamById(kolamId);
+        const records = riwayatIkanMap.get(kolamId) || [];
+        const filtered = k?.tanggalTebar 
+            ? records.filter(h => new Date(h.tanggal) >= new Date(k.tanggalTebar!))
+            : [];
+
+        return filtered.sort((a, b) =>
             new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        ), [riwayatIkanMap]);
+        );
+    }, [riwayatIkanMap, getKolamById]);
 
 
     const getAvailableFunds = useCallback((): number => {
@@ -1293,15 +1382,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
             a.waktu.localeCompare(b.waktu)
         ), [jadwalPakan]);
 
-    const getPanenByKolam = useCallback((kolamId: string) =>
-        (riwayatPanenMap.get(kolamId) || []).sort((a: any, b: any) =>
-            new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        ), [riwayatPanenMap]);
+    const getPanenByKolam = useCallback((kolamId: string) => {
+        const k = getKolamById(kolamId);
+        const records = riwayatPanenMap.get(kolamId) || [];
+        const filtered = k?.tanggalTebar 
+            ? records.filter(p => new Date(p.tanggal) >= new Date(k.tanggalTebar!))
+            : [];
 
-    const getSamplingByKolam = useCallback((kolamId: string) =>
-        riwayatSampling.filter((s: any) => s.kolamId === kolamId).sort((a: any, b: any) =>
+        return filtered.sort((a: any, b: any) =>
             new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        ), [riwayatSampling]);
+        );
+    }, [riwayatPanenMap, getKolamById]);
+
+    const getSamplingByKolam = useCallback((kolamId: string) => {
+        const k = getKolamById(kolamId);
+        const filtered = k?.tanggalTebar 
+            ? riwayatSampling.filter(s => s.kolamId === kolamId && new Date(s.tanggal) >= new Date(k.tanggalTebar!))
+            : [];
+
+        return filtered.sort((a: any, b: any) =>
+            new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
+        );
+    }, [riwayatSampling, getKolamById]);
 
     const getLatestSampling = useCallback((kolamId: string) => {
         const samples = getSamplingByKolam(kolamId);
@@ -1309,10 +1411,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }, [getSamplingByKolam]);
 
     // Sorting Helper Functions
-    const getSortirByKolam = useCallback((kolamId: string) =>
-        riwayatSortir.filter((s: any) => s.kolamId === kolamId).sort((a: any, b: any) =>
+    const getSortirByKolam = useCallback((kolamId: string) => {
+        const k = getKolamById(kolamId);
+        const filtered = k?.tanggalTebar 
+            ? riwayatSortir.filter(s => s.kolamId === kolamId && new Date(s.tanggal) >= new Date(k.tanggalTebar!))
+            : [];
+
+        return filtered.sort((a: any, b: any) =>
             new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
-        ), [riwayatSortir]);
+        );
+    }, [riwayatSortir, getKolamById]);
+
+    const getLatestSortirWithWeight = useCallback((kolamId: string): RiwayatSortir | undefined => {
+        const sortirList = getSortirByKolam(kolamId);
+        return sortirList.find(s => s.bobotRataRata && s.bobotRataRata > 0);
+    }, [getSortirByKolam]);
 
     const getWeeksSinceTebar = useCallback((kolamId: string): number => {
         const kolam = getKolamById(kolamId);
@@ -1440,7 +1553,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const totalExpenses = cycleExpenses.reduce((sum, p) => sum + p.jumlah, 0);
 
         // Initial Fish (Sum of all positive additions in this cycle, EXCLUDING the start of the next cycle)
-        const cycleFishHistory = getRiwayatIkanByKolam(kolamId)
+        const rawHistory = riwayatIkanMap.get(kolamId) || [];
+        const cycleFishHistory = rawHistory
             .filter(rangeFilterInclusive);
 
         const initialFish = cycleFishHistory
@@ -1530,7 +1644,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const getCycleHistory = useCallback((kolamId: string): CycleSummary[] => {
         // 1. Get all fish history sorted by CREATED AT (Ascending) for chronological processing
-        const historyAsc = getRiwayatIkanByKolam(kolamId).sort((a, b) => {
+        const rawHistory = riwayatIkanMap.get(kolamId) || [];
+        const historyAsc = [...rawHistory].sort((a, b) => {
             const timeA = new Date((a as any).createdAt || a.tanggal).getTime();
             const timeB = new Date((b as any).createdAt || b.tanggal).getTime();
             return timeA - timeB;
@@ -1758,17 +1873,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }
 
         try {
+            const isToday = new Date(data.tanggal).toDateString() === new Date().toDateString();
+            const cycleStartTime = isToday ? new Date().toISOString() : new Date(data.tanggal).toISOString();
+
             await updateKolam(kolamId, {
-                tanggalTebar: data.tanggal,
+                tanggalTebar: cycleStartTime,
                 status: 'aman'
             });
 
-            const isToday = new Date(data.tanggal).toDateString() === new Date().toDateString();
-            const samplingTime = isToday ? new Date().toISOString() : new Date(data.tanggal).toISOString();
-
             await addRiwayatIkan({
                 kolamId,
-                tanggal: data.tanggal,
+                tanggal: cycleStartTime,
                 jumlahPerubahan: data.jumlah,
                 keterangan: 'Tebar Bibit Awal'
             });
@@ -1777,7 +1892,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 const jumlahIkanPerKg = 1000 / data.beratPerEkor;
                 await addRiwayatSampling({
                     kolamId,
-                    tanggal: samplingTime,
+                    tanggal: cycleStartTime,
                     bobotGram: data.beratPerEkor,
                     jumlahIkanPerKg,
                     catatan: `Bibit awal: ${data.beratPerEkor} gram/ekor`

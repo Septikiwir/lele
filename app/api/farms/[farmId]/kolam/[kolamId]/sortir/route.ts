@@ -68,7 +68,8 @@ export async function POST(
             jumlahIkanSesudah, 
             mortalitas, 
             bobotRataRata, 
-            catatan 
+            catatan,
+            distributions // Optional: array of { kolamId, jumlah } for multi-pond transfer
         } = body;
 
         // Validation
@@ -105,27 +106,142 @@ export async function POST(
         }
 
         const calculatedMortalitas = parseInt(jumlahIkanSebelum) - parseInt(jumlahIkanSesudah);
+        const sesudah = parseInt(jumlahIkanSesudah);
 
-        const newSortir = await prisma.riwayatSortir.create({
-            data: {
-                kolamId,
-                tanggal: new Date(tanggal),
-                periode: parseInt(periode),
-                jumlahIkanSebelum: parseInt(jumlahIkanSebelum),
-                jumlahIkanSesudah: parseInt(jumlahIkanSesudah),
-                mortalitas: calculatedMortalitas,
-                bobotRataRata: bobotRataRata ? parseFloat(bobotRataRata) : null,
-                catatan
+        // Validate distributions if provided
+        if (distributions && Array.isArray(distributions)) {
+            if (distributions.length === 0) {
+                return NextResponse.json({ 
+                    error: 'Distributions array cannot be empty' 
+                }, { status: 400 });
             }
+
+            // Validate total does not exceed survivors
+            const totalDistributed = distributions.reduce((sum: number, d: any) => sum + parseInt(d.jumlah), 0);
+            if (totalDistributed > sesudah) {
+                return NextResponse.json({ 
+                    error: `Total distribusi (${totalDistributed}) tidak boleh melebihi survivors (${sesudah})` 
+                }, { status: 400 });
+            }
+
+            // Validate each target kolam exists
+            for (const dist of distributions) {
+                if (!dist.kolamId || dist.kolamId === kolamId) {
+                    return NextResponse.json({ 
+                        error: 'Invalid target pond in distributions' 
+                    }, { status: 400 });
+                }
+
+                const targetKolam = await prisma.kolam.findUnique({
+                    where: { id: dist.kolamId }
+                });
+
+                if (!targetKolam) {
+                    return NextResponse.json({ 
+                        error: `Kolam tujuan ${dist.kolamId} tidak ditemukan` 
+                    }, { status: 400 });
+                }
+            }
+        }
+
+        // Use transaction to ensure atomicity
+        const result = await prisma.$transaction(async (tx) => {
+            // 1. Create sortir record
+            const newSortir = await tx.riwayatSortir.create({
+                data: {
+                    kolamId,
+                    tanggal: new Date(tanggal),
+                    periode: parseInt(periode),
+                    jumlahIkanSebelum: parseInt(jumlahIkanSebelum),
+                    jumlahIkanSesudah: sesudah,
+                    mortalitas: calculatedMortalitas,
+                    bobotRataRata: bobotRataRata ? parseFloat(bobotRataRata) : null,
+                    catatan
+                }
+            });
+
+            // 2. Create RiwayatIkan for mortality if > 0
+            if (calculatedMortalitas > 0) {
+                await tx.riwayatIkan.create({
+                    data: {
+                        kolamId,
+                        tanggal: new Date(tanggal),
+                        jumlahPerubahan: -calculatedMortalitas,
+                        jumlahAkhir: sesudah,
+                        keterangan: `Sortir Periode ${periode} - Mortalitas`
+                    }
+                });
+            }
+
+            // 3. Handle distributions if provided
+            let finalCountSource = sesudah;
+            
+            if (distributions && Array.isArray(distributions) && distributions.length > 0) {
+                const sourceKolam = await tx.kolam.findUnique({
+                    where: { id: kolamId }
+                });
+
+                // Calculate total distributed
+                const totalDistributed = distributions.reduce((sum, d) => sum + parseInt(d.jumlah), 0);
+                // Remaining fish stay in source pond
+                finalCountSource = sesudah - totalDistributed;
+
+                // Track running count for source pond
+                let runningSourceCount = sesudah;
+
+                // Process each distribution
+                for (const dist of distributions) {
+                    const targetKolam = await tx.kolam.findUnique({
+                        where: { id: dist.kolamId }
+                    });
+
+                    const jumlahDist = parseInt(dist.jumlah);
+                    const targetCurrentCount = targetKolam?.jumlahIkan || 0;
+                    const targetNewCount = targetCurrentCount + jumlahDist;
+
+                    // Reduce running count
+                    runningSourceCount -= jumlahDist;
+
+                    // Create RiwayatIkan for source (transfer out)
+                    await tx.riwayatIkan.create({
+                        data: {
+                            kolamId,
+                            tanggal: new Date(tanggal),
+                            jumlahPerubahan: -jumlahDist,
+                            jumlahAkhir: runningSourceCount,
+                            keterangan: `Distribusi ke ${targetKolam?.nama || 'Kolam Lain'} (setelah sortir)`
+                        }
+                    });
+
+                    // Create RiwayatIkan for target (transfer in)
+                    await tx.riwayatIkan.create({
+                        data: {
+                            kolamId: dist.kolamId,
+                            tanggal: new Date(tanggal),
+                            jumlahPerubahan: jumlahDist,
+                            jumlahAkhir: targetNewCount,
+                            keterangan: `Terima dari ${sourceKolam?.nama || 'Kolam Lain'} (setelah sortir)`
+                        }
+                    });
+
+                    // Update target kolam
+                    await tx.kolam.update({
+                        where: { id: dist.kolamId },
+                        data: { jumlahIkan: targetNewCount }
+                    });
+                }
+            }
+
+            // Update source kolam
+            await tx.kolam.update({
+                where: { id: kolamId },
+                data: { jumlahIkan: finalCountSource }
+            });
+
+            return newSortir;
         });
 
-        // Update kolam jumlahIkan to reflect post-sorting count
-        await prisma.kolam.update({
-            where: { id: kolamId },
-            data: { jumlahIkan: parseInt(jumlahIkanSesudah) }
-        });
-
-        return NextResponse.json(newSortir, { status: 201 });
+        return NextResponse.json(result, { status: 201 });
     } catch (error) {
         console.error('Create sortir error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

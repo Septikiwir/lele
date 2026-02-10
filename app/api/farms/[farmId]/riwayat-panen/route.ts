@@ -77,12 +77,18 @@ export async function POST(
         const jumlahEkorValue = jumlahEkor ? parseInt(jumlahEkor) : 0;
         const harvestType = tipe.toUpperCase();
 
+        // Handle full timestamp: if date passed is today, use current time
+        const passedDate = new Date(tanggal);
+        const today = new Date();
+        const isToday = passedDate.toDateString() === today.toDateString();
+        const eventDate = isToday ? today : passedDate;
+
         // Prepare updates
         const transactionOps: any[] = [
             prisma.riwayatPanen.create({
                 data: {
                     kolamId,
-                    tanggal: new Date(tanggal),
+                    tanggal: eventDate,
                     beratTotalKg: parseFloat(beratTotalKg),
                     jumlahEkor: jumlahEkorValue,
                     hargaPerKg: parseFloat(hargaPerKg),
@@ -93,7 +99,26 @@ export async function POST(
             })
         ];
 
-        // Update kolam fish count based on harvest type
+        // 1. Create RiwayatIkan record for tracking
+        if (jumlahEkorValue > 0 || harvestType === 'TOTAL') {
+            const currentKolam = await prisma.kolam.findUnique({ where: { id: kolamId } });
+            const change = harvestType === 'TOTAL' ? -(currentKolam?.jumlahIkan || 0) : -jumlahEkorValue;
+            const final = harvestType === 'TOTAL' ? 0 : (currentKolam?.jumlahIkan || 0) - jumlahEkorValue;
+
+            transactionOps.push(
+                prisma.riwayatIkan.create({
+                    data: {
+                        kolamId,
+                        tanggal: eventDate,
+                        jumlahPerubahan: change,
+                        jumlahAkhir: Math.max(0, final),
+                        keterangan: `Panen ${harvestType === 'TOTAL' ? 'Raya' : 'Parsial'}`
+                    }
+                })
+            );
+        }
+
+        // 2. Update kolam fish count based on harvest type
         if (harvestType === 'TOTAL') {
             // Panen Raya: Reset count to 0 and clear stocking date to mark as empty/inactive
             // Or just reset count to 0 and let user "start new cycle" manually?
@@ -104,7 +129,8 @@ export async function POST(
                     where: { id: kolamId },
                     data: {
                         jumlahIkan: 0,
-                        status: 'AMAN' // Reset status
+                        status: 'AMAN', // Reset status
+                        tanggalTebar: null // Reset cycle date
                     }
                 })
             );

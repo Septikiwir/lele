@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Modal from '../ui/Modal';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 
@@ -24,15 +24,23 @@ export default function SortirModal({ isOpen, onClose, defaultKolamId, defaultPe
     // Check if kolam should be fixed (from defaultKolamId)
     const isKolamFixed = !!defaultKolamId;
 
+    interface Distribution {
+        kolamId: string;
+        jumlah: string;
+    }
+
     const [sortirForm, setSortirForm] = useState({
         kolamId: defaultKolamId || '',
         tanggal: new Date().toLocaleDateString('en-CA'),
         periode: defaultPeriode || 1,
         jumlahIkanSebelum: '',
-        jumlahIkanSesudah: '',
+        jumlahKematian: '', // Explicit mortality input
         bobotRataRata: '',
-        catatan: ''
+        catatan: '',
+        withDistribution: false, // Distribute to multiple ponds
     });
+
+    const [distributions, setDistributions] = useState<Distribution[]>([]);
 
     // Sync form when modal opens
     useEffect(() => {
@@ -61,16 +69,24 @@ export default function SortirModal({ isOpen, onClose, defaultKolamId, defaultPe
         }
     }, [sortirForm.kolamId, kolam]);
 
-    const calculateMortalitas = () => {
+    const calculateSurvivors = () => {
         const sebelum = Number(sortirForm.jumlahIkanSebelum) || 0;
-        const sesudah = Number(sortirForm.jumlahIkanSesudah) || 0;
-        return Math.max(0, sebelum - sesudah);
+        const kematian = Number(sortirForm.jumlahKematian) || 0;
+        return Math.max(0, sebelum - kematian);
     };
 
-    const mortalitas = calculateMortalitas();
+    const calculateTotalDistributed = () => {
+        return distributions.reduce((sum, d) => sum + (Number(d.jumlah) || 0), 0);
+    };
+
+    const survivors = calculateSurvivors();
+    const totalDistributed = calculateTotalDistributed();
+    const mortalitas = Number(sortirForm.jumlahKematian) || 0;
     const mortalitasPercent = sortirForm.jumlahIkanSebelum 
         ? ((mortalitas / Number(sortirForm.jumlahIkanSebelum)) * 100).toFixed(1)
         : '0';
+    const remainingInSource = survivors - totalDistributed;
+    const isDistributionValid = !sortirForm.withDistribution || (totalDistributed >= 0 && totalDistributed <= survivors);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -78,16 +94,35 @@ export default function SortirModal({ isOpen, onClose, defaultKolamId, defaultPe
 
         // Validasi
         const sebelum = Number(sortirForm.jumlahIkanSebelum);
-        const sesudah = Number(sortirForm.jumlahIkanSesudah);
+        const kematian = Number(sortirForm.jumlahKematian);
 
-        if (sebelum <= 0 || sesudah < 0) {
-            showToast('Jumlah ikan harus valid', 'error');
+        if (sebelum <= 0) {
+            showToast('Jumlah ikan sebelum harus valid', 'error');
             return;
         }
 
-        if (sesudah > sebelum) {
-            showToast('Jumlah ikan sesudah tidak boleh lebih banyak dari sebelum', 'error');
+        if (kematian < 0 || kematian > sebelum) {
+            showToast('Jumlah kematian tidak valid', 'error');
             return;
+        }
+
+        // Validate distribution if enabled
+        if (sortirForm.withDistribution) {
+            if (distributions.length === 0) {
+                showToast('Tambahkan minimal 1 kolam tujuan', 'error');
+                return;
+            }
+
+            const hasInvalidAmount = distributions.some(d => !d.kolamId || Number(d.jumlah) <= 0);
+            if (hasInvalidAmount) {
+                showToast('Semua distribusi harus memiliki kolam dan jumlah valid', 'error');
+                return;
+            }
+
+            if (totalDistributed > survivors) {
+                showToast(`Total distribusi (${totalDistributed}) tidak boleh melebihi survivors (${survivors})`, 'error');
+                return;
+            }
         }
 
         // Combine selected date with CURRENT time
@@ -103,10 +138,13 @@ export default function SortirModal({ isOpen, onClose, defaultKolamId, defaultPe
                 tanggal: isoString,
                 periode: sortirForm.periode,
                 jumlahIkanSebelum: sebelum,
-                jumlahIkanSesudah: sesudah,
-                mortalitas,
+                jumlahIkanSesudah: survivors,
+                mortalitas: kematian,
                 bobotRataRata: sortirForm.bobotRataRata ? Number(sortirForm.bobotRataRata) : undefined,
-                catatan: sortirForm.catatan
+                catatan: sortirForm.catatan,
+                distributions: sortirForm.withDistribution 
+                    ? distributions.map(d => ({ kolamId: d.kolamId, jumlah: Number(d.jumlah) }))
+                    : undefined
             });
 
             onClose();
@@ -115,10 +153,12 @@ export default function SortirModal({ isOpen, onClose, defaultKolamId, defaultPe
                 tanggal: new Date().toLocaleDateString('en-CA'),
                 periode: 1,
                 jumlahIkanSebelum: '',
-                jumlahIkanSesudah: '',
+                jumlahKematian: '',
                 bobotRataRata: '',
-                catatan: ''
+                catatan: '',
+                withDistribution: false,
             });
+            setDistributions([]);
         } catch (error: any) {
             console.error('Error submitting sortir:', error);
         } finally {
@@ -241,26 +281,174 @@ export default function SortirModal({ isOpen, onClose, defaultKolamId, defaultPe
                     </div>
 
                     <div className="form-group">
-                        <label className="form-label">Jumlah Ikan Sesudah</label>
+                        <label className="form-label">Jumlah Ikan yang Mati</label>
                         <input 
                             type="number" 
                             className="input w-full" 
                             required
                             min="0"
-                            value={sortirForm.jumlahIkanSesudah}
-                            onChange={e => setSortirForm({ ...sortirForm, jumlahIkanSesudah: e.target.value })} 
+                            max={sortirForm.jumlahIkanSebelum}
+                            value={sortirForm.jumlahKematian}
+                            onChange={e => setSortirForm({ ...sortirForm, jumlahKematian: e.target.value })} 
+                            placeholder="Jumlah ikan yang mati saat sortir"
                         />
+                        <p className="text-xs text-slate-500 mt-1">Input jumlah kematian eksplisit</p>
                     </div>
                 </div>
 
-                {/* Mortalitas Display */}
-                {sortirForm.jumlahIkanSesudah && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium text-amber-900">Mortalitas:</span>
-                            <span className="text-lg font-bold text-amber-900">
-                                {mortalitas.toLocaleString()} ekor ({mortalitasPercent}%)
+                {/* Survivors Display */}
+                {sortirForm.jumlahKematian && (
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                            <div className="flex flex-col">
+                                <span className="text-xs font-medium text-amber-700">Mortalitas</span>
+                                <span className="text-xl font-bold text-amber-900">
+                                    {mortalitas.toLocaleString()} ekor
+                                </span>
+                                <span className="text-xs text-amber-600">({mortalitasPercent}%)</span>
+                            </div>
+                        </div>
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                            <div className="flex flex-col">
+                                <span className="text-xs font-medium text-emerald-700">Survivors</span>
+                                <span className="text-xl font-bold text-emerald-900">
+                                    {survivors.toLocaleString()} ekor
+                                </span>
+                                <span className="text-xs text-emerald-600">
+                                    ({((survivors / Number(sortirForm.jumlahIkanSebelum)) * 100).toFixed(1)}%)
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Distribution Option */}
+                {survivors > 0 && (
+                    <div className="border-t border-slate-200 pt-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={sortirForm.withDistribution}
+                                onChange={(e) => {
+                                    const checked = e.target.checked;
+                                    setSortirForm({ 
+                                        ...sortirForm, 
+                                        withDistribution: checked
+                                    });
+                                    if (!checked) {
+                                        setDistributions([]);
+                                    } else if (distributions.length === 0) {
+                                        setDistributions([{ kolamId: '', jumlah: '' }]);
+                                    }
+                                }}
+                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                            />
+                            <span className="text-sm font-medium text-slate-700">
+                                Distribusikan survivors ke beberapa kolam
                             </span>
+                        </label>
+                        <p className="text-xs text-slate-500 mt-1 ml-6">
+                            Distribusikan ikan ke beberapa kolam. Sisa ikan akan tetap di kolam ini.
+                        </p>
+                    </div>
+                )}
+
+                {/* Multi-Pond Distribution */}
+                {sortirForm.withDistribution && survivors > 0 && (
+                    <div className="space-y-3 animate-in fade-in duration-300 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="form-label mb-0">Distribusi Ikan</label>
+                            <button
+                                type="button"
+                                onClick={() => setDistributions([...distributions, { kolamId: '', jumlah: '' }])}
+                                className="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            >
+                                + Tambah Kolam
+                            </button>
+                        </div>
+
+                        {distributions.map((dist, idx) => (
+                            <div key={idx} className="flex gap-2 items-start">
+                                <div className="flex-1">
+                                    <select
+                                        value={dist.kolamId}
+                                        onChange={(e) => {
+                                            const newDists = [...distributions];
+                                            newDists[idx].kolamId = e.target.value;
+                                            setDistributions(newDists);
+                                        }}
+                                        className="input w-full text-sm"
+                                        required
+                                    >
+                                        <option value="">-- Pilih Kolam --</option>
+                                        {kolam
+                                            .filter(k => k.id !== sortirForm.kolamId)
+                                            .map(k => (
+                                                <option key={k.id} value={k.id}>
+                                                    {k.nama} ({k.jumlahIkan.toLocaleString()} ekor)
+                                                </option>
+                                            ))
+                                        }
+                                    </select>
+                                </div>
+                                <div className="w-32">
+                                    <input
+                                        type="number"
+                                        value={dist.jumlah}
+                                        onChange={(e) => {
+                                            const newDists = [...distributions];
+                                            newDists[idx].jumlah = e.target.value;
+                                            setDistributions(newDists);
+                                        }}
+                                        className="input w-full text-sm"
+                                        placeholder="Jumlah"
+                                        min="1"
+                                        required
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setDistributions(distributions.filter((_, i) => i !== idx))}
+                                    className="px-2 py-2 text-red-600 hover:bg-red-50 rounded"
+                                    disabled={distributions.length === 1}
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ))}
+
+                        {/* Distribution Summary */}
+                        <div className="mt-3 pt-3 border-t border-blue-200">
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="text-blue-700">Total Survivors:</span>
+                                <span className="font-bold text-blue-900">{survivors.toLocaleString()} ekor</span>
+                            </div>
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="text-blue-700">Didistribusi:</span>
+                                <span className={`font-bold ${
+                                    totalDistributed <= survivors ? 'text-green-600' : 'text-red-600'
+                                }`}>
+                                    {totalDistributed.toLocaleString()} ekor
+                                </span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-blue-700">Tetap di Kolam Ini:</span>
+                                <span className={`font-bold ${
+                                    remainingInSource >= 0 ? 'text-emerald-600' : 'text-red-600'
+                                }`}>
+                                    {remainingInSource.toLocaleString()} ekor
+                                </span>
+                            </div>
+                            {!isDistributionValid && (
+                                <p className="text-xs text-red-600 mt-2">
+                                    ⚠️ Total distribusi tidak boleh melebihi jumlah survivors
+                                </p>
+                            )}
+                            {remainingInSource > 0 && (
+                                <p className="text-xs text-slate-600 mt-2">
+                                    ℹ️ {remainingInSource.toLocaleString()} ekor akan tetap di kolam sumber
+                                </p>
+                            )}
                         </div>
                     </div>
                 )}
