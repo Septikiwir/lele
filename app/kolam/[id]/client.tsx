@@ -105,7 +105,7 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
     const [addFishCount, setAddFishCount] = useState('');
     const [hargaBibit, setHargaBibit] = useState('');
     const [beratBibit, setBeratBibit] = useState('');
-    const [editReason, setEditReason] = useState('Koreksi / Hitung Ulang');
+    const [editReason, setEditReason] = useState('Kematian');
     const [targetKolamId, setTargetKolamId] = useState('');
     const [pindahJumlah, setPindahJumlah] = useState('');
 
@@ -169,22 +169,43 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
                     keterangan: `Terima dari ${kolam.nama}`
                 });
             } else {
-                const newCount = parseInt(parseCurrencyInput(editFishCount));
-                if (!isNaN(newCount) && newCount >= 0) {
-                    const currentCount = kolam.jumlahIkan;
-                    const delta = newCount - currentCount;
+                // For "Kematian", input is the number of dead fish
+                if (editReason === 'Kematian') {
+                    const deadCount = parseInt(parseCurrencyInput(editFishCount));
+                    if (!isNaN(deadCount) && deadCount > 0) {
+                        if (deadCount > kolam.jumlahIkan) {
+                            throw new Error("Jumlah ikan yang mati tidak boleh melebihi populasi");
+                        }
 
-                    if (delta === 0) {
+                        await addRiwayatIkan({
+                            kolamId: kolam.id,
+                            tanggal: new Date().toISOString(),
+                            jumlahPerubahan: -deadCount,
+                            keterangan: editReason
+                        });
+                    } else if (deadCount === 0) {
                         setIsEditFishOpen(false);
                         return;
                     }
+                } else {
+                    // For other reasons (if any), input is the new total count
+                    const newCount = parseInt(parseCurrencyInput(editFishCount));
+                    if (!isNaN(newCount) && newCount >= 0) {
+                        const currentCount = kolam.jumlahIkan;
+                        const delta = newCount - currentCount;
 
-                    await addRiwayatIkan({
-                        kolamId: kolam.id,
-                        tanggal: new Date().toISOString(),
-                        jumlahPerubahan: delta,
-                        keterangan: editReason
-                    });
+                        if (delta === 0) {
+                            setIsEditFishOpen(false);
+                            return;
+                        }
+
+                        await addRiwayatIkan({
+                            kolamId: kolam.id,
+                            tanggal: new Date().toISOString(),
+                            jumlahPerubahan: delta,
+                            keterangan: editReason
+                        });
+                    }
                 }
             }
             setIsEditFishOpen(false);
@@ -631,7 +652,6 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
                                 onChange={(e) => setEditReason(e.target.value)}
                                 className="input"
                             >
-                                <option>Koreksi / Hitung Ulang</option>
                                 <option>Kematian</option>
                                 <option>Bibit Baru</option>
                                 <option>Pindah Kolam</option>
@@ -741,16 +761,23 @@ export default function KolamDetailClient({ initialData }: KolamDetailClientProp
                             </div>
                         ) : editReason !== 'Pindah Kolam' ? (
                             <div className="form-group animate-in fade-in duration-300">
-                                <label className="form-label">Jumlah Ikan Terbaru</label>
+                                <label className="form-label">
+                                    {editReason === 'Kematian' ? 'Jumlah Ikan yang Mati' : 'Jumlah Ikan Terbaru'}
+                                </label>
                                 <input
                                     type="text"
                                     value={editFishCount}
                                     onChange={(e) => setEditFishCount(formatCurrencyInput(e.target.value))}
                                     className="input"
-                                    placeholder={kolam.jumlahIkan.toLocaleString('id-ID')}
+                                    placeholder={editReason === 'Kematian' ? 'Contoh: 100' : kolam.jumlahIkan.toLocaleString('id-ID')}
                                     required
                                 />
-                                <p className="form-hint">Masukkan angka populasi terakhir yang valid</p>
+                                <p className="form-hint">
+                                    {editReason === 'Kematian' 
+                                        ? `Maksimal: ${kolam.jumlahIkan.toLocaleString('id-ID')} ekor` 
+                                        : 'Masukkan angka populasi terakhir yang valid'
+                                    }
+                                </p>
                             </div>
                         ) : null}
                     </form>
