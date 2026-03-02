@@ -992,21 +992,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     ...created,
                     tanggal: new Date(created.tanggal).toISOString()
                 }]);
-                
+
                 // Update kolam fish counts
                 setKolam(prev => prev.map(k => {
                     // Source kolam: reduce by total distributed amount (remaining fish stay)
                     if (k.id === newSortir.kolamId) {
                         let finalCount = newSortir.jumlahIkanSesudah; // Survivors after mortality
-                        
+
                         if (newSortir.distributions && newSortir.distributions.length > 0) {
                             const totalDistributed = newSortir.distributions.reduce((sum, d) => sum + d.jumlah, 0);
                             finalCount = newSortir.jumlahIkanSesudah - totalDistributed; // Remaining in source
                         }
-                        
+
                         return { ...k, jumlahIkan: finalCount };
                     }
-                    
+
                     // Target kolam(s): add distributed fish
                     if (newSortir.distributions && newSortir.distributions.length > 0) {
                         const distForThisKolam = newSortir.distributions.find(d => d.kolamId === k.id);
@@ -1014,13 +1014,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
                             return { ...k, jumlahIkan: k.jumlahIkan + distForThisKolam.jumlah };
                         }
                     }
-                    
+
                     return k;
                 }));
-                
+
                 // Refresh RiwayatIkan to show auto-created mortality and transfer records
-                await loadRiwayatIkan();
-                
+                await refreshData();
+
                 showToast('Data sortir berhasil disimpan', 'success');
             }
         } catch (error) {
@@ -1043,10 +1043,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         // Check sortir data (if available)
         if (sortir && sortir.bobotRataRata && sortir.bobotRataRata > 0) {
-            const sortirDate = sortir.tanggal.includes('T') 
-                ? new Date(sortir.tanggal) 
+            const sortirDate = sortir.tanggal.includes('T')
+                ? new Date(sortir.tanggal)
                 : new Date(sortir.tanggal.replace(/-/g, '/'));
-            
+
             baseWeightGram = sortir.bobotRataRata;
             baseDate = sortirDate;
             hasWeightData = true;
@@ -1057,9 +1057,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
             const samplingDate = sampling.tanggal.includes('T')
                 ? new Date(sampling.tanggal)
                 : new Date(sampling.tanggal.replace(/-/g, '/'));
-            
+
             const samplingWeight = sampling.bobotGram || (1000 / sampling.jumlahIkanPerKg);
-            
+
             // Use sampling if it's more recent or if no sortir data
             if (!hasWeightData || (baseDate && samplingDate > baseDate)) {
                 baseWeightGram = samplingWeight;
@@ -1259,7 +1259,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const k = getKolamById(kolamId);
         const records = pakanMap.get(kolamId) || [];
         // Filter by current cycle date if exists
-        const filtered = k?.tanggalTebar 
+        const filtered = k?.tanggalTebar
             ? records.filter(p => new Date(p.tanggal) >= new Date(k.tanggalTebar!))
             : []; // If no cycle date, pond is empty/inactive in terms of current cycle
 
@@ -1271,7 +1271,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const getKondisiAirByKolam = useCallback((kolamId: string) => {
         const k = getKolamById(kolamId);
         const records = kondisiAir.filter(ka => ka.kolamId === kolamId);
-        const filtered = k?.tanggalTebar 
+        const filtered = k?.tanggalTebar
             ? records.filter(ka => new Date(ka.tanggal) >= new Date(k.tanggalTebar!))
             : [];
 
@@ -1283,7 +1283,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const getPengeluaranByKolam = useCallback((kolamId: string) => {
         const k = getKolamById(kolamId);
         const records = pengeluaranMap.get(kolamId) || [];
-        const filtered = k?.tanggalTebar 
+        const filtered = k?.tanggalTebar
             ? records.filter(p => new Date(p.tanggal) >= new Date(k.tanggalTebar!))
             : [];
 
@@ -1298,7 +1298,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const getTotalPengeluaranByKolam = useCallback((kolamId: string): number => {
         const k = getKolamById(kolamId);
         const specificExpenses = pengeluaranMap.get(kolamId) || [];
-        const filtered = k?.tanggalTebar 
+        const filtered = k?.tanggalTebar
             ? specificExpenses.filter(p => new Date(p.tanggal) >= new Date(k.tanggalTebar!))
             : [];
         return filtered.reduce((sum, p) => sum + p.jumlah, 0);
@@ -1337,7 +1337,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const getPenjualanByKolam = useCallback((kolamId: string) => {
         const k = getKolamById(kolamId);
         const records = penjualanMap.get(kolamId) || [];
-        const filtered = k?.tanggalTebar 
+        const filtered = k?.tanggalTebar
             ? records.filter(p => new Date(p.tanggal) >= new Date(k.tanggalTebar!))
             : [];
         return filtered.sort((a: any, b: any) =>
@@ -1348,7 +1348,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const getTotalPenjualanByKolam = useCallback((kolamId: string): number => {
         const k = getKolamById(kolamId);
         const records = penjualanMap.get(kolamId) || [];
-        const filtered = k?.tanggalTebar 
+        const filtered = k?.tanggalTebar
             ? records.filter(p => new Date(p.tanggal) >= new Date(k.tanggalTebar!))
             : [];
         return filtered.reduce((sum, p) => sum + (p.beratKg * p.hargaPerKg), 0);
@@ -1360,7 +1360,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const getRiwayatIkanByKolam = useCallback((kolamId: string) => {
         const k = getKolamById(kolamId);
         const records = riwayatIkanMap.get(kolamId) || [];
-        const filtered = k?.tanggalTebar 
+        const filtered = k?.tanggalTebar
             ? records.filter(h => new Date(h.tanggal) >= new Date(k.tanggalTebar!))
             : [];
 
@@ -1385,7 +1385,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const getPanenByKolam = useCallback((kolamId: string) => {
         const k = getKolamById(kolamId);
         const records = riwayatPanenMap.get(kolamId) || [];
-        const filtered = k?.tanggalTebar 
+        const filtered = k?.tanggalTebar
             ? records.filter(p => new Date(p.tanggal) >= new Date(k.tanggalTebar!))
             : [];
 
@@ -1396,7 +1396,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const getSamplingByKolam = useCallback((kolamId: string) => {
         const k = getKolamById(kolamId);
-        const filtered = k?.tanggalTebar 
+        const filtered = k?.tanggalTebar
             ? riwayatSampling.filter(s => s.kolamId === kolamId && new Date(s.tanggal) >= new Date(k.tanggalTebar!))
             : [];
 
@@ -1413,7 +1413,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Sorting Helper Functions
     const getSortirByKolam = useCallback((kolamId: string) => {
         const k = getKolamById(kolamId);
-        const filtered = k?.tanggalTebar 
+        const filtered = k?.tanggalTebar
             ? riwayatSortir.filter(s => s.kolamId === kolamId && new Date(s.tanggal) >= new Date(k.tanggalTebar!))
             : [];
 
@@ -1430,7 +1430,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const getWeeksSinceTebar = useCallback((kolamId: string): number => {
         const kolam = getKolamById(kolamId);
         if (!kolam?.tanggalTebar) return 0;
-        
+
         const tebarDate = new Date(kolam.tanggalTebar);
         const today = new Date();
         const daysPassed = Math.floor((today.getTime() - tebarDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -1444,7 +1444,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const getSortingAlerts = useCallback((): SortingAlert[] => {
         const alerts: SortingAlert[] = [];
-        
+
         // Periode sortir dengan kondisi: [periode, minggu minimum, bobot min (gram), bobot max (gram)]
         const sortingPeriods: [number, number, number, number][] = [
             [1, 2, 15, 25],
